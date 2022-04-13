@@ -1,0 +1,11 @@
+/.idea
+/cmake-build-debug
+/cmake-build-debug-wsl-arch
+
+/.vscode
+/build
+
+/.vs
+/out
+
+src/config.h
