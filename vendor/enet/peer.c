@@ -828,7 +828,8 @@ enet_peer_dispatch_incoming_reliable_commands (ENetPeer * peer, ENetChannel * ch
        peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
     }
 
-   enet_peer_dispatch_incoming_unreliable_commands (peer, channel, queuedCommand);
+    if (! enet_list_empty (& channel -> incomingUnreliableCommands))
+      enet_peer_dispatch_incoming_unreliable_commands (peer, channel, queuedCommand);
 }
 
 ENetIncomingCommand *

@@ -856,8 +856,6 @@ enet_protocol_handle_acknowledge (ENetHost * host, ENetEvent * event, ENetPeer *
     roundTripTime = ENET_TIME_DIFFERENCE (host -> serviceTime, receivedSentTime);
     roundTripTime = ENET_MAX (roundTripTime, 1);
 
-    peer -> roundTripTimeVariance -= peer -> roundTripTimeVariance / 4;
-
     if (peer -> lastReceiveTime > 0)
     {
        enet_peer_throttle (peer, roundTripTime);
@@ -1008,17 +1006,17 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     enet_uint16 peerID, flags;
     enet_uint8 sessionID;
 
-    if (host->receivedDataLength < (size_t) & ((ENetProtocolHeader*)0)->sentTime)
+    if (host -> receivedDataLength < (size_t) & ((ENetProtocolHeader *) 0) -> sentTime)
         return 0;
 
-    header = (ENetProtocolHeader*)host->receivedData;
+    header = (ENetProtocolHeader *) host -> receivedData;
 
-    peerID = ENET_NET_TO_HOST_16(header->peerID);
+    peerID = ENET_NET_TO_HOST_16 (header -> peerID);
     sessionID = (peerID & ENET_PROTOCOL_HEADER_SESSION_MASK) >> ENET_PROTOCOL_HEADER_SESSION_SHIFT;
     flags = peerID & ENET_PROTOCOL_HEADER_FLAG_MASK;
     peerID &= ~ (ENET_PROTOCOL_HEADER_FLAG_MASK | ENET_PROTOCOL_HEADER_SESSION_MASK);
 
-    headerSize = (flags & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME ? sizeof(ENetProtocolHeader) : (size_t) & ((ENetProtocolHeader*)0)->sentTime);
+    headerSize = (flags & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME ? sizeof (ENetProtocolHeader) : (size_t) & ((ENetProtocolHeader *) 0) -> sentTime);
     
     if (host -> checksum != NULL)
       headerSize += sizeof (enet_uint32);
@@ -1420,11 +1418,9 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer)
              if (windowWrap)
              {
                 currentCommand = enet_list_next (currentCommand);
-
                 continue;
              }
           }
-
           if (outgoingCommand -> packet != NULL)
           {
              if (! windowExceeded)
@@ -1453,7 +1449,6 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer)
              (enet_uint16) (peer -> mtu - host -> packetSize) < (enet_uint16) (commandSize + outgoingCommand -> fragmentLength)))
        {
           host -> continueSending = 1;
-
           break;
        }
 
@@ -1468,7 +1463,6 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer)
           }
 
           ++ outgoingCommand -> sendAttempts;
-
           if (outgoingCommand -> roundTripTimeout == 0)
           {
              outgoingCommand -> roundTripTimeout = peer -> roundTripTime + 4 * peer -> roundTripTimeVariance;
@@ -1643,8 +1637,6 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
 #ifdef ENET_DEBUG
            printf ("peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u outgoing, %u/%u incoming\n", currentPeer -> incomingPeerID, currentPeer -> packetLoss / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> packetLossVariance / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> roundTripTime, currentPeer -> roundTripTimeVariance, currentPeer -> packetThrottle / (float) ENET_PEER_PACKET_THROTTLE_SCALE, enet_list_size (& currentPeer -> outgoingCommands), currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingReliableCommands) : 0, currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingUnreliableCommands) : 0);
 #endif
-          
-           currentPeer -> packetLossVariance -= currentPeer -> packetLossVariance / 4;
 
            currentPeer -> packetLossVariance = (currentPeer -> packetLossVariance * 3 + ENET_DIFFERENCE (packetLoss, currentPeer -> packetLoss)) / 4;
            currentPeer -> packetLoss = (currentPeer -> packetLoss * 7 + packetLoss) / 8;
