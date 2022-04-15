@@ -40,19 +40,21 @@ int main() {
         // Start http server.
         httplib::Server http_server{};
         http_server.Post("/growtopia/server_data.php", [](const httplib::Request &req, httplib::Response &res) {
-            res.set_content("server|127.0.0.1\n"
-                "port|17000\n"
-                "type|1\n"
-                "#maint|Server is under maintenance. We will be back online shortly. Thank you for your patience!\n"
-                "beta_server|beta.growtopiagame.com\n"
-                "beta_port|26999\n"
-                "beta_type|1\n"
-                "beta2_server|beta2.growtopiagame.com\n"
-                "beta2_port|26999\n"
-                "beta2_type|1\n"
-                "type2|1\n"
-                "meta|defined\n"
-                "RTENDMARKERBS1001", "text/html");
+            res.set_content(
+                    "server|127.0.0.1\n"
+                    "port|17000\n"
+                    "type|1\n"
+                    "#maint|Server is under maintenance. We will be back online shortly. Thank you for your patience!\n"
+                    "beta_server|beta.growtopiagame.com\n"
+                    "beta_port|26999\n"
+                    "beta_type|1\n"
+                    "beta2_server|beta2.growtopiagame.com\n"
+                    "beta2_port|26999\n"
+                    "beta2_type|1\n"
+                    "type2|1\n"
+                    "meta|defined\n"
+                    "RTENDMARKERBS1001",
+                "text/html");
             return true;
         });
 

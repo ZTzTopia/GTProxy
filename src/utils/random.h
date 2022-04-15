@@ -1,4 +1,6 @@
 #pragma once
+#include <execution>
+
 #include "../include/randutils.hpp"
 #include "../include/pcg/pcg_random.hpp"
 
@@ -21,6 +23,56 @@ namespace utils {
         inline randutils::pcg_rng get_generator_local() {
             randutils::pcg_rng pcg_rng{};
             return pcg_rng;
+        }
+
+        template <class T>
+        inline std::string generate(T gen, std::size_t length, bool uppercase_all = false, const std::string &chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") {
+            std::string result;
+            result.reserve(length);
+
+            std::generate_n(std::back_inserter(result), length, [&]() {
+                return chars[gen.uniform(static_cast<std::size_t>(0), chars.length() - 1)];
+            });
+
+            if (uppercase_all) {
+                std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+            }
+
+            return result;
+        }
+
+        template <typename T>
+        inline std::string generate_alpha(T gen, std::size_t length, bool uppercase_all = false) {
+            return generate(gen, length, uppercase_all);
+        }
+
+        template <typename T>
+        inline std::string generate_number(T gen, std::size_t length) {
+            return generate(gen, length, "0123456789");
+        }
+
+        template <typename T>
+        inline std::string generate_alpha(T gen, std::size_t length) {
+            return generate(gen, length, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+        }
+
+        template <typename T>
+        inline std::string generate_hex(T gen, std::size_t length, bool uppercase_all = true) {
+            return generate(gen, length * 2, uppercase_all, "0123456789abcdef");
+        }
+
+        template <class T>
+        inline std::string generate_mac(T gen) {
+            std::string result;
+            result.reserve(17);
+
+            for (std::size_t i = 0; i < 6; i++) {
+                result.append(generate_hex(gen, 1, false));
+                result.push_back(':');
+            }
+
+            result.pop_back();
+            return result;
         }
     }
 }

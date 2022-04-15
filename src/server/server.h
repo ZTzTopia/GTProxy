@@ -17,9 +17,11 @@ namespace server {
         void on_disconnect(ENetPeer *peer) override;
 
         player::Player *get_player() const { return m_player; }
+        std::string get_login_info() const { return m_login_info; }
 
     private:
         client::Client *m_proxy_client;
         player::Player *m_player;
+        std::string m_login_info;
     };
 }

@@ -15,12 +15,11 @@ namespace enetwrapper {
             m_service_thread.join();
         }
 
-        for (ENetPeer *current_peer = m_host->peers; current_peer < &m_host->peers[m_host->peerCount]; ++current_peer) {
-            enet_peer_disconnect_now(current_peer, 0);
-        }
-
         if (m_host) {
             enet_host_destroy(m_host);
+            for (ENetPeer *current_peer = m_host->peers; current_peer < &m_host->peers[m_host->peerCount]; ++current_peer) {
+                enet_peer_disconnect(current_peer, 0);
+            }
         }
     }
 
@@ -40,7 +39,7 @@ namespace enetwrapper {
         }
 
         m_host->checksum = enet_crc32;
-        m_host->duplicatePeers = 3; // 3 peers are allowed to connect from the same IP address.
+        // m_host->duplicatePeers = 3; // 3 peers are allowed to connect from the same IP address.
         // m_host->usingNewPacket = 1;
         m_host->usingNewPacketForServer = 1;
 		if (enet_host_compress_with_range_coder(m_host) != 0) {
@@ -61,8 +60,12 @@ namespace enetwrapper {
     }
 
     void ENetServer::service_thread() {
+        ENetEvent event;
         while (m_running.load()) {
-            ENetEvent event;
+            if (m_host == nullptr) {
+                continue;
+            }
+
             if (enet_host_service(m_host, &event, 1000) > 0) { // Please don't use timeout 0. or your pc will be a bomb.
                 switch (event.type) {
                     case ENET_EVENT_TYPE_CONNECT:
@@ -70,7 +73,7 @@ namespace enetwrapper {
                         break;
                     case ENET_EVENT_TYPE_RECEIVE:
                         on_receive(event.peer, event.packet);
-                        enet_packet_destroy(event.packet);
+                        // enet_packet_destroy(event.packet);
                         break;
                     case ENET_EVENT_TYPE_DISCONNECT:
                         on_disconnect(event.peer);

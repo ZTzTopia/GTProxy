@@ -28,7 +28,7 @@ namespace player {
     int Player::send_packet_packet(ENetPacket *packet) {
         int ret = -1;
         if (m_peer) {
-            ENetPacket *packet_ = enet_packet_create(nullptr, packet->dataLength + 1, ENET_PACKET_FLAG_RELIABLE);
+            ENetPacket *packet_ = enet_packet_create(nullptr, packet->dataLength, packet->flags);
             std::memcpy(packet_->data, packet->data, packet->dataLength);
 
             ret = enet_peer_send(m_peer, 0, packet_) != 0;
@@ -70,6 +70,27 @@ namespace player {
             }
         }
 
+        return ret;
+    }
+
+    int Player::send_variant(VariantList &&variant_list, uint32_t net_id, enet_uint32 flags) {
+        if (variant_list.Get(0).GetType() == eVariantType::TYPE_UNUSED) {
+            return -1;
+        }
+
+        uint32_t data_size;
+        uint8_t *data = variant_list.SerializeToMem(&data_size, nullptr);
+
+        GameUpdatePacket game_update_packet{};
+        game_update_packet.packet_type = PACKET_CALL_FUNCTION;
+        game_update_packet.net_id = net_id;
+        game_update_packet.flags |= 0x8;
+        game_update_packet.data_extended_size = data_size;
+        game_update_packet.data_extended = reinterpret_cast<uint32_t&>(data);
+
+        int ret{ send_raw_packet(NET_MESSAGE_GAME_PACKET, &game_update_packet, sizeof(GameUpdatePacket) - 4, data, flags) };
+
+        delete data;
         return ret;
     }
 }
