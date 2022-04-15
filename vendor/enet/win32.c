@@ -318,7 +318,7 @@ enet_socket_send (ENetSocket socket,
                   size_t bufferCount)
 {
     struct sockaddr_in sin;
-    DWORD sentLength = 0;
+    DWORD sentLength;
 
     if (address != NULL)
     {
@@ -356,7 +356,7 @@ enet_socket_receive (ENetSocket socket,
 {
     INT sinLength = sizeof (struct sockaddr_in);
     DWORD flags = 0,
-          recvLength = 0;
+          recvLength;
     struct sockaddr_in sin;
 
     if (WSARecvFrom (socket,
