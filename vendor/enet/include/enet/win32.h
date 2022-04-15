@@ -2,7 +2,6 @@
  @file  win32.h
  @brief ENet Win32 header
 */
-#ifdef _WIN32
 #ifndef __ENET_WIN32_H__
 #define __ENET_WIN32_H__
 
@@ -12,11 +11,12 @@
 #pragma warning (disable: 4244) // 64bit to 32bit int
 #pragma warning (disable: 4018) // signed/unsigned mismatch
 #pragma warning (disable: 4146) // unary minus operator applied to unsigned type
+#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_WARNINGS
 #endif
 #endif
 
 #include <stdlib.h>
-#include <stdint.h>
 #include <winsock2.h>
 
 typedef SOCKET ENetSocket;
@@ -55,4 +55,5 @@ typedef fd_set ENetSocketSet;
 #define ENET_SOCKETSET_CHECK(sockset, socket)  FD_ISSET (socket, & (sockset))
 
 #endif /* __ENET_WIN32_H__ */
-#endif
+
+

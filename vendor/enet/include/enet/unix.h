@@ -2,7 +2,6 @@
  @file  unix.h
  @brief ENet Unix header
 */
-#ifndef _WIN32
 #ifndef __ENET_UNIX_H__
 #define __ENET_UNIX_H__
 
@@ -46,4 +45,4 @@ typedef fd_set ENetSocketSet;
 #define ENET_SOCKETSET_CHECK(sockset, socket)  FD_ISSET (socket, & (sockset))
     
 #endif /* __ENET_UNIX_H__ */
-#endif
+

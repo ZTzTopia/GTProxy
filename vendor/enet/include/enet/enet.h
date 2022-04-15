@@ -13,15 +13,15 @@ extern "C"
 #include <stdlib.h>
 
 #ifdef _WIN32
-#include "win32.h"
+#include "enet/win32.h"
 #else
-#include "unix.h"
+#include "enet/unix.h"
 #endif
 
-#include "types.h"
-#include "protocol.h"
-#include "list.h"
-#include "callbacks.h"
+#include "enet/types.h"
+#include "enet/protocol.h"
+#include "enet/list.h"
+#include "enet/callbacks.h"
 
 #define ENET_VERSION_MAJOR 1
 #define ENET_VERSION_MINOR 3
@@ -86,9 +86,10 @@ typedef enum _ENetSocketShutdown
  * but not for enet_host_create.  Once a server responds to a broadcast, the
  * address is updated from ENET_HOST_BROADCAST to the server's actual IP address.
  */
-typedef struct _ENetAddress {
-	enet_uint32 host;
-	enet_uint16 port;
+typedef struct _ENetAddress
+{
+   enet_uint32 host;
+   enet_uint16 port;
 } ENetAddress;
 
 /**
@@ -148,7 +149,6 @@ typedef struct _ENetPacket
 {
    size_t                   referenceCount;  /**< internal use only */
    enet_uint32              flags;           /**< bitwise-or of ENetPacketFlag constants */
-   enet_uint32              pad;             /**< wtf is here? */
    enet_uint8 *             data;            /**< allocated data for packet */
    size_t                   dataLength;      /**< length of data */
    ENetPacketFreeCallback   freeCallback;    /**< function to be called when the packet is no longer in use */
@@ -252,7 +252,7 @@ typedef struct _ENetChannel
 
 typedef enum _ENetPeerFlag
 {
-    ENET_PEER_FLAG_NEEDS_DISPATCH = (1 << 0)
+   ENET_PEER_FLAG_NEEDS_DISPATCH = (1 << 0)
 } ENetPeerFlag;
 
 /**
@@ -399,8 +399,8 @@ typedef struct _ENetHost
    size_t               duplicatePeers;              /**< optional number of allowed peers from duplicate IPs, defaults to ENET_PROTOCOL_MAXIMUM_PEER_ID */
    size_t               maximumPacketSize;           /**< the maximum allowable packet size that may be sent or received on a peer */
    size_t               maximumWaitingData;          /**< the maximum aggregate amount of buffer space a peer may use waiting for packets to be delivered */
-   uint8_t              usingNewPacket;              /**< the New and Improved! */
-   uint8_t              usingNewPacketForServer;     /**< the New and Improved! */
+   enet_uint8           usingNewPacket;              /**< the New and Improved! */
+   enet_uint8           usingNewPacketForServer;     /**< the New and Improved! */
 } ENetHost;
 
 /**
