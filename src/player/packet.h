@@ -81,7 +81,7 @@ namespace player {
         uint8_t unk2; // 2
         uint8_t unk3; // 3
         union {// 4
-            uint32_t net_id;
+            int32_t net_id;
             int32_t object_change_type;
         };
         uint32_t unk5; // 8

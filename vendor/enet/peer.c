@@ -90,7 +90,6 @@ enet_peer_throttle (ENetPeer * peer, enet_uint32 rtt)
 }
 
 /** Queues a packet to be sent.
-
     On success, ENet will assume ownership of the packet, and so enet_packet_destroy
     should not be called on it thereafter. On failure, the caller still must destroy
     the packet on its own as ENet has not queued the packet. The caller can also
@@ -323,9 +322,9 @@ enet_peer_reset_queues (ENetPeer * peer)
 
     if (peer -> flags & ENET_PEER_FLAG_NEEDS_DISPATCH)
     {
-      enet_list_remove (& peer -> dispatchList);
+       enet_list_remove (& peer -> dispatchList);
 
-      peer -> flags &= ~ ENET_PEER_FLAG_NEEDS_DISPATCH;
+       peer -> flags &= ~ ENET_PEER_FLAG_NEEDS_DISPATCH;
     }
 
     while (! enet_list_empty (& peer -> acknowledgements))
@@ -739,9 +738,9 @@ enet_peer_dispatch_incoming_unreliable_commands (ENetPeer * peer, ENetChannel * 
 
              if (! (peer -> flags & ENET_PEER_FLAG_NEEDS_DISPATCH))
              {
-               enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
+                enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
 
-               peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
+                peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
              }
 
              droppedCommand = currentCommand;
@@ -765,12 +764,12 @@ enet_peer_dispatch_incoming_unreliable_commands (ENetPeer * peer, ENetChannel * 
           {
              enet_list_move (enet_list_end (& peer -> dispatchedCommands), startCommand, enet_list_previous (currentCommand));
 
-              if (! (peer -> flags & ENET_PEER_FLAG_NEEDS_DISPATCH))
-              {
+             if (! (peer -> flags & ENET_PEER_FLAG_NEEDS_DISPATCH))
+             {
                 enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
 
                 peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
-              }
+             }
           }
        }
           
@@ -783,9 +782,9 @@ enet_peer_dispatch_incoming_unreliable_commands (ENetPeer * peer, ENetChannel * 
 
        if (! (peer -> flags & ENET_PEER_FLAG_NEEDS_DISPATCH))
        {
-         enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
+           enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
 
-         peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
+           peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
        }
 
        droppedCommand = currentCommand;
@@ -824,12 +823,13 @@ enet_peer_dispatch_incoming_reliable_commands (ENetPeer * peer, ENetChannel * ch
 
     if (! (peer -> flags & ENET_PEER_FLAG_NEEDS_DISPATCH))
     {
-      enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
+       enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
 
-      peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
+       peer -> flags |= ENET_PEER_FLAG_NEEDS_DISPATCH;
     }
 
-    enet_peer_dispatch_incoming_unreliable_commands (peer, channel, queuedCommand);
+    if (! enet_list_empty (& channel -> incomingUnreliableCommands))
+      enet_peer_dispatch_incoming_unreliable_commands (peer, channel, queuedCommand);
 }
 
 ENetIncomingCommand *
