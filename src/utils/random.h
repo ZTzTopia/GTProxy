@@ -26,7 +26,7 @@ namespace utils {
         }
 
         template <class T>
-        inline std::string generate(T gen, std::size_t length, bool uppercase_all = false, const std::string &chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") {
+        inline std::string generate(T gen, std::size_t length, const std::string &chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") {
             std::string result;
             result.reserve(length);
 
@@ -34,16 +34,12 @@ namespace utils {
                 return chars[gen.uniform(static_cast<std::size_t>(0), chars.length() - 1)];
             });
 
-            if (uppercase_all) {
-                std::transform(result.begin(), result.end(), result.begin(), ::toupper);
-            }
-
             return result;
         }
 
         template <typename T>
         inline std::string generate_alpha(T gen, std::size_t length, bool uppercase_all = false) {
-            return generate(gen, length, uppercase_all, uppercase_all
+            return generate(gen, length, uppercase_all
                 ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
         }
@@ -55,7 +51,9 @@ namespace utils {
 
         template <typename T>
         inline std::string generate_hex(T gen, std::size_t length, bool uppercase_all = true) {
-            return generate(gen, length * 2, uppercase_all, "0123456789abcdef");
+            return generate(gen, length * 2, uppercase_all
+                ? "0123456789ABCDEF"
+                : "0123456789abcdef");
         }
 
         template <class T>
