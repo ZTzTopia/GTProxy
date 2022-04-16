@@ -43,17 +43,14 @@ namespace utils {
 
         template <typename T>
         inline std::string generate_alpha(T gen, std::size_t length, bool uppercase_all = false) {
-            return generate(gen, length, uppercase_all);
+            return generate(gen, length, uppercase_all, uppercase_all
+                ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
         }
 
         template <typename T>
         inline std::string generate_number(T gen, std::size_t length) {
             return generate(gen, length, "0123456789");
-        }
-
-        template <typename T>
-        inline std::string generate_alpha(T gen, std::size_t length) {
-            return generate(gen, length, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
         }
 
         template <typename T>
