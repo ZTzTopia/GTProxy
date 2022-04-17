@@ -121,7 +121,7 @@ namespace server {
                         extended_data_int.push_back(static_cast<char>(extended_data[i]));
                     }
 
-                    spdlog::debug("Received packet from growtopia client hex: {}", spdlog::to_hex(extended_data_int));
+                    spdlog::debug("Extended data from growtopia client hex: {}", spdlog::to_hex(extended_data_int));
                 }
             }
         }
