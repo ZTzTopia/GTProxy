@@ -12,7 +12,7 @@ int main() {
         // Initialize logger.
         std::vector<spdlog::sink_ptr> sinks;
         sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-        sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("proxy.log", 1024 * 1024, 8)); // Using the port??
+        sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("proxy.log", 1024 * 1024, 8));
 
         auto logger = std::make_shared<spdlog::logger>("proxy", sinks.begin(), sinks.end());
         logger->set_pattern("[%Y-%m-%dT%TZ] [%n] [%^%l%$] [thread %t] %v");
@@ -31,7 +31,7 @@ int main() {
         }
 
         // Start proxy server.
-        auto proxy_server = std::make_unique<server::Server>();
+        auto proxy_server{ std::make_unique<server::Server>() };
         if (!proxy_server->initialize()) {
             spdlog::error("Failed to initialize proxy server.");
             return 1;

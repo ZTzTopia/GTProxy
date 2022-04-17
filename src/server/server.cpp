@@ -1,4 +1,5 @@
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/bin_to_hex.h>
 
 #include "server.h"
 #include "../utils/random.h"
@@ -110,6 +111,18 @@ namespace server {
             }
             else if (game_update_packet->packet_type == player::PACKET_DISCONNECT) {
                 enet_peer_disconnect_now(peer, 0);
+            }
+            else {
+                uint8_t *extended_data{ player::get_extended_data(game_update_packet) };
+
+                if (extended_data) {
+                    std::vector<char> extended_data_int;
+                    for (int i = 0; i < game_update_packet->data_extended_size; i++) {
+                        extended_data_int.push_back(static_cast<char>(extended_data[i]));
+                    }
+
+                    spdlog::debug("Received packet from growtopia client hex: {}", spdlog::to_hex(extended_data_int));
+                }
             }
         }
         else {

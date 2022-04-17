@@ -1,4 +1,5 @@
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/bin_to_hex.h>
 #include <util/Variant.h>
 
 #include "client.h"
@@ -72,7 +73,7 @@ namespace client {
                         m_send_server_info->token = variant_list.Get(2).GetINT32();
                         m_send_server_info->user = variant_list.Get(3).GetINT32();
                         m_send_server_info->host = data.at(0);
-                        m_send_server_info->uuid_token = data.at(2);
+                        m_send_server_info->uuid_token = data.size() == 2 ? data.at(1) : data.at(2);
                         m_send_server_info->check = true;
 
                         m_proxy_server->get_player()->send_variant({
@@ -80,11 +81,24 @@ namespace client {
                             17000,
                             m_send_server_info->token,
                             m_send_server_info->user,
-                            fmt::format("127.0.0.1|{}|{}", data.at(1), m_send_server_info->uuid_token),
+                            fmt::format("127.0.0.1|{}|{}", data.size() == 2 ? "" : data.at(1), m_send_server_info->uuid_token),
                             variant_list.Get(5).GetINT32()
                         });
                         return;
                     }
+                }
+            }
+            else {
+                uint8_t *extended_data{ player::get_extended_data(game_update_packet) };
+
+                std::vector<int> extended_data_int;
+                if (extended_data) {
+                    std::vector<char> extended_data_int;
+                    for (int i = 0; i < game_update_packet->data_extended_size; i++) {
+                        extended_data_int.push_back(static_cast<char>(extended_data[i]));
+                    }
+
+                    spdlog::debug("Received packet from growtopia server hex: {}", spdlog::to_hex(extended_data_int));
                 }
             }
         }
