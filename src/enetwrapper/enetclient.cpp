@@ -73,7 +73,7 @@ namespace enetwrapper {
                 continue;
             }
 
-            if (enet_host_service(m_host, &event, 1000) > 0) { // Please don't use timeout 0. or your pc will be a bomb.
+            if (enet_host_service(m_host, &event, 32) > 0) { // Please don't use timeout 0. or your pc will be a bomb.
                 switch (event.type) {
                     case ENET_EVENT_TYPE_CONNECT:
                         on_connect(event.peer);
