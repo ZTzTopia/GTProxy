@@ -91,7 +91,6 @@ namespace client {
             else {
                 uint8_t *extended_data{ player::get_extended_data(game_update_packet) };
 
-                std::vector<int> extended_data_int;
                 if (extended_data) {
                     std::vector<char> extended_data_int;
                     for (int i = 0; i < game_update_packet->data_extended_size; i++) {
