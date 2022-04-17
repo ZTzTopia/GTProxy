@@ -129,7 +129,7 @@ namespace server {
             spdlog::debug("{}: {}", message_type, message_data);
         }
 
-        if (message_data.find("action|quit") != std::string::npos) {
+        if (message_data.find("action|quit") != std::string::npos && message_data.find("action|quit_to_exit") == std::string::npos) {
             enet_peer_disconnect_later(peer, 0);
             return;
         }
