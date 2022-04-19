@@ -1,10 +1,10 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
+#include <util/Variant.h>
 
 #include "server.h"
 #include "../utils/random.h"
 #include "../utils/textparse.h"
-#include "util/Variant.h"
 
 namespace server {
     Server::Server()
@@ -98,7 +98,7 @@ namespace server {
             spdlog::debug("{}, {}, {}", game_update_packet->net_id, game_update_packet->unk5, game_update_packet->flags);
             spdlog::debug("{}, {}, {}", game_update_packet->object_amount, game_update_packet->dec_item_data_size, game_update_packet->pos_x);
             spdlog::debug("{}, {}, {}", game_update_packet->pos_y, game_update_packet->unk11, game_update_packet->unk12);
-            spdlog::debug("{}, {}, {}", game_update_packet->unk13, game_update_packet->m_tile_pos_x, game_update_packet->m_tile_pos_y);
+            spdlog::debug("{}, {}, {}", game_update_packet->unk13, game_update_packet->tile_pos_x, game_update_packet->tile_pos_y);
 
             if (game_update_packet->packet_type == player::PACKET_CALL_FUNCTION) {
                 uint8_t *extended_data{ player::get_extended_data(game_update_packet) };
@@ -117,7 +117,7 @@ namespace server {
 
                 if (extended_data) {
                     std::vector<char> extended_data_int;
-                    for (int i = 0; i < game_update_packet->data_extended_size; i++) {
+                    for (uint32_t i = 0; i < game_update_packet->data_extended_size; i++) {
                         extended_data_int.push_back(static_cast<char>(extended_data[i]));
                     }
 

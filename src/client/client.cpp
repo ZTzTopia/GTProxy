@@ -1,6 +1,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
 #include <util/Variant.h>
+#include <httplib.h>
 
 #include "client.h"
 #include "../server/server.h"
@@ -21,7 +22,19 @@ namespace client {
     }
 
     bool Client::initialize() {
-        if (!connect("213.179.209.168", 17254, 1)) {
+        // Get server and port from growtopia1.com
+        httplib::Client http_client{ "http://13.248.211.25" };
+        httplib::Result response = http_client.Post("/growtopia/server_data.php");
+        if (response.error() != httplib::Error::Success || response->status != 200) {
+            spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
+            return false;
+        }
+
+        utils::TextParse text_parse{ response->body };
+        std::string server{ text_parse.get("server", 1) };
+        enet_uint16 port{ text_parse.get<enet_uint16>("port", 1) };
+
+        if (!connect(server, port, 1)) {
             return false;
         }
 
@@ -56,7 +69,7 @@ namespace client {
             spdlog::debug("{}, {}, {}", game_update_packet->net_id, game_update_packet->unk5, game_update_packet->flags);
             spdlog::debug("{}, {}, {}", game_update_packet->object_amount, game_update_packet->dec_item_data_size, game_update_packet->pos_x);
             spdlog::debug("{}, {}, {}", game_update_packet->pos_y, game_update_packet->unk11, game_update_packet->unk12);
-            spdlog::debug("{}, {}, {}", game_update_packet->unk13, game_update_packet->m_tile_pos_x, game_update_packet->m_tile_pos_y);
+            spdlog::debug("{}, {}, {}", game_update_packet->unk13, game_update_packet->tile_pos_x, game_update_packet->tile_pos_y);
 
             if (game_update_packet->packet_type == player::PACKET_CALL_FUNCTION) {
                 uint8_t *extended_data{ player::get_extended_data(game_update_packet) };
@@ -93,7 +106,7 @@ namespace client {
 
                 if (extended_data) {
                     std::vector<char> extended_data_int;
-                    for (int i = 0; i < game_update_packet->data_extended_size; i++) {
+                    for (uint32_t i = 0; i < game_update_packet->data_extended_size; i++) {
                         extended_data_int.push_back(static_cast<char>(extended_data[i]));
                     }
 

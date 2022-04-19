@@ -6,6 +6,7 @@
 
 #include "enetwrapper/enetwrapper.h"
 #include "server/server.h"
+#include "utils/textparse.h"
 
 int main() {
     {
@@ -30,6 +31,17 @@ int main() {
             return 1;
         }
 
+        // Get meta from growtopia1.com
+        httplib::Client http_client{ "http://13.248.211.25" };
+        httplib::Result response = http_client.Post("/growtopia/server_data.php");
+        if (response.error() != httplib::Error::Success || response->status != 200) {
+            spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
+            return 1;
+        }
+
+        utils::TextParse text_parse{ response->body };
+        std::string meta{ text_parse.get("meta", 1) };
+
         // Start proxy server.
         auto proxy_server{ std::make_unique<server::Server>() };
         if (!proxy_server->initialize()) {
@@ -39,8 +51,12 @@ int main() {
 
         // Start http server.
         httplib::Server http_server{};
-        http_server.Post("/growtopia/server_data.php", [](const httplib::Request &req, httplib::Response &res) {
-            res.set_content(
+        http_server.Post("/growtopia/server_data.php", [meta](const httplib::Request &req, httplib::Response &res) {
+            if (!req.body.empty()) {
+                spdlog::info("Request body from growtopia client: {}", req.body);
+            }
+
+            res.set_content(fmt::format(
                     "server|127.0.0.1\n"
                     "port|17000\n"
                     "type|1\n"
@@ -52,8 +68,8 @@ int main() {
                     "beta2_port|26999\n"
                     "beta2_type|1\n"
                     "type2|1\n"
-                    "meta|defined\n"
-                    "RTENDMARKERBS1001",
+                    "meta|{}\n"
+                    "RTENDMARKERBS1001", meta),
                 "text/html");
             return true;
         });

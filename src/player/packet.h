@@ -74,15 +74,24 @@ namespace player {
         PACKET_MAXVAL
     };
 
+    enum eFlag {
+        FLAG_NONE = 0,
+        FLAG_EXTENDED_DATA = (1 << 3), // 8
+        FLAG_CHARACTER_ROTATE_LEFT = (1 << 4), // 16
+        FLAG_CHARACTER_ROTATE_RIGHT = (1 << 5), // 32
+        FLAG_CHARACTER_LAVA_HIT = (1 << 6), // 64
+        FLAG_CHARACTER_JUMP = (1 << 7) // 128
+    };
+
 #pragma pack(push, 1)
     struct GameUpdatePacket {
         uint8_t packet_type; // 0
         uint8_t unk1; // 1
         uint8_t unk2; // 2
         uint8_t unk3; // 3
-        union {// 4
+        union { // 4
             int32_t net_id;
-            int32_t object_change_type;
+            uint32_t object_change_type;
         };
         uint32_t unk5; // 8
         uint32_t flags; // 12
@@ -104,10 +113,11 @@ namespace player {
         float unk12; // 36
         float unk13; // 40
         union { // 44
-            uint32_t m_tile_pos_x;
+            uint32_t tile_pos_x;
+            uint8_t icon_state;
         };
         union { // 48
-            uint32_t m_tile_pos_y;
+            uint32_t tile_pos_y;
         };
         uint32_t data_extended_size; // 52
         uint32_t data_extended; // 56
