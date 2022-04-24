@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <ranges>
 
 namespace utils {
     class TextParse {
@@ -8,46 +9,41 @@ namespace utils {
         TextParse() = default;
         ~TextParse() = default;
 
-        explicit TextParse(const std::string &data) {
-            m_data = string_tokenize(data, "\n");
-            for (auto & i : m_data) {
-                std::replace(i.begin(), i.end(), '\t', '\0');
+        explicit TextParse(const std::string &string) {
+            m_data = string_tokenize(string, "\n");
+            for (auto &data : m_data) {
+                std::replace(data.begin(), data.end(), '\t', '\0');
             }
         };
 
-        static std::vector<std::string> string_tokenize(const std::string &string, const std::string &delimiters = "|") {
-            std::vector<std::string> tokens;
-            std::string::size_type last_pos = string.find_first_not_of(delimiters, 0);
-            std::string::size_type pos = string.find_first_of(delimiters, last_pos);
-
-            while (std::string::npos != pos || std::string::npos != last_pos) {
-                tokens.push_back(string.substr(last_pos, pos - last_pos));
-                last_pos = string.find_first_not_of(delimiters, pos);
-                pos = string.find_first_of(delimiters, last_pos);
-            }
-
-            return tokens;
+        static std::vector<std::string> string_tokenize(const std::string &string, const std::string &delimiter = "|") {
+            // https://stackoverflow.com/a/48403210
+            auto split = string
+                | std::ranges::views::split(delimiter)
+                | std::ranges::views::transform([](auto &&str) {
+                    return std::string_view(&*str.begin(), std::ranges::distance(str));
+                });
+            return { split.begin(), split.end() };
         }
 
-        std::string get(const std::string &key, int index, const std::string &token = "|") {
+        std::string get(const std::string &key, int index, const std::string &token = "|", int key_index = 0) {
             if (m_data.empty()) {
                 return "";
             }
 
-            for (auto &i : m_data) {
-                if (i.empty()) {
+            for (auto &data : m_data) {
+                if (data.empty()) {
                     continue;
                 }
 
-                std::vector<std::string> data = string_tokenize(i, token);
-                if (data[0] == key) {
-                    // TODO: Fix crash.
-                    if (index < 0 || index + 1 > data.size()) {
+                std::vector<std::string> tokenize = string_tokenize(data, token);
+                if (tokenize[key_index] == key) {
+                    if (index < 0 || index >= tokenize.size()) {
                         return "";
                     }
 
                     // Found it.
-                    return data[index];
+                    return tokenize[key_index + index];
                 }
             }
 
@@ -86,12 +82,12 @@ namespace utils {
                 return;
             }
 
-            for (int i = 0; i < m_data.size(); i++) {
-                std::vector<std::string> data = string_tokenize(m_data.at(i), token);
-                if (data[0] == key) {
-                    m_data[i] = std::string{ data[0] };
-                    m_data[i] += token;
-                    m_data[i] += value;
+            for (auto &data : m_data) {
+                std::vector<std::string> tokenize = string_tokenize(data, token);
+                if (tokenize[0] == key) {
+                    data = std::string{ tokenize[0] };
+                    data += token;
+                    data += value;
                     break;
                 }
             }

@@ -93,4 +93,15 @@ namespace player {
         delete data;
         return ret;
     }
+
+    int Player::send_log(const std::string &log, bool on_console_message) {
+        if (!on_console_message) {
+            return send_packet(NET_MESSAGE_GAME_MESSAGE, fmt::format("action|log\nmsg|{}", log));
+        }
+
+        return send_variant({
+            "OnConsoleMessage",
+            log
+        });
+    }
 }

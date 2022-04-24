@@ -9,8 +9,7 @@ file(GLOB INCLUDE_FILES
     server/*.h
     utils/*.h
     ../vendor/proton/shared/manager/*.h
-    ../vendor/proton/shared/util/*.h
-)
+    ../vendor/proton/shared/util/*.h)
 file(GLOB SOURCE_FILES
     *.cpp
     client/*.cpp
@@ -20,12 +19,11 @@ file(GLOB SOURCE_FILES
     server/*.cpp
     utils/*.cpp
     ../vendor/proton/shared/manager/*.cpp
-    ../vendor/proton/shared/util/*.cpp
-)
+    ../vendor/proton/shared/util/*.cpp)
 
 add_executable(${PROJECT_NAME}
     ${INCLUDE_FILES}
-    ${SOURCE_FILES})
+    ${SOURCE_FILES} command/commandhandler.cpp command/commandhandler.h command/command.cpp command/command.h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11
@@ -34,14 +32,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/proton/shared)
-
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if (MSVC)
-        target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:>")
-    else ()
-        target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:>")
-    endif ()
-endif ()
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     NOMINMAX

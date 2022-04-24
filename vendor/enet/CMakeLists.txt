@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.12...3.20)
 project(enet)
 
-set(MAIN_PROJECT OFF)
+set(ENET_MAIN_PROJECT OFF)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    set(MAIN_PROJECT ON)
+    set(ENET_MAIN_PROJECT ON)
 endif ()
 
 # The "configure" step.
@@ -83,7 +83,8 @@ set(SOURCE_FILES
     peer.c
     protocol.c
     unix.c
-    win32.c)
+    win32.c
+)
 
 source_group(include FILES ${INCLUDE_FILES})
 source_group(source FILES ${SOURCE_FILES})
@@ -101,15 +102,18 @@ if (MSVC)
     target_compile_definitions(enet
         PRIVATE
             ENET_DLL=1
-            ENET_BUILDING_LIB=1)
+            ENET_BUILDING_LIB=1
+    )
 endif()
 
 target_include_directories(enet
     PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 target_include_directories(enet_static
     PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 
 if (WIN32)
     target_link_libraries(enet PRIVATE winmm ws2_32)
@@ -117,7 +121,7 @@ if (WIN32)
 endif()
 
 # Install enet binary.
-if (MAIN_PROJECT)
+if (ENET_MAIN_PROJECT)
     include(GNUInstallDirs)
 
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include

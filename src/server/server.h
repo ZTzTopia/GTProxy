@@ -2,6 +2,7 @@
 #include "../player/packet.h"
 #include "../enetwrapper/enetserver.h"
 #include "../client/client.h"
+#include "../command/commandhandler.h"
 #include "../player/player.h"
 
 namespace server {
@@ -22,6 +23,7 @@ namespace server {
     private:
         client::Client *m_proxy_client;
         player::Player *m_player;
+        command::CommandHandler *m_command_handler;
         std::string m_login_info;
     };
 }

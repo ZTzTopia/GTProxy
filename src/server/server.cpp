@@ -12,7 +12,9 @@ namespace server {
         , m_proxy_client(nullptr)
         , m_player(nullptr)
         , m_login_info()
-    {}
+    {
+        m_command_handler = new command::CommandHandler{ this };
+    }
 
     Server::~Server() {
         delete m_proxy_client;
@@ -78,7 +80,7 @@ namespace server {
     }
 
     void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
-        spdlog::info("Received packet from growtopia client: {} bytes", packet->dataLength);
+        spdlog::info("Outgoing packet {} bytes", packet->dataLength);
 
         if (m_proxy_client == nullptr) {
             return;
@@ -93,12 +95,12 @@ namespace server {
 
         if (message_type == player::NET_MESSAGE_GAME_PACKET) {
             player::GameUpdatePacket *game_update_packet{ player::get_struct(packet) };
-            spdlog::debug("gameudpatepacket type: {}", game_update_packet->packet_type);
-            spdlog::debug("{}, {}, {}", game_update_packet->unk1, game_update_packet->unk2, game_update_packet->unk3);
-            spdlog::debug("{}, {}, {}", game_update_packet->net_id, game_update_packet->unk5, game_update_packet->flags);
-            spdlog::debug("{}, {}, {}", game_update_packet->object_amount, game_update_packet->dec_item_data_size, game_update_packet->pos_x);
-            spdlog::debug("{}, {}, {}", game_update_packet->pos_y, game_update_packet->unk11, game_update_packet->unk12);
-            spdlog::debug("{}, {}, {}", game_update_packet->unk13, game_update_packet->tile_pos_x, game_update_packet->tile_pos_y);
+            spdlog::info("gameudpatepacket type: {}", game_update_packet->packet_type);
+            spdlog::info("{}, {}, {}", game_update_packet->unk1, game_update_packet->unk2, game_update_packet->unk3);
+            spdlog::info("{}, {}, {}", game_update_packet->net_id, game_update_packet->unk5, game_update_packet->flags);
+            spdlog::info("{}, {}, {}", game_update_packet->object_amount, game_update_packet->dec_item_data_size, game_update_packet->pos_x);
+            spdlog::info("{}, {}, {}", game_update_packet->pos_y, game_update_packet->unk11, game_update_packet->unk12);
+            spdlog::info("{}, {}, {}", game_update_packet->unk13, game_update_packet->tile_pos_x, game_update_packet->tile_pos_y);
 
             if (game_update_packet->packet_type == player::PACKET_CALL_FUNCTION) {
                 uint8_t *extended_data{ player::get_extended_data(game_update_packet) };
@@ -106,7 +108,7 @@ namespace server {
                     VariantList variant_list{};
                     variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_extended_size));
 
-                    spdlog::debug("{}", variant_list.GetContentsAsDebugString());
+                    spdlog::info("{}", variant_list.GetContentsAsDebugString());
                 }
             }
             else if (game_update_packet->packet_type == player::PACKET_DISCONNECT) {
@@ -121,43 +123,47 @@ namespace server {
                         extended_data_int.push_back(static_cast<char>(extended_data[i]));
                     }
 
-                    spdlog::debug("Extended data from growtopia client hex: {}", spdlog::to_hex(extended_data_int));
+                    spdlog::info("Extended data: {}", spdlog::to_hex(extended_data_int));
                 }
             }
         }
         else {
-            spdlog::debug("{}: {}", message_type, message_data);
+            spdlog::info("{}: {}", message_type, message_data);
         }
 
-        if (message_data.find("action|quit") != std::string::npos && message_data.find("action|quit_to_exit") == std::string::npos) {
-            enet_peer_disconnect_later(peer, 0);
-            return;
+        if (message_data.find("requestedName") != std::string::npos) {
+            utils::TextParse text_parse{ message_data };
+            if (!text_parse.get("requestedName", 1).empty()) {
+                randutils::pcg_rng gen{ utils::random::get_generator_static() };
+
+                static std::string mac{ utils::random::generate_mac(gen) };
+                static std::string rid{ utils::random::generate_hex(gen, 16, true) };
+                static std::string wk{ utils::random::generate_hex(gen, 16, true) };
+                static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
+
+                text_parse.set("protocol", 160);
+                text_parse.set("game_version", "3.86");
+                text_parse.set("mac", mac);
+                text_parse.set("rid", rid);
+                text_parse.set("wk", wk);
+                text_parse.set("hash", hash_string(device_id.c_str(), 0));
+                text_parse.set("hash2", hash_string(mac.c_str(), 0));
+
+                m_proxy_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
+                return;
+            }
         }
-
-        utils::TextParse text_parse{ message_data };
-        if (!text_parse.get("requestedName", 1).empty()) {
-            randutils::pcg_rng gen{ utils::random::get_generator_static() };
-
-            static std::string mac{ utils::random::generate_mac(gen) };
-            static std::string rid{ utils::random::generate_hex(gen, 16, true) };
-            static std::string wk{ utils::random::generate_hex(gen, 16, true) };
-            static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
-
-            text_parse.set("mac", mac);
-            text_parse.set("rid", rid);
-            text_parse.set("wk", wk);
-            text_parse.set("hash", hash_string(device_id.c_str(), 0));
-            text_parse.set("hash2", hash_string(mac.c_str(), 0));
-
-            m_proxy_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
-            return;
+        else if (message_data.find("action|input") != std::string::npos) {
+            utils::TextParse text_parse{ message_data };
+            if (!text_parse.get("text", 1, "|", 1).empty()) {
+                if (m_command_handler->handle(text_parse.get("text", 1, "|", 1))) {
+                    return;
+                }
+            }
         }
 
         if (m_proxy_client->get_player()->send_packet_packet(packet) != 0) {
             spdlog::error("Failed to send packet to growtopia server");
-        }
-        else {
-            spdlog::debug("Sent packet to growtopia server");
         }
     }
 

@@ -13,9 +13,9 @@ int main() {
         // Initialize logger.
         std::vector<spdlog::sink_ptr> sinks;
         sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-        sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("proxy.log", 1024 * 1024, 8));
+        sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("proxy.log", 1024 * 1024 * 5, 15));
 
-        auto logger = std::make_shared<spdlog::logger>("proxy", sinks.begin(), sinks.end());
+        auto logger = std::make_shared<spdlog::logger>("GTProxy", sinks.begin(), sinks.end());
         logger->set_pattern("[%Y-%m-%dT%TZ] [%n] [%^%l%$] [thread %t] %v");
         logger->set_level(spdlog::level::debug);
         logger->flush_on(spdlog::level::debug);
