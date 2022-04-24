@@ -47,13 +47,13 @@ namespace command {
                     return;
                 }
 
-                if (args[0].size() > 31) {
+                if (args[0].size() > 23) {
                     m_server->get_player()->send_log("`4World name too long, try again.");
                     return;
                 }
 
                 m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, "action|quit_to_exit");
-                m_server->get_player()->send_log(fmt::format("Warping to {}``...", args[0]));
+                m_server->get_player()->send_log(fmt::format("Warping to {}...", args[0]));
                 m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, fmt::format("action|join_request\n"
                                                                                              "name|{}\n"
                                                                                              "invitedWorld|0", args[0]));
@@ -86,8 +86,8 @@ namespace command {
 
         for (auto &command : m_commands) {
             if (command->get_name() == command_name) {
-                command->call(args);
                 m_server->get_player()->send_log(fmt::format("`6!{}``", command_name));
+                command->call(args);
                 return true;
             }
         }
