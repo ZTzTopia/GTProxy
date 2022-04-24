@@ -7,9 +7,9 @@ namespace command {
         : m_server(server)
     {
         m_commands.push_back(
-            new Command("help", "Displays this help message", [this](const std::vector<std::string>& args) {
+            new Command("help", "Displays this help message", [this](const std::vector<std::string> &args) {
                 if (!args.empty()) {
-                    auto it = std::find_if(m_commands.begin(), m_commands.end(), [&args](const Command* command) {
+                    auto it = std::find_if(m_commands.begin(), m_commands.end(), [&args](const Command *command) {
                         return command->get_name() == args[0];
                     });
 
@@ -33,6 +33,30 @@ namespace command {
                 }
 
                 m_server->get_player()->send_log(commands);
+            })
+        );
+        m_commands.push_back(
+            new Command("warp", "Warps you to a world", [this](const std::vector<std::string> &args) {
+                if (args.empty()) {
+                    m_server->get_player()->send_log("`4Usage: `$!warp <world name>");
+                    return;
+                }
+
+                if (args[0] == "exit") {
+                    m_server->get_player()->send_log("`4You cannot warp to the exit world.");
+                    return;
+                }
+
+                if (args[0].size() > 31) {
+                    m_server->get_player()->send_log("`4World name too long, try again.");
+                    return;
+                }
+
+                m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, "action|quit_to_exit");
+                m_server->get_player()->send_log(fmt::format("Warping to {}``...", args[0]));
+                m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, fmt::format("action|join_request\n"
+                                                                                             "name|{}\n"
+                                                                                             "invitedWorld|0", args[0]));
             })
         );
     }
@@ -63,6 +87,7 @@ namespace command {
         for (auto &command : m_commands) {
             if (command->get_name() == command_name) {
                 command->call(args);
+                m_server->get_player()->send_log(fmt::format("`6!{}``", command_name));
                 return true;
             }
         }
