@@ -155,8 +155,8 @@ namespace server {
         }
         else if (message_data.find("action|input") != std::string::npos) {
             utils::TextParse text_parse{ message_data };
-            if (!text_parse.get("text", 1, "|", 1).empty()) {
-                if (m_command_handler->handle(text_parse.get("text", 1, "|", 1))) {
+            if (!text_parse.get("text", 1).empty()) {
+                if (m_command_handler->handle(text_parse.get("text", 1))) {
                     return;
                 }
             }

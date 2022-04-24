@@ -23,7 +23,14 @@ namespace utils {
                 | std::ranges::views::transform([](auto &&str) {
                     return std::string_view(&*str.begin(), std::ranges::distance(str));
                 });
-            return { split.begin(), split.end() };
+
+            // Delete empty strings.
+            std::vector<std::string> result{ split.begin(), split.end() };
+            result.erase(std::remove_if(result.begin(), result.end(), [](const auto &str) {
+                return str.empty();
+            }), result.end());
+
+            return result;
         }
 
         std::string get(const std::string &key, int index, const std::string &token = "|", int key_index = 0) {
