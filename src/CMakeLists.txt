@@ -50,7 +50,6 @@ conan_cmake_configure(REQUIRES
     GENERATORS cmake_find_package
     IMPORTS "bin, *.dll -> ./bin"
     OPTIONS
-        fmt:header_only=True
         spdlog:shared=True)
 
 conan_cmake_autodetect(settings)
