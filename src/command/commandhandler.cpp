@@ -74,7 +74,7 @@ namespace command {
         for (auto &command : m_commands) {
             if (command->get_name() != command_name)
                 continue;
-            m_server->get_player()->send_log(fmt::format("`6!{}``", string));
+            m_server->get_player()->send_log(fmt::format("`6{}``", string));
             command->call(args);
             return true;
         }
