@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <ranges>
+#include <unordered_map>
 
 namespace utils {
     class TextParse {
@@ -17,20 +18,16 @@ namespace utils {
         };
 
         static std::vector<std::string> string_tokenize(const std::string &string, const std::string &delimiter = "|") {
-            // https://stackoverflow.com/a/48403210
-            auto split = string
-                | std::ranges::views::split(delimiter)
-                | std::ranges::views::transform([](auto &&str) {
-                    return std::string_view(&*str.begin(), std::ranges::distance(str));
-                });
+            std::vector<std::string> tokens;
+            std::string::size_type last_pos = string.find_first_not_of(delimiter, 0);
+            std::string::size_type pos = string.find_first_of(delimiter, last_pos);
 
-            // Delete empty strings.
-            std::vector<std::string> result{ split.begin(), split.end() };
-            result.erase(std::remove_if(result.begin(), result.end(), [](const auto &str) {
-                return str.empty();
-            }), result.end());
-
-            return result;
+            while (std::string::npos != pos || std::string::npos != last_pos) {
+                tokens.push_back(string.substr(last_pos, pos - last_pos));
+                last_pos = string.find_first_not_of(delimiter, pos);
+                pos = string.find_first_of(delimiter, last_pos);
+            }
+            return tokens;
         }
 
         std::string get(const std::string &key, int index, const std::string &token = "|", int key_index = 0) {
@@ -105,23 +102,27 @@ namespace utils {
             set(key, std::to_string(value), token);
         }
 
+        std::vector<std::string> get_all_array() {
+            std::vector<std::string> ret{};
+            for(int i = 0; i < m_data.size(); i++)
+                ret.push_back(fmt::format("[{}]: {}", i, m_data[i]));
+            return ret;
+        }
         std::string get_all_raw() {
             std::string string{};
             for (int i = 0; i < m_data.size(); i++) {
                 string += m_data.at(i);
-
-                if (i + 1 >= m_data.size()) {
+                if (i + 1 >= m_data.size())
                     continue;
-                }
-
-                if (!m_data.at(i + 1).empty()) {
+                if (!m_data.at(i + 1).empty())
                     string += '\n';
-                }
             }
-
             return string;
         }
 
+        bool empty() {
+            return m_data.empty();
+        }
         size_t get_line_count() {
             return m_data.size();
         }

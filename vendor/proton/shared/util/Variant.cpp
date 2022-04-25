@@ -1,7 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <sstream>
+#include <map>
 
 #include "Variant.h"
+#include "fmt/format.h"
 
 Variant::~Variant() {
     if (m_pSig_onChanged) {
@@ -258,6 +260,23 @@ uint32_t ColorCombineMix(uint32_t c1, uint32_t c2, float progress) {
 
     // LogMsg(PrintColor(MAKE_RGBA(r, g, b, a)).c_str());
     return MAKE_RGBA(r, g, b, a);
+}
+uint32_t GetColorWithRatio(double ratio)
+{
+    int normalized = int(ratio * 256 * 6);
+    int region = normalized / 256;
+    int x = normalized % 256;
+    uint8_t r = 0, g = 0, b = 0;
+    switch (region)
+    {
+    case 0: r = 255; g = 0;   b = 0;   g += x; break;
+    case 1: r = 255; g = 255; b = 0;   r -= x; break;
+    case 2: r = 0;   g = 255; b = 0;   b += x; break;
+    case 3: r = 0;   g = 255; b = 255; g -= x; break;
+    case 4: r = 0;   g = 0;   b = 255; r += x; break;
+    case 5: r = 255; g = 0;   b = 255; b -= x; break;
+    }
+    return r + (g << 8) + (b << 16);
 }
 
 #define SMOOTHSTEP(x) ((x) * (x) * (3 - 2 * (x))) // Thanks to sol_hsa at
@@ -520,24 +539,21 @@ void VariantList::GetVariantListStartingAt(VariantList *pOut, int startIndex) {
     }
 }
 
+std::vector<std::string>  VariantList::GetContentsAsArray() {
+    std::vector<std::string>  ret{};
+     for (int i = 0; i < C_MAX_VARIANT_LIST_PARMS; i++) {
+        if (m_variant[i].GetType() == eVariantType::TYPE_UNUSED)
+            continue;
+        ret.push_back(m_variant[i].Print());
+     }
+     return ret;
+}
 std::string VariantList::GetContentsAsDebugString() {
-    std::string string{};
-    for (int i = 0; i < C_MAX_VARIANT_LIST_PARMS; i++) {
-        if (m_variant[i].GetType() == eVariantType::TYPE_UNUSED) {
-            break;
-        }
-        else {
-            if (!string.empty()) {
-                string += ", \r\n";
-            }
-
-            string += "Parm " + std::to_string(i) + ": " + m_variant[i].Print();
-        }
-    }
-
-    if (string.empty()) {
-        string = "(None)";
-    }
-
-    return string;
+    const auto& data = this->GetContentsAsArray();
+    if(data.empty())
+        return "(None)";
+    std::string ret{};
+    for(int i = 0; i < data.size(); i++)
+        ret.append(fmt::format("[{}] {}\r\n", i, data[i]));
+    return ret;
 }
