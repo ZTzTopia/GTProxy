@@ -1,7 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <sstream>
+#include <map>
 
 #include "Variant.h"
+#include "fmt/format.h"
 
 Variant::~Variant() {
     if (m_pSig_onChanged) {
@@ -520,24 +522,21 @@ void VariantList::GetVariantListStartingAt(VariantList *pOut, int startIndex) {
     }
 }
 
+std::vector<std::string>  VariantList::GetContentsAsArray() {
+    std::vector<std::string>  ret{};
+     for (int i = 0; i < C_MAX_VARIANT_LIST_PARMS; i++) {
+        if (m_variant[i].GetType() == eVariantType::TYPE_UNUSED)
+            continue;
+        ret.push_back(m_variant[i].Print());
+     }
+     return ret;
+}
 std::string VariantList::GetContentsAsDebugString() {
-    std::string string{};
-    for (int i = 0; i < C_MAX_VARIANT_LIST_PARMS; i++) {
-        if (m_variant[i].GetType() == eVariantType::TYPE_UNUSED) {
-            break;
-        }
-        else {
-            if (!string.empty()) {
-                string += ", \r\n";
-            }
-
-            string += "Parm " + std::to_string(i) + ": " + m_variant[i].Print();
-        }
-    }
-
-    if (string.empty()) {
-        string = "(None)";
-    }
-
-    return string;
+    const auto& data = this->GetContentsAsArray();
+    if(data.empty())
+        return "(None)";
+    std::string ret{};
+    for(int i = 0; i < data.size(); i++)
+        ret.append(fmt::format("[{}] {}\r\n", i, data[i]));
+    return ret;
 }

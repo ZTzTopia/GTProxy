@@ -462,6 +462,7 @@ public:
     Variant &Get(int parmNum) { assert(parmNum < C_MAX_VARIANT_LIST_PARMS); return m_variant[parmNum]; }
     void GetVariantListStartingAt(VariantList *pOut, int startIndex); // Shift variables over to the right, deleting some.  0 based index
 
+    std::vector<std::string> GetContentsAsArray();
     std::string GetContentsAsDebugString();
 
 public:
