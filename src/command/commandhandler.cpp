@@ -13,25 +13,19 @@ namespace command {
                         return command->get_name() == args[0];
                     });
 
-                    if (it != m_commands.end()) {
+                    if (it != m_commands.end())
                         m_server->get_player()->send_log((*it)->get_description());
-                    }
-                    else {
+                    else
                         m_server->get_player()->send_log("`4Unknown command. ``Enter `$!help`` for a list of valid commands.");
-                    }
-
                     return;
                 }
-
                 std::string commands;
-
                 commands.append(">> Commands: ");
                 for (auto &command : m_commands) {
                     commands += '!';
                     commands += command->get_name();
                     commands += ' ';
                 }
-
                 m_server->get_player()->send_log(commands);
             })
         );
@@ -58,40 +52,32 @@ namespace command {
                                                                                              "name|{}\n"
                                                                                              "invitedWorld|0", args[0]));
             })
-        );
     }
 
     CommandHandler::~CommandHandler() {
-        for (auto &command : m_commands) {
+        for (auto &command : m_commands)
             delete command;
-        }
-
         m_commands.clear();
     }
 
     bool CommandHandler::handle(const std::string &string) {
         std::vector<std::string> args = utils::TextParse::string_tokenize(string, " ");
-        if (args.empty()) {
+        if (args.empty())
             return false;
-        }
-
-        if (!args[0].starts_with("!")) {
+        if (!args[0].starts_with("!"))
             return false;
-        }
 
         std::string command_name = args[0].substr(1);
         std::transform(command_name.begin(), command_name.end(), command_name.begin(), ::tolower);
-
         args.erase(args.begin());
 
         for (auto &command : m_commands) {
-            if (command->get_name() == command_name) {
-                m_server->get_player()->send_log(fmt::format("`6!{}``", string));
-                command->call(args);
-                return true;
-            }
+            if (command->get_name() != command_name)
+                continue;
+            m_server->get_player()->send_log(fmt::format("`6{}``", string));
+            command->call(args);
+            return true;
         }
-
         return false;
     }
 }
