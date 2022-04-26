@@ -4,6 +4,7 @@
 #include <util/Variant.h>
 
 #include "packet.h"
+#include "NetAvatar.h"
 
 namespace server {
     class Server;
@@ -22,8 +23,9 @@ namespace player {
         int send_log(const std::string &log, bool on_console_message = false);
 
         [[nodiscard]] ENetPeer *get_peer() const { return m_peer; }
-
+        NetAvatar *get_avatar() { return m_avatar; }
     private:
         ENetPeer *m_peer;
+        NetAvatar *m_avatar;
     };
 }
