@@ -79,43 +79,113 @@ namespace player {
     };
 
 #pragma pack(push, 1)
-    struct GameUpdatePacket {
-        uint8_t packet_type; // 0
-        uint8_t unk1; // 1
-        uint8_t unk2; // 2
-        uint8_t unk3; // 3
-        union { // 4
-            int32_t net_id;
-            uint32_t object_change_type;
+    struct GameUpdatePacket { //thanks to Inzernal project
+        uint8_t type{};
+        union {
+            uint8_t object_type{};
+            uint8_t punch_id;
+            uint8_t npc_type;
         };
-        uint32_t unk5; // 8
-        uint32_t flags; // 12
-        union { // 16
-            uint32_t object_amount;
+        union {
+            uint8_t count_1{};
+            uint8_t jump_count;
+            uint8_t build_range;
+            uint8_t npc_id;
+            uint8_t lost_item_count;
         };
-        union { // 20
-            uint32_t dec_item_data_size;
-            uint32_t item_id;
-            uint32_t tile_damage;
+        union {
+            uint8_t count_2{};
+            uint8_t animation_type;
+            uint8_t punch_range;
+            uint8_t npc_action;
+            uint8_t particle_id;
+            uint8_t gained_item_count;
+            uint8_t dice_result;
+            uint8_t fruit_count;
         };
-        union { // 24
+        union {
+            int32_t net_id{};
+            int32_t effect_flags_check;
+            int32_t object_change_type;
+            int32_t particle_emitter_id;
+        };
+        union {
+            int32_t item{};
+            int32_t ping_hash;
+            int32_t item_net_id;
+            int32_t pupil_color;
+            int32_t tiles_length;
+        };
+        int32_t flags{};
+        union {
+            float float_var{};
+            float water_speed;
+            float obj_alt_count;
+        };
+        union {
+            int32_t int_data{};
+            int32_t ping_item;
+            int32_t elapsed_ms;
+            int32_t delay;
+            int32_t tile_damage;
+            int32_t item_id;
+            int32_t item_speed;
+            int32_t effect_flags;
+            int32_t object_id;
+            int32_t hash;
+            int32_t verify_pos;
+            int32_t client_hack_type;
+        };
+        union {
+            float vec_x{};
             float pos_x;
+            float accel;
+            float punch_range_in;
         };
-        union { // 28
+        union {
+            float vec_y{};
             float pos_y;
+            float build_range_in;
+            float punch_strength;
         };
-        float unk11; // 32
-        float unk12; // 36
-        float unk13; // 40
-        union { // 44
-            uint32_t tile_pos_x;
-            uint8_t icon_state;
+        union {
+            float vec2_x{};
+            float dest_x;
+            float gravity_in;
+            float speed_out;
+            float velocity_x;
+            float particle_variable;
+            float pos2_x;
+            int hack_type;
         };
-        union { // 48
-            uint32_t tile_pos_y;
+        union {
+            float vec2_y{};
+            float dest_y;
+            float speed_in;
+            float gravity_out;
+            float velocity_y;
+            float particle_alt_id;
+            float pos2_y;
+            int hack_type2;
         };
-        uint32_t data_extended_size; // 52
-        uint32_t data_extended; // 56
+        union {
+            float particle_rotation{};
+            float npc_variable;
+        };
+        union {
+            uint32_t int_x{};
+            uint32_t item_id_alt;
+            uint32_t eye_shade_color;
+        };
+        union {
+            uint32_t int_y{};
+            uint32_t item_count;
+            uint32_t eyecolor;
+            uint32_t npc_speed;
+            uint32_t particle_size_alt;
+        };
+        uint32_t data_size;
+        uint32_t data;
     };
 #pragma pack(pop)
     static_assert((sizeof(GameUpdatePacket) == 60) && "Invalid GameUpdatePacket size.");
@@ -158,33 +228,27 @@ namespace player {
         return (char*)(packet->data + 4);
     }
     inline char *get_struct(ENetPacket *packet, int length) {
-        if (packet->dataLength >= length + 4) {
-            return (char*)(packet->data + 4);
-        }
-
-        return nullptr;
+        if (packet->dataLength < length + 4)
+            return nullptr;
+        return (char*)(packet->data + 4);
     }
     inline GameUpdatePacket *get_struct(ENetPacket *packet) {
         if (packet->dataLength >= sizeof(GameUpdatePacket)) {
-            auto *game_update_packet = reinterpret_cast<GameUpdatePacket *>(packet->data + 4);
-            if ((game_update_packet->flags & 0x8) == 0) {
-                // game_update_packet->data_extended = 0;
+            auto *updatePacket = reinterpret_cast<GameUpdatePacket *>(packet->data + 4);
+            if (!(updatePacket->flags & player::PACKET_FLAG_EXTENDED))
+                return updatePacket;
+            if (packet->dataLength < updatePacket->data_size + sizeof(GameUpdatePacket)) {
+                spdlog::error("Packet too small for extended packet to be valid");
+                spdlog::error("Sizeof float is {}.  TankUpdatePacket size: {}", sizeof(float), sizeof(GameUpdatePacket) - 4);
+                return nullptr;
             }
-            else {
-                if (packet->dataLength < game_update_packet->data_extended_size + sizeof(GameUpdatePacket)) {
-                    spdlog::error("Packet too small for extended packet to be valid");
-                    spdlog::error("Sizeof float is {}.  TankUpdatePacket size: {}", sizeof(float), sizeof(GameUpdatePacket) - 4);
-                    return nullptr;
-                }
-            }
-            return game_update_packet;
+            return updatePacket;
         }
         return nullptr;
     }
-    inline uint8_t *get_extended_data(GameUpdatePacket *game_update_packet) {
-        if ((game_update_packet->flags & 0x8) != 0) {
-            return reinterpret_cast<uint8_t *>(&game_update_packet->data_extended);
-        }
-        return nullptr;
+    inline uint8_t *get_extended_data(GameUpdatePacket *updatePacket) {
+        if (!(updatePacket->flags & player::PACKET_FLAG_EXTENDED))
+            return nullptr;
+        return reinterpret_cast<uint8_t *>(&updatePacket->data);
     }
 }

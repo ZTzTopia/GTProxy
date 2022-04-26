@@ -1,4 +1,5 @@
 #pragma once
+#include <ranges>
 
 typedef struct _CL_Vec2f {
     float x;
@@ -37,6 +38,10 @@ typedef struct _CL_Vec2f {
 
     _CL_Vec2f operator*(const float& other) const {
         return _CL_Vec2f(x * other, y * other);
+    }
+
+    std::pair<float, float> get_pair() const {
+        return { x, y };
     }
 } CL_Vec2f;
 

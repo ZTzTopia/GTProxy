@@ -6,6 +6,8 @@
 
 #include "client.h"
 #include "../server/server.h"
+#include "../world/WorldTileMap.h"
+#include "../utils/binary_reader.h"
 #include "../utils/textparse.h"
 #include "../utils/quick_hash.h"
 
@@ -56,17 +58,26 @@ namespace client {
         switch(message_type) {
             case player::NET_MESSAGE_GAME_PACKET: {
                 player::GameUpdatePacket *updatePacket{player::get_struct(packet)};
-                uint8_t* extended_data{ player::get_extended_data(updatePacket) };
-                if(!extended_data)
-                    break;
-                switch (updatePacket->packet_type) {
+                switch (updatePacket->type) {
                     case player::PACKET_CALL_FUNCTION: {
+                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
+                        if(!extended_data)
+                            break;
                         VariantList variant_list{};
-                        variant_list.SerializeFromMem(extended_data, static_cast<int>(updatePacket->data_extended_size));
+                        variant_list.SerializeFromMem(extended_data, static_cast<int>(updatePacket->data_size));
                         
                         using namespace utils;
                         const auto& hash = utils::quick_hash(variant_list.Get(0).GetString());
                         switch (hash) {
+                            case "OnSpawn"_qh: {
+                                utils::TextParse text_parse{ variant_list.Get(1).GetString() };
+                                if(text_parse.get("type", 1) == "local") {
+                                    m_player->get_avatar()->name = text_parse.get("name", 1);
+                                    m_player->get_avatar()->AvatarData.net_id = text_parse.get<int32_t>("netID", 1);
+                                }
+                                //todo <int32_t, NetAvatarObject>
+                                break;
+                            }
                             case "OnSendToServer"_qh: {
                                 std::vector<std::string> tokenize{ utils::TextParse::string_tokenize(variant_list.Get(4).GetString()) };
 
@@ -113,17 +124,89 @@ namespace client {
                         }
                         break;
                     }
+                    case player::PACKET_SEND_MAP_DATA: {
+                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
+                        if(!extended_data)
+                            break;
+                        BinaryReader *br = new BinaryReader(extended_data + 6, updatePacket->data_size + 6);
+                        m_player->get_avatar()->world_name = br->read_string();
+                        delete br;
+                        break;
+                    }
+                    case player::PACKET_SEND_TILE_UPDATE_DATA: {
+                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
+                        if(!extended_data || updatePacket->data_size < 8)
+                            break;
+                        BinaryReader *br = new BinaryReader(extended_data, updatePacket->data_size);
+                        Tile tile{};
+
+                        br->copy(&tile, sizeof(uint16_t) * 4);
+                        if(tile.parent_tile)
+                            br->skip(2);
+                        if(!(tile.flags & Tile::EXTRA_DATA)) {
+                            delete br;
+                            break;
+                        }
+                        TileExtra* tile_extra{ tile.tile_extra };
+                        tile_extra->type = (TileExtra::ExtraType)br->read_byte();
+                        switch(tile_extra->type) {
+                            case TileExtra::TYPE_DOOR: {
+                                tile_extra->label = br->read_string();
+                                tile_extra->unk_1 = br->read_byte();
+                                break;
+                            }
+                            case TileExtra::TYPE_SIGN: {
+                                tile_extra->label = br->read_string();
+                                tile_extra->unk_2 = br->read_uint();
+                                break;
+                            }
+                            case TileExtra::TYPE_LOCK: {
+                                tile_extra->flags_1 = br->read_byte();
+                                tile_extra->user_id = br->read_uint();
+                                switch(tile.foreground) {
+                                    case 202:
+                                    case 204:
+                                    case 206:
+                                    case 4994: {
+                                        const int& access_count = br->read_int();
+                                        for(int i = 0; i < access_count; i++)
+                                            tile_extra->access_list.push_back(br->read_uint());
+                                        break;
+                                    }
+                                    default: {
+                                        break;
+                                    }
+                                }
+                                br->copy(tile_extra->unk7a, 8);
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                        if(tile_extra->type != TileExtra::TYPE_NONE)
+                            spdlog::info("Incoming PACKET_SEND_TILE_UPDATE_DATA\n > TileExtra_Type -> [{}]:\n{}", TileExtra::GetTypeAsString(tile_extra->type), tile_extra->GetRawData());
+                        delete br;
+                        break;
+                    }
+                    case player::PACKET_SET_CHARACTER_STATE: {
+                        if(updatePacket->net_id == m_player->get_avatar()->AvatarData.net_id) {
+                            std::memcpy(&m_player->get_avatar()->AvatarData, packet->data + 4, packet->dataLength - 4);
+                            break;
+                        }
+                        //todo <int32_t, NetAvatarObject>
+                        break;
+                    }
                     case player::PACKET_APP_INTEGRITY_FAIL:
                         return;
                     default: {
-                        spdlog::info("Incoming GameUpdatePacket:\n [{}]{}", updatePacket->packet_type, player::get_packet_type(updatePacket->packet_type));
                         uint8_t *extended_data{ player::get_extended_data(updatePacket) };
-                        if (!extended_data)
-                            break;
                         std::vector<char> data_array;
-                        for (uint32_t i = 0; i < updatePacket->data_extended_size; i++)
+                        for (uint32_t i = 0; i < updatePacket->data_size; i++)
                             data_array.push_back(static_cast<char>(extended_data[i]));
-                        spdlog::info(" > extended_data: {}", spdlog::to_hex(data_array));
+                        spdlog::info("Incoming GameUpdatePacket:\n [{}]{}{}", 
+                            updatePacket->type, 
+                            player::get_packet_type(updatePacket->type),
+                            extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(data_array)) : "");
                         break;
                     }
                 }

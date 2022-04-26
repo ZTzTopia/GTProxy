@@ -26,7 +26,7 @@ $ pip install conan
 ```shell
 $ mkdir build
 $ cd build
-$ cmake ..
+$ cmake .. -DCMAKE_BUILD_TYPE=DEBUG
 $ cmake --build .
 ```
 

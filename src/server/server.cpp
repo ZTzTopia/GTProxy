@@ -88,7 +88,6 @@ namespace server {
         switch(message_type) {
             case player::NET_MESSAGE_GENERIC_TEXT:
             case player::NET_MESSAGE_GAME_MESSAGE: {
-                utils::TextParse text_parse{ message_data };
                 if (message_data.find("requestedName") != std::string::npos) {
                     utils::TextParse text_parse{ message_data };
                     if (!text_parse.get("requestedName", 1).empty()) {
@@ -124,13 +123,13 @@ namespace server {
                 player::GameUpdatePacket *updatePacket{ player::get_struct(packet) };
                 if(!updatePacket)
                     return;
-                switch(updatePacket->packet_type) {
+                switch(updatePacket->type) {
                     case player::PACKET_CALL_FUNCTION: {
                         uint8_t *extended_data{ player::get_extended_data(updatePacket) };
                         if (!extended_data)
                             break;
                         VariantList variant_list{};
-                        variant_list.SerializeFromMem(extended_data, static_cast<int>(updatePacket->data_extended_size));
+                        variant_list.SerializeFromMem(extended_data, static_cast<int>(updatePacket->data_size));
                         spdlog::info("{}", variant_list.GetContentsAsDebugString());
                         break;
                     }
@@ -139,13 +138,18 @@ namespace server {
                         break;
                     }
                     default: {
-                        uint8_t *extended_data{ player::get_extended_data(updatePacket) };
-                        if (!extended_data)
+                        if(updatePacket->type == player::PACKET_STATE) {
+                            m_proxy_client->get_player()->get_avatar()->pos = CL_Vec2f{ updatePacket->pos_x, updatePacket->pos_y };
                             break;
-                        std::vector<char> extended_data_int;
-                        for (uint32_t i = 0; i < updatePacket->data_extended_size; i++)
-                            extended_data_int.push_back(static_cast<char>(extended_data[i]));
-                        spdlog::info("Extended data: {}", spdlog::to_hex(extended_data_int));
+                        }
+                        uint8_t *extended_data{ player::get_extended_data(updatePacket) };
+                        std::vector<char> data_array;
+                        for (uint32_t i = 0; i < updatePacket->data_size; i++)
+                            data_array.push_back(static_cast<char>(extended_data[i]));
+                        spdlog::info("Outgoing GameUpdatePacket:\n [{}]{}{}", 
+                            updatePacket->type, 
+                            player::get_packet_type(updatePacket->type),
+                            extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(data_array)) : "");
                         break;
                     }
                 }
