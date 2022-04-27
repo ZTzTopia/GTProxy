@@ -1,5 +1,4 @@
 #pragma once
-#include <ranges>
 
 typedef struct _CL_Vec2f {
     float x;
