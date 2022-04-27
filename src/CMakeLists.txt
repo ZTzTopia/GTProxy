@@ -46,10 +46,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../conan/conan.cmake)
 conan_cmake_configure(REQUIRES
         fmt/8.1.1
         spdlog/1.10.0
-        cpp-httplib/0.10.4
+        cpp-httplib/0.10.6
     GENERATORS cmake_find_package
     IMPORTS "bin, *.dll -> ./bin"
     OPTIONS
+        fmt:shared=True
         spdlog:shared=True)
 
 conan_cmake_autodetect(settings)
