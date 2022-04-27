@@ -3,6 +3,7 @@ project(Main LANGUAGES CXX)
 file(GLOB INCLUDE_FILES
     *.h
     client/*.h
+    command/*.h
     enetwrapper/*.h
     include/**/include/*.h
     player/*.h
@@ -13,6 +14,7 @@ file(GLOB INCLUDE_FILES
 file(GLOB SOURCE_FILES
     *.cpp
     client/*.cpp
+    command/*.cpp
     enetwrapper/*.cpp
     include/**/include/*.cpp
     player/*.cpp
@@ -23,7 +25,7 @@ file(GLOB SOURCE_FILES
 
 add_executable(${PROJECT_NAME}
     ${INCLUDE_FILES}
-    ${SOURCE_FILES} command/commandhandler.cpp command/commandhandler.h command/command.cpp command/command.h config.h)
+    ${SOURCE_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11
