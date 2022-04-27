@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 #include <enet/enet.h>
 #include <util/Variant.h>
 
@@ -24,8 +25,10 @@ namespace player {
 
         [[nodiscard]] ENetPeer *get_peer() const { return m_peer; }
         NetAvatar *get_avatar() { return m_avatar; }
+        std::unordered_map<int32_t, NetAvatar*> &get_avatar_map() { return m_avatar_map; }
     private:
         ENetPeer *m_peer;
         NetAvatar *m_avatar;
+        std::unordered_map<int32_t, NetAvatar*> m_avatar_map;
     };
 }

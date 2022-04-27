@@ -27,7 +27,7 @@ namespace client {
     }
 
     bool Client::initialize() {
-        // Get server and port from growtopia1.com
+        // Get server and port from server_data.php.
         httplib::Client http_client{ Config::get().config()["server"]["host"] };
         httplib::Result response = http_client.Post("/growtopia/server_data.php");
         if (response.error() != httplib::Error::Success || response->status != 200) {
@@ -76,7 +76,13 @@ namespace client {
                                     m_player->get_avatar()->name = text_parse.get("name", 1);
                                     m_player->get_avatar()->AvatarData.net_id = text_parse.get<int32_t>("netID", 1);
                                 }
-                                //todo <int32_t, NetAvatarObject>
+                                else {
+                                    auto net_id = text_parse.get<int32_t>("netID", 1);
+                                    auto avatar = new NetAvatar{};
+                                    avatar->name = text_parse.get("name", 1);
+                                    avatar->AvatarData.net_id = net_id;
+                                    m_player->get_avatar_map().insert_or_assign(net_id, avatar);
+                                }
                                 break;
                             }
                             case "OnSendToServer"_qh: {
@@ -194,7 +200,14 @@ namespace client {
                             std::memcpy(&m_player->get_avatar()->AvatarData, packet->data + 4, packet->dataLength - 4);
                             break;
                         }
-                        //todo <int32_t, NetAvatarObject>
+                        else {
+                            for (auto& avatar : m_player->get_avatar_map()) {
+                                if (avatar.first == updatePacket->net_id) {
+                                    std::memcpy(&avatar.second->AvatarData, packet->data + 4, packet->dataLength - 4);
+                                    break;
+                                }
+                            }
+                        }
                         break;
                     }
                     case player::PACKET_APP_INTEGRITY_FAIL:
@@ -226,6 +239,7 @@ namespace client {
         }
         if (m_proxy_server->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia client");
+        enet_host_flush(m_host);
     }
 
     void Client::on_disconnect(ENetPeer *peer) {

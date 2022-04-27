@@ -1,16 +1,18 @@
+#include <fmt/chrono.h>
+#include <fmt/ranges.h>
+
 #include "commandhandler.h"
+#include "../config.h"
 #include "../server/server.h"
 #include "../utils/dialog_builder.h"
 #include "../utils/textparse.h"
-#include "fmt/chrono.h"
-#include "fmt/ranges.h"
 
 namespace command {
     CommandHandler::CommandHandler(server::Server *server)
         : m_server(server)
     {
         m_commands.push_back(
-            new Command("help", "Displays this help message", [this](const std::vector<std::string> &args) {
+            new Command({ "help", { "?" }, "Displays this help message" }, [this](const std::vector<std::string> &args) {
                 if (!args.empty()) {
                     auto it = std::find_if(m_commands.begin(), m_commands.end(), [&args](const Command *command) {
                         return command->get_name() == args[0];
@@ -25,7 +27,7 @@ namespace command {
                 std::string commands;
                 commands.append(">> Commands: ");
                 for (auto &command : m_commands) {
-                    commands += '!';
+                    commands += Config::get().config()["command"]["prefix"];
                     commands += command->get_name();
                     commands += ' ';
                 }
@@ -33,7 +35,7 @@ namespace command {
             })
         );
         m_commands.push_back(
-            new Command("warp", "Warps you to a world", [this](const std::vector<std::string> &args) {
+            new Command({ "warp", {}, "Warps you to a world" }, [this](const std::vector<std::string> &args) {
                 if (args.empty()) {
                     m_server->get_player()->send_log("`4Usage: `$!warp <world name>");
                     return;
@@ -51,13 +53,15 @@ namespace command {
 
                 m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, "action|quit_to_exit");
                 m_server->get_player()->send_log(fmt::format("Warping to {}...", args[0]));
-                m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, fmt::format("action|join_request\n"
-                                                                                             "name|{}\n"
-                                                                                             "invitedWorld|0", args[0]));
+                m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE,
+                    fmt::format("action|join_request\n"
+                        "name|{}\n"
+                        "invitedWorld|0",
+                    args[0]));
             })
         );
         m_commands.push_back(
-            new Command("clientinfo", "Display Client's Information", [this](const std::vector<std::string> &args) {
+            new Command({ "clientinfo", {}, "Display Client's Information" }, [this](const std::vector<std::string> &args) {
                 const NetAvatar* avatar = m_server->get_client_player()->get_avatar();
 
                 dialog_builder db;
@@ -79,17 +83,17 @@ namespace command {
                     ->add_smalltext(fmt::format("pupil_color: {}", avatar->AvatarData.pupil_color))
                     ->add_smalltext(fmt::format("hair_color: {}", avatar->AvatarData.hair_color))
                     ->add_smalltext(fmt::format("eye_color: {}", avatar->AvatarData.eye_color))
-                    ->end_dialog("", "Cancel", "");
+                    ->end_dialog("", "Close", "");
                 m_server->get_player()->send_variant({"OnDialogRequest", db.get() });
             })
         );
         m_commands.push_back(
-            new Command("pid", "Change your Punch Id", [this](const std::vector<std::string> &args) {
+            new Command({ "punchid", { "pid" }, "Change your Punch Id" }, [this](const std::vector<std::string> &args) {
                 if (args.empty()) {
-                    m_server->get_player()->send_log("`4Usage: `$!pid <pid(decimal)>");
+                    m_server->get_player()->send_log("`4Usage: `$!punchid <id>");
                     return;
                 }
-                uint8_t punch_id = static_cast<uint8_t>(std::atoi(args[0].c_str()));
+                uint8_t punch_id = std::stol(args[0]);
                 const NetAvatar* avatar = m_server->get_client_player()->get_avatar();
 
                 player::GameUpdatePacket pkt;
@@ -97,6 +101,21 @@ namespace command {
                 pkt.punch_id = punch_id;
                 m_server->get_player()->send_raw_packet(player::NET_MESSAGE_GAME_PACKET, &pkt, sizeof(player::GameUpdatePacket));
                 m_server->get_player()->send_log(fmt::format("you've changed your punch_id to: `2{}``", punch_id));
+            })
+        );
+        m_commands.push_back(
+            new Command({ "list", {}, "List" }, [this](const std::vector<std::string> &args) {
+                if (args.empty()) {
+                    m_server->get_player()->send_log("`4Usage: `$!list <player>");
+                    return;
+                }
+
+                if (args[0] == "player") {
+                    m_server->get_player()->send_log(fmt::format("total: {}", m_server->get_client_player()->get_avatar_map().size()));
+                    for (auto& avatar : m_server->get_client_player()->get_avatar_map()) {
+                        m_server->get_player()->send_log(fmt::format("avatar: `w{}``, net_id: `w{}``, position: `w{}``", avatar.second->name, avatar.second->AvatarData.net_id, avatar.second->pos.get_pair()));
+                    }
+                }
             })
         );
     }
@@ -111,7 +130,7 @@ namespace command {
         std::vector<std::string> args = utils::TextParse::string_tokenize(string, " ");
         if (args.empty())
             return false;
-        if (!args[0].starts_with("!"))
+        if (!args[0].starts_with(Config::get().config()["command"]["prefix"]))
             return false;
 
         std::string command_name = args[0].substr(1);
@@ -119,8 +138,16 @@ namespace command {
         args.erase(args.begin());
 
         for (auto &command : m_commands) {
-            if (command->get_name() != command_name)
-                continue;
+            if (command->get_name() != command_name) {
+                bool found{ false };
+                for (auto &alias : command->get_aliases())
+                    if (command_name == alias) {
+                        found = true;
+                        break;
+                    }
+                if (!found)
+                    continue;
+            }
             m_server->get_player()->send_log(fmt::format("`6{}``", string));
             command->call(args);
             return true;

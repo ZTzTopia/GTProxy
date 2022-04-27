@@ -11,21 +11,33 @@ public:
     }
 
     void load(const std::string& path) {
-        nlohmann::json json;
-        std::ifstream file(path);
+        nlohmann::json json{};
 
-        if (!file.is_open()) {
-            json["server"]["host"] = "http://13.248.211.25"; // https://growtopia1.com
+        std::ifstream in{ path };
+        if (!in.is_open()) {
+            json["server"]["host"] = "http://13.248.211.25"; // http://growtopia1.com
             json["server"]["game_version"] = "3.86";
             json["server"]["protocol"] = 160;
-            m_config = json;
+            json["command"]["prefix"] = "!";
+
             std::ofstream out(path);
             out << json.dump(4);
-            return;
+            out.close();
+        }
+        else {
+            in >> json;
+
+            if (!json["command"].contains("prefix")) {
+                json["command"]["prefix"] = "!";
+
+                std::ofstream out(path);
+                out << json.dump(4);
+                out.close();
+            }
+
+            in.close();
         }
 
-        file >> json;
-        file.close();
         m_config = json;
     }
 

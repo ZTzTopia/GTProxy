@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 namespace utils {
     class TextParse {
@@ -21,7 +20,7 @@ namespace utils {
             std::string::size_type last_pos = string.find_first_not_of(delimiter, 0);
             std::string::size_type pos = string.find_first_of(delimiter, last_pos);
 
-            while (std::string::npos != pos || std::string::npos != last_pos) {
+            while (pos != std::string::npos || last_pos != std::string::npos) {
                 tokens.push_back(string.substr(last_pos, pos - last_pos));
                 last_pos = string.find_first_not_of(delimiter, pos);
                 pos = string.find_first_of(delimiter, last_pos);

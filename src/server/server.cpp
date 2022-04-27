@@ -163,6 +163,7 @@ namespace server {
         }
         if (m_proxy_client->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia server");
+        enet_host_flush(m_host);
     }
 
     void Server::on_disconnect(ENetPeer *peer) {

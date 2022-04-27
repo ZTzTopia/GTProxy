@@ -4,7 +4,7 @@ on:
   push:
     branches: [ test ]
   pull_request:
-    branches: [ test ]
+    branches: [ main, test ]
 
 env:
   BUILD_TYPE: Release
