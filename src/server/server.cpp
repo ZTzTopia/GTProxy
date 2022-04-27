@@ -3,6 +3,7 @@
 #include <util/Variant.h>
 
 #include "server.h"
+#include "../config.h"
 #include "../utils/random.h"
 #include "../utils/textparse.h"
 
@@ -98,8 +99,8 @@ namespace server {
                         static std::string wk{ utils::random::generate_hex(gen, 16, true) };
                         static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
 
-                        text_parse.set("protocol", 160);
-                        text_parse.set("game_version", "3.86");
+                        text_parse.set("protocol", Config::get().config()["server"]["protocol"].get<uint8_t>());
+                        text_parse.set("game_version", Config::get().config()["server"]["game_version"]);
                         text_parse.set("mac", mac);
                         text_parse.set("rid", rid);
                         text_parse.set("wk", wk);

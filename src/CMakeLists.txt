@@ -23,7 +23,7 @@ file(GLOB SOURCE_FILES
 
 add_executable(${PROJECT_NAME}
     ${INCLUDE_FILES}
-    ${SOURCE_FILES} command/commandhandler.cpp command/commandhandler.h command/command.cpp command/command.h)
+    ${SOURCE_FILES} command/commandhandler.cpp command/commandhandler.h command/command.cpp command/command.h config.h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11
@@ -47,6 +47,7 @@ conan_cmake_configure(REQUIRES
         fmt/8.1.1
         spdlog/1.10.0
         cpp-httplib/0.10.6
+        nlohmann_json/3.10.5
     GENERATORS cmake_find_package
     IMPORTS "bin, *.dll -> ./bin"
     OPTIONS
@@ -78,4 +79,10 @@ find_package(httplib REQUIRED)
 if (httplib_FOUND)
     target_include_directories(${PROJECT_NAME} PUBLIC ${httplib_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} ${httplib_LIBRARIES})
+endif ()
+
+find_package(nlohmann_json REQUIRED)
+if (nlohmann_json_FOUND)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${nlohmann_json_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} ${nlohmann_json_LIBRARIES})
 endif ()

@@ -5,6 +5,7 @@
 #include "fmt/ranges.h"
 
 #include "client.h"
+#include "../config.h"
 #include "../server/server.h"
 #include "../world/WorldTileMap.h"
 #include "../utils/binary_reader.h"
@@ -27,7 +28,7 @@ namespace client {
 
     bool Client::initialize() {
         // Get server and port from growtopia1.com
-        httplib::Client http_client{ "http://13.248.211.25" };
+        httplib::Client http_client{ Config::get().config()["server"]["host"] };
         httplib::Result response = http_client.Post("/growtopia/server_data.php");
         if (response.error() != httplib::Error::Success || response->status != 200) {
             spdlog::error("Failed to get server data. HTTP status code: {}", response->status);

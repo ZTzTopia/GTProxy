@@ -4,6 +4,7 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <httplib.h>
 
+#include "config.h"
 #include "enetwrapper/enetwrapper.h"
 #include "server/server.h"
 #include "utils/textparse.h"
@@ -25,6 +26,9 @@ int main() {
         // Program logic.
         spdlog::info("Starting Growtopia proxy...");
 
+        // Load config file.
+        Config::get().load("config.json");
+
         // Initialize enet.
         if (!enetwrapper::ENetWrapper::one_time_init()) {
             spdlog::error("Failed to initialize ENet server.");
@@ -32,7 +36,7 @@ int main() {
         }
 
         // Get meta from growtopia1.com
-        httplib::Client http_client{"http://13.248.211.25"};
+        httplib::Client http_client{ Config::get().config()["server"]["host"] };
         httplib::Result response = http_client.Post("/growtopia/server_data.php");
         if (response.error() != httplib::Error::Success || response->status != 200) {
             spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
