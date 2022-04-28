@@ -81,12 +81,12 @@ namespace server {
     }
 
     void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
-        if (!m_proxy_client || !m_player)
+        if (!m_proxy_client || !m_proxy_client->get_player() || !m_player)
             return;
 
         player::eNetMessageType message_type{ player::get_message_type(packet) };
         std::string message_data{ player::get_text(packet) };
-        switch(message_type) {
+        switch (message_type) {
             case player::NET_MESSAGE_GENERIC_TEXT:
             case player::NET_MESSAGE_GAME_MESSAGE: {
                 if (message_data.find("requestedName") != std::string::npos) {
@@ -121,14 +121,21 @@ namespace server {
                 break;
             }
             case player::NET_MESSAGE_GAME_PACKET: {
-                player::GameUpdatePacket *updatePacket{ player::get_struct(packet) };
-                if(!updatePacket)
+                player::GameUpdatePacket* updatePacket{ player::get_struct(packet) };
+                if (!updatePacket)
                     return;
+
                 switch(updatePacket->type) {
+                    case player::PACKET_STATE: {
+                        spdlog::debug("flags: {}", player::flag_to_string(
+                                static_cast<player::ePacketFlag>(updatePacket->flags)));
+                        m_proxy_client->get_player()->get_avatar()->pos = { updatePacket->pos_x, updatePacket->pos_y };
+                    }
                     case player::PACKET_CALL_FUNCTION: {
-                        uint8_t *extended_data{ player::get_extended_data(updatePacket) };
+                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
                         if (!extended_data)
                             break;
+
                         VariantList variant_list{};
                         variant_list.SerializeFromMem(extended_data, static_cast<int>(updatePacket->data_size));
                         spdlog::info("{}", variant_list.GetContentsAsDebugString());
@@ -139,14 +146,12 @@ namespace server {
                         break;
                     }
                     default: {
-                        if(updatePacket->type == player::PACKET_STATE) {
-                            m_proxy_client->get_player()->get_avatar()->pos = CL_Vec2f{ updatePacket->pos_x, updatePacket->pos_y };
-                            break;
-                        }
-                        uint8_t *extended_data{ player::get_extended_data(updatePacket) };
+                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
+
                         std::vector<char> data_array;
                         for (uint32_t i = 0; i < updatePacket->data_size; i++)
                             data_array.push_back(static_cast<char>(extended_data[i]));
+
                         spdlog::info("Outgoing GameUpdatePacket:\n [{}]{}{}", 
                             updatePacket->type, 
                             player::get_packet_type(updatePacket->type),
@@ -161,8 +166,10 @@ namespace server {
                 break;
             }
         }
+
         if (m_proxy_client->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia server");
+
         enet_host_flush(m_host);
     }
 
@@ -171,8 +178,10 @@ namespace server {
 
         if (!peer->data)
             return;
+
         if (m_player->get_peer())
             enet_peer_disconnect(m_player->get_peer(), 0);       
+
         delete m_player;
         m_player = nullptr;
 

@@ -84,13 +84,18 @@ int main() {
 }
 
 /*
+ * PACKET_STATE - 0
+ * Variant.
+ */
+
+/*
  * PACKET_CALL_FUNCTION - 1
  * Variant.
  */
 
 /*
  * PACKET_UPDATE_STATUS - 2
- * Soon.
+ * Unknown.
  */
 
 /*
@@ -150,16 +155,17 @@ int main() {
  *  * 4 - net id (4 bytes)
  *
  * Serialization
- *  * See Inventory.
+ *  * See PlayerItems.
  */
 
 /*
  * PACKET_ITEM_ACTIVATE_REQUEST - 10
  */
 
-/*struct Inventory {
+/*struct PlayerItems {
+    uint32_t max_size;
     uint32_t size;
-    std::map<uint16_t, uint8_t> items;
+    std::map<uint16_t, std::pair<uint8_t, uint8_t>> items; // item id, (count, unknown TODO!)
 };
 
 struct TileExtra {

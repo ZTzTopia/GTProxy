@@ -25,7 +25,7 @@ file(GLOB SOURCE_FILES
 
 add_executable(${PROJECT_NAME}
     ${INCLUDE_FILES}
-    ${SOURCE_FILES})
+    ${SOURCE_FILES} player/PlayerItems.h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11

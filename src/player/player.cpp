@@ -8,7 +8,7 @@ namespace player {
     {
         peer->data = reinterpret_cast<void *>(this);
         this->m_avatar = new NetAvatar();
-        m_inventory = new Inventory{};
+        m_player_items = new PlayerItems{};
     }
 
     int Player::send_packet(eNetMessageType type, const std::string &data) {

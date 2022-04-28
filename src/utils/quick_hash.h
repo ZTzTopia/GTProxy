@@ -8,8 +8,8 @@ namespace utils {
             hash = ((hash << 5) + hash) + c;
         return hash;
     }
+}
 
-    constexpr uint32_t operator "" _qh(const char* str, std::size_t len) {
-        return quick_hash(std::string_view{ str, len });
-    }
+constexpr uint32_t operator "" _qh(const char* str, std::size_t len) {
+    return utils::quick_hash(std::string_view{ str, len });
 }
