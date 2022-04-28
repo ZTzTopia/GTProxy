@@ -210,6 +210,23 @@ namespace client {
                         }
                         break;
                     }
+                    case player::PACKET_SEND_INVENTORY_STATE: {
+                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
+                        if (!extended_data)
+                            break;
+
+                        player::Inventory* inventory = m_player->get_inventory();
+                        inventory->items.clear();
+
+                        BinaryReader binary_reader{ extended_data, updatePacket->data_size };
+                        inventory->size = binary_reader.read_uint();
+                        for (uint32_t i = 0; i < inventory->size; i++) {
+                            uint16_t id = binary_reader.read_ushort();
+                            uint8_t count = binary_reader.read_byte();
+                            inventory->items.insert_or_assign(id, count);
+                        }
+                        break;
+                    }
                     case player::PACKET_APP_INTEGRITY_FAIL:
                         return;
                     default: {

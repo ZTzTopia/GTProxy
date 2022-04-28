@@ -27,8 +27,9 @@ public:
         else {
             in >> json;
 
-            if (!json["command"].contains("prefix")) {
-                json["command"]["prefix"] = "!";
+            if (!json.contains("command")) {
+                if (!json["command"].contains("prefix"))
+                    json["command"]["prefix"] = "!";
 
                 std::ofstream out(path);
                 out << json.dump(4);

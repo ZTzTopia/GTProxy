@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <enet/enet.h>
 #include <util/Variant.h>
@@ -12,6 +13,11 @@ namespace server {
 }
 
 namespace player {
+    struct Inventory {
+        uint32_t size;
+        std::map<uint16_t, uint8_t> items;
+    };
+
     class Player {
     public:
         explicit Player(ENetPeer *peer);
@@ -26,9 +32,11 @@ namespace player {
         [[nodiscard]] ENetPeer *get_peer() const { return m_peer; }
         NetAvatar *get_avatar() { return m_avatar; }
         std::unordered_map<int32_t, NetAvatar*> &get_avatar_map() { return m_avatar_map; }
+        Inventory* get_inventory() { return m_inventory; }
     private:
         ENetPeer *m_peer;
         NetAvatar *m_avatar;
         std::unordered_map<int32_t, NetAvatar*> m_avatar_map;
+        Inventory *m_inventory;
     };
 }

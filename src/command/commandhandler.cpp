@@ -130,7 +130,7 @@ namespace command {
         std::vector<std::string> args = utils::TextParse::string_tokenize(string, " ");
         if (args.empty())
             return false;
-        if (!args[0].starts_with(Config::get().config()["command"]["prefix"]))
+        if (!args[0].starts_with(Config::get().config()["command"]["prefix"].get<std::string>()))
             return false;
 
         std::string command_name = args[0].substr(1);
