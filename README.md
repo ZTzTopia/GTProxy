@@ -1,5 +1,5 @@
 # Growtopia Proxy
-[![GitHub Release](https://img.shields.io/github/release/ZTzTopia/GTProxy.svg)](https://github.com/ZTzTopia/GTPriavteServer/releases/latest) 
+[![GitHub Release](https://img.shields.io/github/release/ZTzTopia/GTProxy.svg)](https://github.com/ZTzTopia/GTProxy/releases/latest) 
 ![Github Action](https://github.com/ZTzTopia/GTProxy/actions/workflows/CMake.yml/badge.svg)
 
 This is a proxy for [Growtopia](https://growtopiagame.com/).

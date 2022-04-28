@@ -77,8 +77,8 @@ int main() {
             return true;
         });
 
-        http_server.listen("0.0.0.0", 80);
         spdlog::info("HTTP Server listening to {}:{}", "0.0.0.0", 80);
+        http_server.listen("0.0.0.0", 80);
     }
     return EXIT_SUCCESS;
 }

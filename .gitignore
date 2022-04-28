@@ -1,6 +1,6 @@
 /.idea
 /cmake-build-debug
-/cmake-build-debug-wsl-arch
+/cmake-build-release
 
 /.vscode
 /build
