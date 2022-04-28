@@ -1,15 +1,16 @@
 # Growtopia Proxy
-[![GitHub Release](https://img.shields.io/github/release/ZTzTopia/GTPriavteServer.svg)](https://github.com/ZTzTopia/GTPriavteServer/releases/latest) 
-![Github Action](https://github.com/ZTzTopia/GTPrivateServer/actions/workflows/cmake.yml/badge.svg)
+[![GitHub Release](https://img.shields.io/github/release/ZTzTopia/GTProxy.svg)](https://github.com/ZTzTopia/GTPriavteServer/releases/latest) 
+![Github Action](https://github.com/ZTzTopia/GTProxy/actions/workflows/CMake.yml/badge.svg)
 
 This is a proxy for [Growtopia](https://growtopiagame.com/).
 
 ## 📜 Features
 - [x] Proxy for Growtopia.
+- [x] Command.
+- [x] Config.
 
 ## 💻 Supported platforms
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 11.
-- [GNU/Linux](https://www.gnu.org/gnu/linux-and-gnu.en.html). Tested with Arch WSL, not 100% tested.
 
 ## 📝 Requirements
 - [CMake](https://cmake.org/).
@@ -19,21 +20,20 @@ Required python >= 3.5
 $ pip install conan
 ```
 
-## ⚙️ Setting up
-- Rename `src/config.sample.h` to `src/config.h` and fill it.
-
 ## 🔨 Building the source
 ```shell
 $ mkdir build
 $ cd build
-$ cmake .. -DCMAKE_BUILD_TYPE=DEBUG
+$ cmake .. -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build .
 ```
 
 ## 📦 Running the program
-- If you on windows, you need move needed dynamic binary from `/path/to/binary/conan/bin` to `/path/to/program/`.
+- If you on Windows, you need move needed dynamic binary from `/path/to/binary/conan/bin` to `/path/to/program/`.
 - Run the program.
+- Edit the `config.json` file.
+- Run the program again.
 - Enjoy.
 
 ## ✨ Credits
-- Thanks to one of my friends helped a lot to this project.
+- Thanks to my two friends who helped a lot with this project.
