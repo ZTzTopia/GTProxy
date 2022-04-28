@@ -29,7 +29,7 @@ jobs:
       run: |
         mkdir ${{github.workspace}}/build/program
         copy ${{github.workspace}}/build/conan/bin ${{github.workspace}}/build/program
-        copy ${{github.workspace}}/build/src/Main.exe ${{github.workspace}}/build/program
+        copy ${{github.workspace}}/build/src/Release/Main.exe ${{github.workspace}}/build/program
 
     - uses: actions/upload-artifact@v3
       with:
