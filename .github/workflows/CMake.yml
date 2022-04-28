@@ -31,7 +31,7 @@ jobs:
         copy ${{github.workspace}}\build\src\Release\Main.exe ${{github.workspace}}\build\program
         copy ${{github.workspace}}\build\conan\bin ${{github.workspace}}\build\program
 
-    - uses: actions\upload-artifact@v3
+    - uses: actions/upload-artifact@v3
       with:
         name: GTProxy-${{github.ref_name}}-${{github.run_number}}
         path: ${{github.workspace}}\build\program
