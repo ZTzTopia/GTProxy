@@ -83,7 +83,7 @@ namespace server {
                         static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
 
                         text_parse.set("protocol", Config::get().config()["server"]["protocol"].get<uint8_t>());
-                        text_parse.set("game_version", Config::get().config()["server"]["game_version"]);
+                        text_parse.set("game_version", Config::get().config()["server"]["gameVersion"]);
                         text_parse.set("mac", mac);
                         text_parse.set("rid", rid);
                         text_parse.set("wk", wk);

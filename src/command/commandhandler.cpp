@@ -93,7 +93,8 @@ namespace command {
                     m_server->get_player()->send_log("`4Usage: `$!punchid <id>");
                     return;
                 }
-                uint8_t punch_id = std::stol(args[0]);
+
+                auto punch_id = static_cast<uint8_t>(std::stoi(args[0]));
                 const NetAvatar* avatar = m_server->get_client_player()->get_avatar();
 
                 player::GameUpdatePacket pkt;
