@@ -114,7 +114,7 @@ namespace client {
                                     if (data.find(" + ") != std::string::npos) {
                                         std::vector<std::string> tokenize_{ utils::TextParse::string_tokenize(data, " + ") };
                                         auto sum_1 = static_cast<uint8_t>(std::stoi(tokenize_[0]));
-                                        auto sum_2 = static_cast<uint8_t>(std::stoi(tokenize_[0]));
+                                        auto sum_2 = static_cast<uint8_t>(std::stoi(tokenize_[1]));
                                         auto sum = sum_1 + sum_2;
                                         m_proxy_server->get_player()->send_log(fmt::format("Solved captcha: {} + {} = {}", sum_1, sum_2, sum));
                                         m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT, 
@@ -125,7 +125,7 @@ namespace client {
                                         return;
                                     }
                                 }
-                                return;
+                                break;
                             }
                             default: {
                                 spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
