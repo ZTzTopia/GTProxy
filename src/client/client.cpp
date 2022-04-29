@@ -34,9 +34,17 @@ namespace client {
             spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
             return false;
         }
+
         utils::TextParse text_parse{ response->body };
         std::string server{ text_parse.get("server", 1) };
         enet_uint16 port{ text_parse.get<enet_uint16>("port", 1) };
+
+        // Sometimes the length of the server ipv4 adds extra characters (making the next character the very beginning of the sentence),
+        // this prevents you from connecting to the server. This issue only happens on GTPS servers.
+        // TODO: What if the extra character is not only one? or is a domain? or a ipv6 (oh sorry enet not support ipv6).
+        std::regex ipv4(R"(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\z/)");
+        if (!std::regex_match(server, ipv4))
+           server.resize(server.length() - 1);\
 
         if (!connect(server, port, 1))
             return false;
