@@ -1,26 +1,13 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
+
 #include "TileExtra.h"
 
-#pragma pack(push, 1)
-class Tile{
+class Tile {
 public:
-    Tile() : foreground(0), background(0), parent_tile(0), flags(0) {
-        tile_extra = new TileExtra();
-    }
-    ~Tile() {
-        tile_extra = nullptr;
-    }
-
-    uint16_t foreground;
-    uint16_t background;
-    uint16_t parent_tile;
-    uint16_t flags;
-    
-    TileExtra* tile_extra;
-public:
-    enum Flag {
-        EXTRA_DATA = 1 << 0,
+    enum TileFlag : uint16_t {
+        NONE = 0,
+        EXTRA = 1 << 0,
         LOCKED = 1 << 1,
         SEED = 1 << 4,
         FLIPPED = 1 << 5,
@@ -34,5 +21,19 @@ public:
         GREEN = 1 << 14,
         BLUE = 1 << 15,
     };
+
+public:
+    Tile() : foreground(0), background(0), parent_tile(0), flags(NONE) {
+        tile_extra = new TileExtra{};
+    }
+    ~Tile() {
+        delete tile_extra;
+    }
+
+public:
+    uint16_t foreground;
+    uint16_t background;
+    uint16_t parent_tile;
+    TileFlag flags;
+    TileExtra* tile_extra;
 };
-#pragma pack(pop)

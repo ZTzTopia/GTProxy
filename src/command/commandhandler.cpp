@@ -6,6 +6,7 @@
 #include "../server/server.h"
 #include "../utils/dialog_builder.h"
 #include "../utils/textparse.h"
+#include "../world/World.h"
 
 namespace command {
     CommandHandler::CommandHandler(server::Server *server)
@@ -107,7 +108,7 @@ namespace command {
         m_commands.push_back(
             new Command({ "list", {}, "Used for debugging" }, [this](const std::vector<std::string> &args) {
                 if (args.empty()) {
-                    m_server->get_player()->send_log("`4Usage: `$!list <player|inventory>");
+                    m_server->get_player()->send_log("`4Usage: `$!list <player|inventory|world>");
                     return;
                 }
 
@@ -116,16 +117,20 @@ namespace command {
                     ->add_label_with_icon(fmt::format("`wList {}``", args[0]), 18, dialog_builder::LEFT, dialog_builder::BIG)
                     ->add_spacer();
                 if (args[0] == "player") {
-                    db.add_smalltext(fmt::format("total: {}", m_server->get_client_player()->get_avatar_map().size()));
+                    db.add_textbox(fmt::format("total: {}", m_server->get_client_player()->get_avatar_map().size()));
                     for (auto& avatar : m_server->get_client_player()->get_avatar_map()) {
                         db.add_smalltext(fmt::format("avatar: `w{}``, net_id: `w{}``, position: `w{}``", avatar.second->name, avatar.second->AvatarData.net_id, avatar.second->pos.get_pair()));
                     }
                 }
                 else if (args[0] == "inventory") {
-                    db.add_smalltext(fmt::format("max: {}, total: {}", m_server->get_client_player()->get_inventory()->max_size, m_server->get_client_player()->get_inventory()->size));
+                    db.add_textbox(fmt::format("max: {}, total: {}", m_server->get_client_player()->get_inventory()->max_size, m_server->get_client_player()->get_inventory()->size));
                     for (auto& inventory : m_server->get_client_player()->get_inventory()->items) {
                         db.add_smalltext(fmt::format("id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
                     }
+                }
+                else if (args[0] == "world") {
+                    World* world{ m_server->get_client_player()->get_world() };
+                    db.add_textbox(fmt::format("version: {}, unknown: {}, name: {} ({})", world->version, world->unk, world->name, world->name_len));
                 }
                 db.end_dialog("", "Close", "");
                 m_server->get_player()->send_variant({"OnDialogRequest", db.get() });

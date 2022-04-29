@@ -11,6 +11,7 @@
 #include "../utils/binary_reader.h"
 #include "../utils/textparse.h"
 #include "../utils/quick_hash.h"
+#include "../world/World.h"
 
 namespace client {
     Client::Client(server::Server *server)
@@ -141,8 +142,81 @@ namespace client {
                         if (!extended_data)
                             break;
 
-                        BinaryReader br{ extended_data + 6, updatePacket->data_size + 6 };
-                        m_player->get_avatar()->world_name = br.read_string();
+                        m_player->get_world()->serialize(extended_data, updatePacket->data_size);
+
+#if 0
+                        if (tile_map.tile_count > 0) {
+                            for (uint32_t i = 0; i < tile_map.tile_count; i++) {
+                                Tile tile{};
+                                tile.foreground = br.read_ushort();
+                                tile.background = br.read_ushort();
+                                tile.parent_tile = br.read_ushort();
+                                tile.flags = static_cast<Tile::TileFlag>(br.read_ushort());
+                                if (!(tile.flags & Tile::TileFlag::EXTRA)) {
+                                    tile.tile_extra->type = static_cast<TileExtra::ExtraType>(br.read_byte());
+                                    switch (tile.tile_extra->type) {
+                                        case TileExtra::ExtraType::TYPE_DOOR:
+                                            tile.tile_extra->label_len = br.read_ushort();
+                                            br.back(sizeof(uint16_t));
+                                            tile.tile_extra->unk_2 = br.read_byte();
+                                        case TileExtra::TYPE_SIGN:
+                                            tile.tile_extra->label_len = br.read_ushort();
+                                            br.back(sizeof(uint16_t));
+                                            tile.tile_extra->label = br.read_string();
+                                            tile.tile_extra->unk32_2 = br.read_uint();
+                                            break;
+                                        case TileExtra::TYPE_LOCK:
+                                            tile.tile_extra->unk = br.read_byte();
+                                            tile.tile_extra->user_id = br.read_uint();
+                                            // TODO!
+                                        case TileExtra::TYPE_TREE:
+                                            br.skip(sizeof(uint32_t));
+                                            br.skip(sizeof(uint8_t));
+                                            break;
+                                        case TileExtra::TYPE_UNK:
+                                            break;
+                                        case TileExtra::TYPE_MAILBOX:
+                                        case TileExtra::TYPE_BULLETIN:
+                                        case TileExtra::TYPE_DONATION_BOX:
+                                        case TileExtra::TYPE_TOY_BOX:
+                                            br.read_string();
+                                            br.read_string();
+                                            br.read_string();
+                                            br.skip(sizeof(uint8_t));
+                                            break;
+                                        case TileExtra::TYPE_UNK_2:
+                                        case TileExtra::TYPE_UNK_3:
+                                            br.skip(sizeof(uint8_t));
+                                            break;
+                                        case TileExtra::TYPE_PROVIDER:
+                                            br.skip(sizeof(uint32_t));
+                                            if (tile.foreground != 5318 && (tile.foreground != 10656/* || *((unsigned __int16 *)a5 + 3) < 0x11u*/) )
+                                                break;
+                                            br.skip(sizeof(uint32_t));
+                                            break;
+                                        case TileExtra::TYPE_ACHIEVEMENT_BLOCK:
+                                            br.skip(sizeof(uint32_t));
+                                            br.skip(sizeof(uint8_t));
+                                            break;
+                                        case TileExtra::TYPE_HEART_MONITOR:
+                                            br.skip(sizeof(uint32_t));
+                                            br.read_string();
+                                            break;
+                                        case TileExtra::TYPE_MANNEQUIN:
+                                            br.read_string();
+                                            br.skip(sizeof(uint8_t));
+                                            br.skip(sizeof(uint32_t));
+                                            // TODO!
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+#endif
+
+                        m_player->get_avatar()->world_name = m_player->get_world()->name;
                         break;
                     }
                     case player::PACKET_SEND_TILE_UPDATE_DATA: {
@@ -151,54 +225,38 @@ namespace client {
                             break;
 
                         BinaryReader br{ extended_data, updatePacket->data_size };
+
                         Tile tile{};
                         br.copy(&tile, sizeof(uint16_t) * 4);
+
                         if (tile.parent_tile)
                             br.skip(2);
 
-                        if (!(tile.flags & Tile::EXTRA_DATA)) {
+                        if (!(tile.flags & Tile::EXTRA))
                             break;
-                        }
 
                         TileExtra* tile_extra{ tile.tile_extra };
-                        tile_extra->type = (TileExtra::ExtraType)br.read_byte();
-                        switch(tile_extra->type) {
-                            case TileExtra::TYPE_DOOR: {
+                        tile_extra->type = static_cast<TileExtra::ExtraType>(br.read_byte());
+                        switch (tile_extra->type) {
+                            case TileExtra::TYPE_DOOR:
                                 tile_extra->label = br.read_string();
-                                tile_extra->unk_1 = br.read_byte();
+                                tile_extra->unk_2 = br.read_byte();
                                 break;
-                            }
-                            case TileExtra::TYPE_SIGN: {
+                            case TileExtra::TYPE_SIGN:
                                 tile_extra->label = br.read_string();
-                                tile_extra->unk_2 = br.read_uint();
+                                tile_extra->unk32_2 = br.read_uint();
                                 break;
-                            }
-                            case TileExtra::TYPE_LOCK: {
-                                tile_extra->flags_1 = br.read_byte();
-                                tile_extra->user_id = br.read_uint();
-                                switch(tile.foreground) {
-                                    case 202:
-                                    case 204:
-                                    case 206:
-                                    case 4994: {
-                                        const int& access_count = br.read_int();
-                                        for(int i = 0; i < access_count; i++)
-                                            tile_extra->access_list.push_back(br.read_uint());
-                                        break;
-                                    }
-                                    default: {
-                                        break;
-                                    }
-                                }
-                                br.copy(tile_extra->unk7a, 8);
+                            case TileExtra::TYPE_TREE:
+                                tile_extra->growth_time = br.read_uint();
+                                tile_extra->fruit_count = br.read_byte();
                                 break;
-                            }
                             default:
                                 break;
                         }
 
                         if (tile_extra->type != TileExtra::TYPE_NONE)
                             spdlog::info("Incoming PACKET_SEND_TILE_UPDATE_DATA\n > TileExtra_Type -> [{}]:\n{}", TileExtra::GetTypeAsString(tile_extra->type), tile_extra->GetRawData());
+
                         break;
                     }
                     case player::PACKET_SET_CHARACTER_STATE: {

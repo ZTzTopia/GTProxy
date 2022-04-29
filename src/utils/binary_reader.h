@@ -66,6 +66,9 @@ public:
     void skip(uint32_t len) {
         this->m_pos += len;
     }
+    void back(uint32_t len) {
+        this->m_pos -= len;
+    }
 private:
     uint8_t* m_data;
     uint32_t m_pos;

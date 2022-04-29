@@ -238,6 +238,7 @@ struct World {
  * 6 - Mailbox.
  * 7 - Bulletin.
  * 9 - Provider.
+ * 10 - Achievement block.
  * 11 - Heart monitor.
  * 12 - Donation box.
  * 13 - Toy box.
@@ -245,8 +246,11 @@ struct World {
  * 19 - Dress up.
  * 20 - Crystal.
  * 21 - Burglar.
+ * 23 - Display block.
  * 24 - Vending machine.
  * 26 - Solar.
  * 31 - Tamagotchi.
+ * 62 - Sucker.
  * 63 - Robot.
+ * 71 - Sucker.
  */
