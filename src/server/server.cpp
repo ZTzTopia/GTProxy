@@ -34,6 +34,7 @@ namespace server {
     void Server::on_connect(ENetPeer *peer) {
         spdlog::info("Client connected to proxy server: {}", peer->connectID);
 
+        // TODO: Fix this send to server.
         if (!m_proxy_client || !m_proxy_client->get_send_server_info()->check) {
             delete m_proxy_client;
 
@@ -61,25 +62,6 @@ namespace server {
         m_player = new player::Player{ peer };
     }
 
-    uint32_t hash_string(const char *data, uint32_t length) {
-        uint32_t hash = 0x55555555;
-        if (data) {
-            if (length >= 1) {
-                while (length) {
-                    hash = (hash >> 27) + (hash << 5) + *reinterpret_cast<const uint8_t *>(data++);
-                    length--;
-                }
-            }
-            else {
-                while (*data) {
-                    hash = (hash >> 27) + (hash << 5) + *reinterpret_cast<const uint8_t*>(data++);
-                }
-            }
-        }
-
-        return hash;
-    }
-
     void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
         if (!m_proxy_client || !m_proxy_client->get_player() || !m_player)
             return;
@@ -104,8 +86,8 @@ namespace server {
                         text_parse.set("mac", mac);
                         text_parse.set("rid", rid);
                         text_parse.set("wk", wk);
-                        text_parse.set("hash", hash_string(device_id.c_str(), 0));
-                        text_parse.set("hash2", hash_string(mac.c_str(), 0));
+                        text_parse.set("hash", utils::proton_hash(device_id.c_str(), 0));
+                        text_parse.set("hash2", utils::proton_hash(mac.c_str(), 0));
 
                         m_proxy_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
                         return;
@@ -117,6 +99,10 @@ namespace server {
                         if (m_command_handler->handle(text_parse.get("text", 1)))
                             return;
                     }
+                }
+                else if (message_data.find("action|quit") != std::string::npos &&
+                    message_data.find("action|quit_to_exit") == std::string::npos) {
+                    enet_peer_disconnect_now(peer, 0);
                 }
                 break;
             }
