@@ -230,8 +230,27 @@ namespace client {
                             uint16_t id = binary_reader.read_ushort();
                             uint8_t count = binary_reader.read_byte();
                             uint8_t unknown = binary_reader.read_byte();
-                            inventory->items.insert_or_assign(id, std::make_pair(count, unknown));
+                            inventory->items.insert(std::make_pair(id, std::make_pair(count, unknown)));
                         }
+                        break;
+                    }
+                    case player::PACKET_MODIFY_ITEM_INVENTORY: {
+                        PlayerItems* inventory = m_player->get_inventory();
+
+                        bool found{ false };
+                        for (auto& item : inventory->items) {
+                            if (item.first == updatePacket->item_id) {
+                                if (updatePacket->gained_item_count > 0)
+                                    item.second.first += updatePacket->gained_item_count;
+                                else if (updatePacket->lost_item_count > 0)
+                                    item.second.first -= updatePacket->lost_item_count;
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found && updatePacket->gained_item_count > 0)
+                            inventory->items.insert(std::make_pair(updatePacket->item_id, std::make_pair(updatePacket->gained_item_count, 0)));
                         break;
                     }
                     case player::PACKET_APP_INTEGRITY_FAIL:

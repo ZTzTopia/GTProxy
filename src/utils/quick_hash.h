@@ -9,7 +9,7 @@ namespace utils {
         return hash;
     }
 
-    uint32_t proton_hash(const char* data, uint32_t length) {
+    constexpr uint32_t proton_hash(const char* data, uint32_t length) {
         if (data) {
             uint32_t hash = 0x55555555;
             if (length >= 1) {
