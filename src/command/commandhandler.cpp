@@ -124,7 +124,7 @@ namespace command {
                 else if (args[0] == "inventory") {
                     db.add_smalltext(fmt::format("max: {}, total: {}", m_server->get_client_player()->get_inventory()->max_size, m_server->get_client_player()->get_inventory()->size));
                     for (auto& inventory : m_server->get_client_player()->get_inventory()->items) {
-                        db.add_smalltext(fmt::format("id: `w{}``, [count, unknown]: `w{}``", inventory.first, inventory.second));
+                        db.add_smalltext(fmt::format("id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
                     }
                 }
                 db.end_dialog("", "Close", "");

@@ -225,14 +225,19 @@ namespace client {
                         inventory->items.clear();
 
                         BinaryReader binary_reader{ extended_data, updatePacket->data_size };
-                        binary_reader.skip(1);
+                        inventory->version = binary_reader.read_byte();
                         inventory->max_size = binary_reader.read_uint();
-                        inventory->size = binary_reader.read_ushort();
+
+                        if (inventory->version >= 1)
+                            inventory->size = binary_reader.read_ushort();
+                        else
+                            inventory->size = binary_reader.read_byte();
+
                         for (uint32_t i = 0; i < inventory->size; i++) {
                             uint16_t id = binary_reader.read_ushort();
                             uint8_t count = binary_reader.read_byte();
-                            uint8_t unknown = binary_reader.read_byte();
-                            inventory->items.insert(std::make_pair(id, std::make_pair(count, unknown)));
+                            uint8_t unused = binary_reader.read_byte();
+                            inventory->items.insert(std::make_pair(id, std::make_pair(count, unused)));
                         }
                         break;
                     }
@@ -246,6 +251,10 @@ namespace client {
                                     item.second.first += updatePacket->gained_item_count;
                                 else if (updatePacket->lost_item_count > 0)
                                     item.second.first -= updatePacket->lost_item_count;
+
+                                if (item.second.first <= 0)
+                                    inventory->items.erase(item.first);
+
                                 found = true;
                                 break;
                             }
