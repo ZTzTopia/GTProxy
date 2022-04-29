@@ -11,7 +11,7 @@ namespace utils {
         explicit TextParse(const std::string &string) {
             m_data = string_tokenize(string, "\n");
             for (auto &data : m_data) {
-                std::replace(data.begin(), data.end(), '\t', '\0');
+                std::replace(data.begin(), data.end(), '\r', '\0');
             }
         };
 
