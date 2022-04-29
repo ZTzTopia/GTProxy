@@ -6,6 +6,7 @@
 #include "../config.h"
 #include "../utils/random.h"
 #include "../utils/textparse.h"
+#include "../utils/quick_hash.h"
 
 namespace server {
     Server::Server()
