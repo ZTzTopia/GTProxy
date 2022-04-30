@@ -4,7 +4,7 @@
 
 namespace player {
     Player::Player(ENetPeer *peer)
-        : m_peer(peer)
+        : m_peer(peer), m_fast_drop(false)
     {
         peer->data = reinterpret_cast<void *>(this);
         this->m_avatar = new NetAvatar();

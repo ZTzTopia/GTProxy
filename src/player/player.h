@@ -31,11 +31,15 @@ namespace player {
         std::unordered_map<int32_t, NetAvatar*> &get_avatar_map() { return m_avatar_map; }
         PlayerItems* get_inventory() { return m_player_items; }
         World* get_world() { return m_world; }
+        bool toggle_fast_drop() { m_fast_drop = !m_fast_drop; return m_fast_drop; }
+        bool get_fast_drop() { return m_fast_drop; }
+
     private:
         ENetPeer *m_peer;
         NetAvatar *m_avatar;
         std::unordered_map<int32_t, NetAvatar*> m_avatar_map;
         PlayerItems *m_player_items;
         World *m_world;
+        bool m_fast_drop;
     };
 }
