@@ -11,6 +11,7 @@
 #include "../utils/binary_reader.h"
 #include "../utils/textparse.h"
 #include "../utils/quick_hash.h"
+#include "../command/commandhandler.h"
 
 namespace client {
     Client::Client(server::Server *server)
@@ -123,6 +124,26 @@ namespace client {
                                                 "captcha_answer|{}", 
                                             sum));
                                         return;
+                                    }
+                                }
+                                break;
+                            }
+                            case "OnDialogRequest"_qh: {
+                                auto DialogText = variant_list.Get(1).GetString();
+                                if (cmd::fastdrop == true) {
+                                    std::string itemid = DialogText.substr(DialogText.find("embed_data|itemID|") + 18, DialogText.length() - DialogText.find("embed_data|itemID|") - 1);
+                                    std::string count = DialogText.substr(DialogText.find("count||") + 7, DialogText.length() - DialogText.find("count||") - 1);
+                                    if (DialogText.find("embed_data|itemID|") != -1) {
+                                        if (DialogText.find("Drop") != -1) {
+                                            m_proxy_server->get_player()->send_log(fmt::format("Dropping ItemID: {}", itemid));
+                                            m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT, 
+                                            fmt::format("action|dialog_return\n"
+                                                "dialog_name|drop_item\n"
+                                                "itemID|{}|\n"
+                                                "count|{}", 
+                                            itemid,count));
+                                            return;
+                                        }
                                     }
                                 }
                                 break;
