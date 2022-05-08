@@ -3,6 +3,9 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
+#define GROWTOPIA_VERSION "3.87"
+#define GROWTOPIA_PROTOCOL 161
+
 class Config {
 public:
     static Config& get() {
@@ -16,8 +19,8 @@ public:
         std::ifstream in{ path };
         if (!in.is_open()) {
             json["server"]["host"] = "http://13.248.211.25"; // http://growtopia1.com
-            json["server"]["gameVersion"] = "3.87";
-            json["server"]["protocol"] = 161;
+            json["server"]["gameVersion"] = GROWTOPIA_VERSION;
+            json["server"]["protocol"] = GROWTOPIA_PROTOCOL;
             json["server"]["usingNewPacket"] = true;
             json["command"]["prefix"] = "!";
 
@@ -36,7 +39,13 @@ public:
 
             if (json["server"].contains("game_version")) {
                 json["server"].erase("game_version");
-                json["server"]["gameVersion"] = "3.86";
+                json["server"]["gameVersion"] = GROWTOPIA_VERSION;
+                need_to_save = true;
+            }
+            
+            if (json["server"].contains("gameVersion")) {
+                if (json["server"]["gameVersion"] != GROWTOPIA_VERSION)
+                    json["server"]["gameVersion"] = GROWTOPIA_VERSION;
                 need_to_save = true;
             }
 
@@ -65,3 +74,6 @@ public:
 private:
     nlohmann::json m_config;
 };
+
+#undef GROWTOPIA_VERSION
+#undef GROWTOPIA_PROTOCOL
