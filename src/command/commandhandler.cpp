@@ -6,16 +6,15 @@
 #include "../server/server.h"
 #include "../utils/dialog_builder.h"
 #include "../utils/textparse.h"
-#include "../world/World.h"
 
 namespace command {
     CommandHandler::CommandHandler(server::Server *server)
         : m_server(server)
     {
         m_commands.push_back(
-            new Command({ "help", { "?" }, "Displays this help message" }, [this](const std::vector<std::string> &args) {
+            new Command({ "help", { "?" }, "Displays this help message" }, [this](const std::vector<std::string>& args) {
                 if (!args.empty()) {
-                    auto it = std::find_if(m_commands.begin(), m_commands.end(), [&args](const Command *command) {
+                    auto it = std::find_if(m_commands.begin(), m_commands.end(), [args](const Command* command) {
                         return command->get_name() == args[0];
                     });
 
@@ -25,20 +24,21 @@ namespace command {
                         m_server->get_player()->send_log("`4Unknown command. ``Enter `$!help`` for a list of valid commands.");
                     return;
                 }
-                std::string commands;
-                commands.append(">> Commands: ");
+
+                std::string commands{ ">> Commands: " };
                 for (auto &command : m_commands) {
                     commands += Config::get().config()["command"]["prefix"];
                     commands += command->get_name();
                     commands += ' ';
                 }
+
                 m_server->get_player()->send_log(commands);
             })
         );
         m_commands.push_back(
             new Command({ "warp", {}, "Warps you to a world" }, [this](const std::vector<std::string> &args) {
                 if (args.empty()) {
-                    m_server->get_player()->send_log("`4Usage: `$!warp <world name>");
+                    m_server->get_player()->send_log("`4Usage: ``!warp <world name>");
                     return;
                 }
 
@@ -91,7 +91,7 @@ namespace command {
         m_commands.push_back(
             new Command({ "punchid", { "pid" }, "Change your Punch Id" }, [this](const std::vector<std::string> &args) {
                 if (args.empty()) {
-                    m_server->get_player()->send_log("`4Usage: `$!punchid <id>");
+                    m_server->get_player()->send_log("`4Usage: ``!punchid <id>");
                     return;
                 }
 
@@ -108,7 +108,7 @@ namespace command {
         m_commands.push_back(
             new Command({ "list", {}, "Used for debugging" }, [this](const std::vector<std::string> &args) {
                 if (args.empty()) {
-                    m_server->get_player()->send_log("`4Usage: `$!list <player|inventory|world>");
+                    m_server->get_player()->send_log("`4Usage: ``!list <player|inventory|world>");
                     return;
                 }
 
@@ -117,20 +117,21 @@ namespace command {
                     ->add_label_with_icon(fmt::format("`wList {}``", args[0]), 18, dialog_builder::LEFT, dialog_builder::BIG)
                     ->add_spacer();
                 if (args[0] == "player") {
-                    db.add_textbox(fmt::format("total: {}", m_server->get_client_player()->get_avatar_map().size()));
+                    db.add_smalltext(fmt::format("total: `w{}``", m_server->get_client_player()->get_avatar_map().size()));
                     for (auto& avatar : m_server->get_client_player()->get_avatar_map()) {
                         db.add_smalltext(fmt::format("avatar: `w{}``, net_id: `w{}``, position: `w{}``", avatar.second->name, avatar.second->AvatarData.net_id, avatar.second->pos.get_pair()));
                     }
                 }
                 else if (args[0] == "inventory") {
-                    db.add_textbox(fmt::format("max: {}, total: {}", m_server->get_client_player()->get_inventory()->max_size, m_server->get_client_player()->get_inventory()->size));
-                    for (auto& inventory : m_server->get_client_player()->get_inventory()->items) {
+                    PlayerItems* player_items{ m_server->get_client_player()->get_inventory() };
+                    db.add_smalltext(fmt::format("version: `w{}``, max: `w{}``, total: `w{}``", player_items->version, player_items->max_size, player_items->size));
+                    for (auto& inventory : player_items->items) {
                         db.add_smalltext(fmt::format("id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
                     }
                 }
                 else if (args[0] == "world") {
                     World* world{ m_server->get_client_player()->get_world() };
-                    db.add_textbox(fmt::format("version: {}, unknown: {}, name: {} ({})", world->version, world->unk, world->name, world->name_len));
+                    db.add_smalltext(fmt::format("version: `w{}``, unknown: `w{}``, name: `w{}`` (`w{}``)", world->version, world->unk, world->name, world->name_len));
                 }
                 db.end_dialog("", "Close", "");
                 m_server->get_player()->send_variant({"OnDialogRequest", db.get() });
@@ -166,6 +167,7 @@ namespace command {
                 if (!found)
                     continue;
             }
+
             m_server->get_player()->send_log(fmt::format("`6{}``", string));
             command->call(args);
             return true;

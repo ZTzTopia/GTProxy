@@ -26,7 +26,9 @@ namespace utils {
         }
 
         template <class T>
-        inline std::string generate(T gen, std::size_t length, const std::string &chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") {
+        inline std::string generate(T gen, std::size_t length,
+            const std::string &chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+        {
             std::string result;
             result.reserve(length);
 

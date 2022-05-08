@@ -2,10 +2,12 @@
 #include <vector>
 
 #include "Tile.h"
+#include "../utils/math.h"
 
-class WorldTileMap {
-public:
-    CL_Vec2i size;
+#pragma pack(push, 1)
+struct WorldTileMap {
+    math::Vec2<int> size;
     uint32_t tile_count;
     std::vector<Tile> tiles;
 };
+#pragma pack(pop)

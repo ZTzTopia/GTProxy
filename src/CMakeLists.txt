@@ -9,7 +9,6 @@ file(GLOB INCLUDE_FILES
     player/*.h
     server/*.h
     utils/*.h
-    ../vendor/proton/shared/manager/*.h
     ../vendor/proton/shared/util/*.h)
 file(GLOB SOURCE_FILES
     *.cpp
@@ -20,12 +19,11 @@ file(GLOB SOURCE_FILES
     player/*.cpp
     server/*.cpp
     utils/*.cpp
-    ../vendor/proton/shared/manager/*.cpp
     ../vendor/proton/shared/util/*.cpp)
 
 add_executable(${PROJECT_NAME}
     ${INCLUDE_FILES}
-    ${SOURCE_FILES})
+    ${SOURCE_FILES} utils/math.h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11

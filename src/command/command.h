@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <functional>
+#include <string>
 #include <utility>
 
 namespace command {
@@ -12,10 +12,9 @@ namespace command {
 
     class Command {
     public:
-        explicit Command(CommandContext context,
-            const std::function<void(const std::vector<std::string>&)>& callback)
-            : m_context(std::move(context))
-            , m_callback(callback) {}
+        Command(CommandContext context,
+            const std::function<void(const std::vector<std::string>& args)>& callback)
+            : m_context(std::move(context)), m_callback(callback) {}
         ~Command() = default;
 
         void call(const std::vector<std::string>& args) { m_callback(args); }
@@ -29,4 +28,4 @@ namespace command {
         CommandContext m_context;
         std::function<void(std::vector<std::string>)> m_callback;
     };
-}
+}// namespace command

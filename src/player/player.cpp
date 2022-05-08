@@ -20,8 +20,7 @@ namespace player {
         std::memcpy(packet->data + sizeof(eNetMessageType), data.c_str(), data.length());
 
         int ret = enet_peer_send(m_peer, 0, packet) != 0;
-        if (ret)
-            enet_packet_destroy(packet);
+        if (ret) enet_packet_destroy(packet);
         return ret;
     }
     int Player::send_packet_packet(ENetPacket *packet) {
@@ -31,8 +30,7 @@ namespace player {
         std::memcpy(packet_->data, packet->data, packet->dataLength);
 
         int ret = enet_peer_send(m_peer, 0, packet_) != 0;
-        if (ret)
-            enet_packet_destroy(packet);
+        if (ret) enet_packet_destroy(packet);
         return ret;
     }
     int Player::send_raw_packet(eNetMessageType type, GameUpdatePacket *game_update_packet, size_t length, uint8_t *extended_data, enet_uint32 flags) {
@@ -73,9 +71,8 @@ namespace player {
         game_update_packet.net_id = net_id;
         game_update_packet.flags |= player::PACKET_FLAG_EXTENDED;
         game_update_packet.data_size = data_size;
-        game_update_packet.data = reinterpret_cast<uint32_t&>(data);
 
-        int ret{ send_raw_packet(NET_MESSAGE_GAME_PACKET, &game_update_packet, sizeof(GameUpdatePacket) - 4, data, flags) };
+        int ret{ send_raw_packet(NET_MESSAGE_GAME_PACKET, &game_update_packet, sizeof(GameUpdatePacket), data, flags) };
         delete data;
         return ret;
     }

@@ -10,23 +10,21 @@
 
 namespace server {
     Server::Server()
-        : enetwrapper::ENetServer()
-        , m_proxy_client(nullptr)
-        , m_player(nullptr)
-        , m_login_info()
+        : enetwrapper::ENetServer(), m_proxy_client(nullptr), m_player(nullptr)
     {
         m_command_handler = new command::CommandHandler{ this };
     }
 
-    Server::~Server() {
+    Server::~Server()
+    {
         delete m_proxy_client;
         delete m_player;
     }
 
-    bool Server::initialize() {
-        if (!create_host(17000, 1)) {
+    bool Server::initialize()
+    {
+        if (!create_host(17000, 1))
             return false;
-        }
 
         start_service();
         return true;
@@ -35,11 +33,9 @@ namespace server {
     void Server::on_connect(ENetPeer *peer) {
         spdlog::info("Client connected to proxy server: {}", peer->connectID);
 
-        // TODO: Fix this send to server.
-        if (!m_proxy_client || !m_proxy_client->get_send_server_info()->check) {
-            delete m_proxy_client;
-
-            // Start proxy client.
+        // TODO: Fix all about client and server disconnecting.
+        if (!m_proxy_client) {
+messy_code:
             m_proxy_client = new client::Client{ this };
             if (!m_proxy_client->initialize()) {
                 spdlog::error("Failed to initialize proxy client.");
@@ -49,25 +45,24 @@ namespace server {
             }
         }
         else {
-            std::string prot{ m_proxy_client->get_send_server_info()->host };
-            uint32_t prottt{ m_proxy_client->get_send_server_info()->port };
-
-            delete m_proxy_client;
-            m_proxy_client = new client::Client{ this };
-            m_proxy_client->connect(prot, prottt, 1);
-            m_proxy_client->start_service();
-
-            m_proxy_client->get_send_server_info()->check = false;
+            if (m_proxy_client->is_on_send_to_server()) {
+                m_proxy_client->connect(m_proxy_client->get_host(), m_proxy_client->get_port(), 1);
+                m_proxy_client->start_service();
+            }
+            else {
+                delete m_proxy_client;
+                goto messy_code;
+            }
         }
 
         m_player = new player::Player{ peer };
     }
 
     void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
-        if (!m_proxy_client || !m_proxy_client->get_player() || !m_player)
+        if (!m_player || !m_proxy_client)
             return;
 
-        player::eNetMessageType message_type{ player::get_message_type(packet) };
+        player::eNetMessageType message_type{ player::message_type_to_string(packet) };
         std::string message_data{ player::get_text(packet) };
         switch (message_type) {
             case player::NET_MESSAGE_GENERIC_TEXT:
@@ -90,7 +85,8 @@ namespace server {
                         text_parse.set("hash", utils::proton_hash(device_id.c_str(), 0));
                         text_parse.set("hash2", utils::proton_hash(mac.c_str(), 0));
 
-                        m_proxy_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
+                        if (m_proxy_client->get_player())
+                            m_proxy_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
                         return;
                     }
                 }
@@ -115,8 +111,10 @@ namespace server {
                 switch(updatePacket->type) {
                     case player::PACKET_STATE: {
                         spdlog::debug("flags: {}", player::flag_to_string(
-                                static_cast<player::ePacketFlag>(updatePacket->flags)));
-                        m_proxy_client->get_player()->get_avatar()->pos = { updatePacket->pos_x, updatePacket->pos_y };
+                            static_cast<player::ePacketFlag>(updatePacket->flags)));
+
+                        if (m_proxy_client->get_player())
+                            m_proxy_client->get_player()->get_avatar()->pos = { updatePacket->pos_x, updatePacket->pos_y };
                     }
                     case player::PACKET_CALL_FUNCTION: {
                         uint8_t* extended_data{ player::get_extended_data(updatePacket) };
@@ -141,7 +139,7 @@ namespace server {
 
                         spdlog::info("Outgoing GameUpdatePacket:\n [{}]{}{}", 
                             updatePacket->type, 
-                            player::get_packet_type(updatePacket->type),
+                            player::packet_type_to_string(updatePacket->type),
                             extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(data_array)) : "");
                         break;
                     }
@@ -149,12 +147,12 @@ namespace server {
                 break;
             }
             default: {
-                spdlog::info("[{}]{}: {}", message_type, player::get_message_type(message_type), message_data);
+                spdlog::info("[{}]{}: {}", message_type, player::message_type_to_string(message_type), message_data);
                 break;
             }
         }
 
-        if (m_proxy_client->get_player()->send_packet_packet(packet) != 0)
+        if (m_proxy_client->get_player() && m_proxy_client->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia server");
 
         enet_host_flush(m_host);
@@ -163,16 +161,14 @@ namespace server {
     void Server::on_disconnect(ENetPeer *peer) {
         spdlog::info("Client disconnected from Growtopia Client: (peer->data! -> {})", peer->data);
 
-        if (!peer->data)
-            return;
-
+        if (!m_player) return;
         if (m_player->get_peer())
-            enet_peer_disconnect(m_player->get_peer(), 0);       
+            enet_peer_disconnect_now(m_player->get_peer(), 0);
 
         delete m_player;
         m_player = nullptr;
 
         if (m_proxy_client && m_proxy_client->get_player())
-            enet_peer_disconnect(m_proxy_client->get_player()->get_peer(), 0);
+            enet_peer_disconnect_now(m_proxy_client->get_player()->get_peer(), 0);
     }
 }

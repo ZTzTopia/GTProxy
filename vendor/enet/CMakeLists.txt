@@ -98,6 +98,9 @@ add_library(enet_static STATIC
     ${SOURCE_FILES}
 )
 
+target_compile_definitions(enet PRIVATE _WINSOCK_DEPRECATED_NO_WARNINGS)
+target_compile_definitions(enet_static PRIVATE _WINSOCK_DEPRECATED_NO_WARNINGS)
+
 if (MSVC)
     target_compile_definitions(enet
         PRIVATE

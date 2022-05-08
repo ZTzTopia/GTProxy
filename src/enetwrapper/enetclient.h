@@ -10,17 +10,18 @@ namespace enetwrapper {
         ~ENetClient();
 
         bool connect(const std::string &host, enet_uint16 port, size_t peer_count);
+        void disconnect();
 
         void start_service();
         void service_thread();
 
-        virtual void on_connect(ENetPeer *peer) = 0;
-        virtual void on_receive(ENetPeer *peer, ENetPacket *packet) = 0;
-        virtual void on_disconnect(ENetPeer *peer) = 0;
+        virtual void on_connect(ENetPeer* peer) = 0;
+        virtual void on_receive(ENetPeer* peer, ENetPacket* packet) = 0;
+        virtual void on_disconnect(ENetPeer* peer) = 0;
 
     protected:
-        ENetHost *m_host;
-        ENetPeer *m_peer;
+        ENetHost* m_host;
+        ENetPeer* m_peer;
         std::thread m_service_thread;
         std::atomic<bool> m_running;
     };

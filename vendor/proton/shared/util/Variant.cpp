@@ -1,9 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <sstream>
 #include <map>
+#include <fmt/format.h>
 
 #include "Variant.h"
-#include "fmt/format.h"
 
 Variant::~Variant() {
     if (m_pSig_onChanged) {

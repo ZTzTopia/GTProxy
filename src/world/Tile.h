@@ -3,8 +3,8 @@
 
 #include "TileExtra.h"
 
-class Tile {
-public:
+#pragma pack(push, 1)
+struct Tile {
     enum TileFlag : uint16_t {
         NONE = 0,
         EXTRA = 1 << 0,
@@ -22,18 +22,13 @@ public:
         BLUE = 1 << 15,
     };
 
-public:
-    Tile() : foreground(0), background(0), parent_tile(0), flags(NONE) {
-        tile_extra = new TileExtra{};
-    }
-    ~Tile() {
-        delete tile_extra;
-    }
-
-public:
     uint16_t foreground;
     uint16_t background;
     uint16_t parent_tile;
     TileFlag flags;
     TileExtra* tile_extra;
+
+    Tile() : foreground(0), background(0), parent_tile(0), flags(NONE) { tile_extra = new TileExtra{}; }
+    ~Tile() { delete tile_extra; }
 };
+#pragma pack(pop)

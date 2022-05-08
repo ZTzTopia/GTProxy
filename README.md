@@ -2,15 +2,17 @@
 [![GitHub Release](https://img.shields.io/github/release/ZTzTopia/GTProxy.svg)](https://github.com/ZTzTopia/GTProxy/releases/latest) 
 ![Github Action](https://github.com/ZTzTopia/GTProxy/actions/workflows/CMake.yml/badge.svg)
 
-This is a proxy for [Growtopia](https://growtopiagame.com/).
+This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it possible to debug incoming and outgoing packets and even modify them.
 
 ## 📜 Features
-- [x] Proxy for Growtopia.
+- [x] Print incoming and outgoing packets (text, variant list, etc).
+- [x] Built-in http server with metadata from [Growtopia](https://growtopiagame.com/) server data.
+- [x] Works well with sub-server redirection.
 - [x] Command.
-- [x] Config.
+- [x] Config file.
 
 ## 💻 Supported platforms
-- [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 11.
+- [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.
 
 ## 📝 Requirements
 - [CMake](https://cmake.org/).

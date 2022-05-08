@@ -1,33 +1,29 @@
-#include <spdlog/spdlog.h>
-#include <spdlog/fmt/bin_to_hex.h>
-#include <util/Variant.h>
-#include <httplib.h>
 #include "fmt/ranges.h"
+#include <httplib.h>
+#include <spdlog/fmt/bin_to_hex.h>
+#include <spdlog/spdlog.h>
+#include <util/Variant.h>
 
-#include "client.h"
 #include "../config.h"
 #include "../server/server.h"
-#include "../world/WorldTileMap.h"
 #include "../utils/binary_reader.h"
-#include "../utils/textparse.h"
 #include "../utils/quick_hash.h"
+#include "../utils/textparse.h"
 #include "../world/World.h"
+#include "../world/WorldTileMap.h"
+#include "client.h"
 
 namespace client {
-    Client::Client(server::Server *server)
-        : enetwrapper::ENetClient()
-        , m_proxy_server(server)
-        , m_player(nullptr)
+    Client::Client(server::Server* server)
+        : enetwrapper::ENetClient(), m_proxy_server(server), m_player(nullptr), m_on_send_to_server() {}
+
+    Client::~Client()
     {
-        m_send_server_info = new SendServerInfo{};
-    }
-
-    Client::~Client() {
         delete m_player;
-        delete m_send_server_info;
     }
 
-    bool Client::initialize() {
+    bool Client::initialize()
+    {
         // Get server and port from server_data.php.
         httplib::Client http_client{ Config::get().config()["server"]["host"] };
         httplib::Result response = http_client.Post("/growtopia/server_data.php");
@@ -36,7 +32,7 @@ namespace client {
             return false;
         }
 
-        utils::TextParse text_parse{ response->body };
+        utils::TextParse text_parse{response->body};
         std::string server{ text_parse.get("server", 1) };
         enet_uint16 port{ text_parse.get<enet_uint16>("port", 1) };
 
@@ -47,36 +43,37 @@ namespace client {
         return true;
     }
 
-    void Client::on_connect(ENetPeer *peer) {
+    void Client::on_connect(ENetPeer* peer)
+    {
         spdlog::info("Client connected to growtopia server: {}", peer->connectID);
+        m_on_send_to_server.active = false;
         m_player = new player::Player{ peer };
     }
 
-    void Client::on_receive(ENetPeer *peer, ENetPacket *packet) {
-        if (!m_proxy_server || !m_proxy_server->get_player() || !m_player)
+    void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
+    {
+        if (!m_player) return;
+        if (!m_proxy_server || !m_proxy_server->get_player())
             return;
 
-        m_send_server_info->check = false;
-
-        player::eNetMessageType message_type{ player::get_message_type(packet) };
+        player::eNetMessageType message_type{player::message_type_to_string(packet)};
         std::string message_data{ player::get_text(packet) };
         switch (message_type) {
             case player::NET_MESSAGE_GAME_PACKET: {
-                player::GameUpdatePacket *updatePacket{player::get_struct(packet)};
-                switch (updatePacket->type) {
+                player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
+                switch (game_update_packet->type) {
                     case player::PACKET_CALL_FUNCTION: {
-                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
-                        if (!extended_data)
-                            break;
+                        uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+                        if (!extended_data) break;
 
                         VariantList variant_list{};
-                        variant_list.SerializeFromMem(extended_data, static_cast<int>(updatePacket->data_size));
+                        variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
 
-                        const auto& hash = utils::quick_hash(variant_list.Get(0).GetString());
+                        std::size_t hash{ utils::quick_hash(variant_list.Get(0).GetString()) };
                         switch (hash) {
                             case "OnSpawn"_qh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
-                                if(text_parse.get("type", 1) == "local") {
+                                if (text_parse.get("type", 1) == "local") {
                                     m_player->get_avatar()->name = text_parse.get("name", 1);
                                     m_player->get_avatar()->AvatarData.net_id = text_parse.get<int32_t>("netID", 1);
                                 }
@@ -90,41 +87,58 @@ namespace client {
                                 break;
                             }
                             case "OnSendToServer"_qh: {
-                                std::vector<std::string> tokenize{ utils::TextParse::string_tokenize(variant_list.Get(4).GetString()) };
+                                std::vector<std::string> tokenize{
+                                    utils::TextParse::string_tokenize(variant_list.Get(4).GetString()) };
 
-                                m_send_server_info->port = variant_list.Get(1).GetINT32();
-                                m_send_server_info->token = variant_list.Get(2).GetINT32();
-                                m_send_server_info->user = variant_list.Get(3).GetINT32();
-                                m_send_server_info->host = tokenize.at(0);
-                                m_send_server_info->uuid_token = tokenize.size() == 2 ? tokenize.at(1) : tokenize.at(2);
-                                m_send_server_info->check = true;
+                                m_on_send_to_server.active = true;
+                                m_on_send_to_server.host = tokenize[0];
+                                m_on_send_to_server.port = static_cast<enet_uint16>(variant_list.Get(1).GetINT32());
 
                                 m_proxy_server->get_player()->send_variant({
                                     "OnSendToServer",
                                     17000,
-                                    m_send_server_info->token,
-                                    m_send_server_info->user,
-                                    fmt::format("127.0.0.1|{}|{}", tokenize.size() == 2 ? "" : tokenize.at(1), m_send_server_info->uuid_token),
-                                    variant_list.Get(5).GetINT32()
-                                });
+                                    variant_list.Get(2).GetINT32(),
+                                    variant_list.Get(3).GetINT32(),
+                                    fmt::format(
+                                        "127.0.0.1|{}|{}", tokenize.size() == 2 ? "" : tokenize.at(1)
+                                        , tokenize.size() == 2 ? tokenize.at(1) : tokenize.at(2)),
+                                    variant_list.Get(5).GetINT32() });
 
-                                spdlog::info("Send to {}:{}", m_send_server_info->host, m_send_server_info->port);
+                                spdlog::info(
+                                    "OnSendToServer: {}:{}",
+                                    m_on_send_to_server.host,
+                                    m_on_send_to_server.port);
                                 return;
                             }
+                            case "OnDialogRequest"_qh:
                             case "onShowCaptcha"_qh: {
-                                std::vector<std::string> tokenize{ utils::TextParse::string_tokenize(variant_list.Get(1).GetString()) };
-                                for (auto &data : tokenize) {
-                                    if (data.find(" + ") != std::string::npos) {
-                                        std::vector<std::string> tokenize_{ utils::TextParse::string_tokenize(data, " + ") };
-                                        auto sum_1 = static_cast<uint8_t>(std::stoi(tokenize_[0]));
-                                        auto sum_2 = static_cast<uint8_t>(std::stoi(tokenize_[1]));
-                                        auto sum = sum_1 + sum_2;
-                                        m_proxy_server->get_player()->send_log(fmt::format("Solved captcha: {} + {} = {}", sum_1, sum_2, sum));
-                                        m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT, 
+                                bool is_dialog_request = hash == "OnDialogRequest"_qh;
+                                bool is_captcha = hash == "onShowCaptcha"_qh;
+
+                                std::vector<std::string> tokenize{
+                                    utils::TextParse::string_tokenize(variant_list.Get(1).GetString()) };
+
+                                for (auto& data: tokenize) {
+                                    if (is_dialog_request) {
+                                        if (data.find("Are you Human?") != std::string::npos)
+                                            is_captcha = true;
+                                    }
+
+                                    if (is_captcha && data.find(" + ") != std::string::npos) {
+                                        std::vector<std::string> tokenize_{
+                                            utils::TextParse::string_tokenize(data, " + ") };
+
+                                        auto num1 = static_cast<uint8_t>(std::stoi(tokenize_[0]));
+                                        auto num2 = static_cast<uint8_t>(std::stoi(tokenize_[1]));
+                                        uint16_t sum = num1 + num2;
+
+                                        m_proxy_server->get_player()->send_log(
+                                            fmt::format("Captcha solver: {} + {} = {}", num1, num2, sum));
+                                        m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
                                             fmt::format("action|dialog_return\n"
                                                 "dialog_name|captcha_submit\n"
-                                                "captcha_answer|{}", 
-                                            sum));
+                                                "captcha_answer|{}",
+                                                sum));
                                         return;
                                     }
                                 }
@@ -138,135 +152,81 @@ namespace client {
                         break;
                     }
                     case player::PACKET_SEND_MAP_DATA: {
-                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
-                        if (!extended_data)
-                            break;
+                        uint8_t* extended_data{player::get_extended_data(game_update_packet)};
+                        if (!extended_data) break;
 
-                        m_player->get_world()->serialize(extended_data, updatePacket->data_size);
+                        World* world = m_player->get_world();
+                        world->serialize(extended_data);
 
-#if 0
-                        if (tile_map.tile_count > 0) {
-                            for (uint32_t i = 0; i < tile_map.tile_count; i++) {
-                                Tile tile{};
-                                tile.foreground = br.read_ushort();
-                                tile.background = br.read_ushort();
-                                tile.parent_tile = br.read_ushort();
-                                tile.flags = static_cast<Tile::TileFlag>(br.read_ushort());
-                                if (!(tile.flags & Tile::TileFlag::EXTRA)) {
-                                    tile.tile_extra->type = static_cast<TileExtra::ExtraType>(br.read_byte());
-                                    switch (tile.tile_extra->type) {
-                                        case TileExtra::ExtraType::TYPE_DOOR:
-                                            tile.tile_extra->label_len = br.read_ushort();
-                                            br.back(sizeof(uint16_t));
-                                            tile.tile_extra->unk_2 = br.read_byte();
-                                        case TileExtra::TYPE_SIGN:
-                                            tile.tile_extra->label_len = br.read_ushort();
-                                            br.back(sizeof(uint16_t));
-                                            tile.tile_extra->label = br.read_string();
-                                            tile.tile_extra->unk32_2 = br.read_uint();
-                                            break;
-                                        case TileExtra::TYPE_LOCK:
-                                            tile.tile_extra->unk = br.read_byte();
-                                            tile.tile_extra->user_id = br.read_uint();
-                                            // TODO!
-                                        case TileExtra::TYPE_TREE:
-                                            br.skip(sizeof(uint32_t));
-                                            br.skip(sizeof(uint8_t));
-                                            break;
-                                        case TileExtra::TYPE_UNK:
-                                            break;
-                                        case TileExtra::TYPE_MAILBOX:
-                                        case TileExtra::TYPE_BULLETIN:
-                                        case TileExtra::TYPE_DONATION_BOX:
-                                        case TileExtra::TYPE_TOY_BOX:
-                                            br.read_string();
-                                            br.read_string();
-                                            br.read_string();
-                                            br.skip(sizeof(uint8_t));
-                                            break;
-                                        case TileExtra::TYPE_UNK_2:
-                                        case TileExtra::TYPE_UNK_3:
-                                            br.skip(sizeof(uint8_t));
-                                            break;
-                                        case TileExtra::TYPE_PROVIDER:
-                                            br.skip(sizeof(uint32_t));
-                                            if (tile.foreground != 5318 && (tile.foreground != 10656/* || *((unsigned __int16 *)a5 + 3) < 0x11u*/) )
-                                                break;
-                                            br.skip(sizeof(uint32_t));
-                                            break;
-                                        case TileExtra::TYPE_ACHIEVEMENT_BLOCK:
-                                            br.skip(sizeof(uint32_t));
-                                            br.skip(sizeof(uint8_t));
-                                            break;
-                                        case TileExtra::TYPE_HEART_MONITOR:
-                                            br.skip(sizeof(uint32_t));
-                                            br.read_string();
-                                            break;
-                                        case TileExtra::TYPE_MANNEQUIN:
-                                            br.read_string();
-                                            br.skip(sizeof(uint8_t));
-                                            br.skip(sizeof(uint32_t));
-                                            // TODO!
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-#endif
-
-                        m_player->get_avatar()->world_name = m_player->get_world()->name;
+                        m_player->get_avatar()->world_name = world->name;
                         break;
                     }
                     case player::PACKET_SEND_TILE_UPDATE_DATA: {
-                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
-                        if (!extended_data || updatePacket->data_size < 8)
-                            break;
-
-                        BinaryReader br{ extended_data, updatePacket->data_size };
+                        uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+                        if (!extended_data) break;
 
                         Tile tile{};
-                        br.copy(&tile, sizeof(uint16_t) * 4);
+                        BinaryReader br{ extended_data };
 
-                        if (tile.parent_tile)
-                            br.skip(2);
+                        // TODO: Move to Tile::serialize()
+                        tile.foreground = br.read_u16();
+                        tile.background = br.read_u16();
+                        tile.parent_tile = br.read_u16();
+                        tile.flags = static_cast<Tile::TileFlag>(br.read_u16());
 
-                        if (!(tile.flags & Tile::EXTRA))
-                            break;
+                        if (tile.parent_tile) br.skip(2);
+                        if (!(tile.flags & Tile::EXTRA)) break;
 
                         TileExtra* tile_extra{ tile.tile_extra };
-                        tile_extra->type = static_cast<TileExtra::ExtraType>(br.read_byte());
-                        switch (tile_extra->type) {
+
+                        // TODO: Move to TileExtra::serialize()
+                        tile_extra->m_type = static_cast<TileExtra::ExtraType>(br.read_u8());
+                        if (tile_extra->m_type == TileExtra::TYPE_NONE) break;
+
+                        switch (tile_extra->m_type) {
                             case TileExtra::TYPE_DOOR:
-                                tile_extra->label = br.read_string();
-                                tile_extra->unk_2 = br.read_byte();
+                                tile_extra->m_door.label = br.read_string();
+                                tile_extra->m_door.unk = br.read_u8();
                                 break;
                             case TileExtra::TYPE_SIGN:
-                                tile_extra->label = br.read_string();
-                                tile_extra->unk32_2 = br.read_uint();
+                                tile_extra->m_sign.label = br.read_string();
+                                tile_extra->m_sign.unk = br.read_u32();
                                 break;
-                            case TileExtra::TYPE_TREE:
-                                tile_extra->growth_time = br.read_uint();
-                                tile_extra->fruit_count = br.read_byte();
+                            case TileExtra::TYPE_SEED:
+                                tile_extra->m_seed.growth_time = br.read_u32();
+                                tile_extra->m_seed.fruit_count = br.read_u8();
+                                break;
+                            case TileExtra::TYPE_PROVIDER: {
+                                tile_extra->m_provider.unk = br.read_u32();
+
+                                World* world = m_player->get_world();
+                                if (tile.foreground != 5318 && (tile.foreground != 10656 || world->version < 17) )
+                                    break;
+
+                                tile_extra->m_provider.unk2 = br.read_u32();
+                                break;
+                            }
+                            case TileExtra::TYPE_HEART_MONITOR:
+                                tile_extra->m_heart_monitor.unk = br.read_u32();
+                                tile_extra->m_heart_monitor.label = br.read_string();
                                 break;
                             default:
                                 break;
                         }
 
-                        if (tile_extra->type != TileExtra::TYPE_NONE)
-                            spdlog::info("Incoming PACKET_SEND_TILE_UPDATE_DATA\n > TileExtra_Type -> [{}]:\n{}", TileExtra::GetTypeAsString(tile_extra->type), tile_extra->GetRawData());
-
+                        spdlog::info(
+                            "Incoming PACKET_SEND_TILE_UPDATE_DATA\n > TileExtra_Type -> [{}]:\n{}",
+                            TileExtra::GetTypeAsString(tile_extra->m_type), tile_extra->GetRawData());
                         break;
                     }
                     case player::PACKET_SET_CHARACTER_STATE: {
-                        if(updatePacket->net_id == m_player->get_avatar()->AvatarData.net_id) {
+                        if (game_update_packet->net_id == m_player->get_avatar()->AvatarData.net_id) {
                             std::memcpy(&m_player->get_avatar()->AvatarData, packet->data + 4, packet->dataLength - 4);
                             break;
                         }
                         else {
-                            for (auto& avatar : m_player->get_avatar_map()) {
-                                if (avatar.first == updatePacket->net_id) {
+                            for (auto& avatar: m_player->get_avatar_map()) {
+                                if (avatar.first == game_update_packet->net_id) {
                                     std::memcpy(&avatar.second->AvatarData, packet->data + 4, packet->dataLength - 4);
                                     break;
                                 }
@@ -275,40 +235,23 @@ namespace client {
                         break;
                     }
                     case player::PACKET_SEND_INVENTORY_STATE: {
-                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
-                        if (!extended_data)
-                            break;
+                        uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+                        if (!extended_data) break;
 
                         PlayerItems* inventory = m_player->get_inventory();
-                        inventory->items.clear();
-
-                        BinaryReader binary_reader{ extended_data, updatePacket->data_size };
-                        inventory->version = binary_reader.read_byte();
-                        inventory->max_size = binary_reader.read_uint();
-
-                        if (inventory->version >= 1)
-                            inventory->size = binary_reader.read_ushort();
-                        else
-                            inventory->size = binary_reader.read_byte();
-
-                        for (uint32_t i = 0; i < inventory->size; i++) {
-                            uint16_t id = binary_reader.read_ushort();
-                            uint8_t count = binary_reader.read_byte();
-                            uint8_t unused = binary_reader.read_byte();
-                            inventory->items.insert(std::make_pair(id, std::make_pair(count, unused)));
-                        }
+                        inventory->serialize(extended_data);
                         break;
                     }
                     case player::PACKET_MODIFY_ITEM_INVENTORY: {
                         PlayerItems* inventory = m_player->get_inventory();
 
                         bool found{ false };
-                        for (auto& item : inventory->items) {
-                            if (item.first == updatePacket->item_id) {
-                                if (updatePacket->gained_item_count > 0)
-                                    item.second.first += updatePacket->gained_item_count;
-                                else if (updatePacket->lost_item_count > 0)
-                                    item.second.first -= updatePacket->lost_item_count;
+                        for (auto& item: inventory->items) {
+                            if (item.first == game_update_packet->item_id) {
+                                if (game_update_packet->gained_item_count > 0)
+                                    item.second.first += game_update_packet->gained_item_count;
+                                else if (game_update_packet->lost_item_count > 0)
+                                    item.second.first -= game_update_packet->lost_item_count;
 
                                 if (item.second.first <= 0)
                                     inventory->items.erase(item.first);
@@ -318,20 +261,25 @@ namespace client {
                             }
                         }
 
-                        if (!found && updatePacket->gained_item_count > 0)
-                            inventory->items.insert(std::make_pair(updatePacket->item_id, std::make_pair(updatePacket->gained_item_count, 0)));
+                        if (!found && game_update_packet->gained_item_count > 0)
+                            inventory->items.insert(
+                                std::make_pair(game_update_packet->item_id,
+                                std::make_pair(game_update_packet->gained_item_count, 0)));
                         break;
                     }
                     case player::PACKET_APP_INTEGRITY_FAIL:
                         return;
                     default: {
-                        uint8_t *extended_data{ player::get_extended_data(updatePacket) };
+                        uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+                        
                         std::vector<char> data_array;
-                        for (uint32_t i = 0; i < updatePacket->data_size; i++)
+                        for (uint32_t i = 0; i < game_update_packet->data_size; i++)
                             data_array.push_back(static_cast<char>(extended_data[i]));
-                        spdlog::info("Incoming GameUpdatePacket:\n [{}]{}{}", 
-                            updatePacket->type, 
-                            player::get_packet_type(updatePacket->type),
+                        
+                        spdlog::info(
+                            "Incoming TankUpdatePacket:\n [{}]{}{}",
+                            game_update_packet->type,
+                            player::packet_type_to_string(game_update_packet->type),
                             extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(data_array)) : "");
                         break;
                     }
@@ -339,12 +287,12 @@ namespace client {
                 break;
             }
             default: {
-                utils::TextParse text_parse{ message_data };
-                if (text_parse.empty())
-                    break;
+                utils::TextParse text_parse{message_data};
+                if (text_parse.empty()) break;
 
-                spdlog::info("Incoming TankUpdatePacket:\n{} [{}]:\n{}\n", 
-                    player::get_message_type(message_type),
+                spdlog::info(
+                    "Incoming MessagePacket:\n{} [{}]:\n{}\n",
+                    player::message_type_to_string(message_type),
                     message_type,
                     fmt::join(text_parse.get_all_array(), "\r\n"));
                 break;
@@ -352,26 +300,26 @@ namespace client {
         }
 
         if (m_proxy_server->get_player()->send_packet_packet(packet) != 0)
-            spdlog::error("Failed to send packet to growtopia client");
+            spdlog::error("Failed to send packet to growtopia client!");
 
         enet_host_flush(m_host);
     }
 
-    void Client::on_disconnect(ENetPeer *peer) {
+    void Client::on_disconnect(ENetPeer* peer)
+    {
         spdlog::info("Client disconnected from Growtopia Server: (peer->data! -> {})", peer->data);
 
-        if (!peer->data)
-            return;
+        if (!m_player) return;
 
         if (m_player->get_peer())
-            enet_peer_disconnect(m_player->get_peer(), 0);
+            enet_peer_disconnect_now(m_player->get_peer(), 0);
 
         delete m_player;
         m_player = nullptr;
 
         if (m_proxy_server->get_player())
-            enet_peer_disconnect(m_proxy_server->get_player()->get_peer(), 0);
+            enet_peer_disconnect_now(m_proxy_server->get_player()->get_peer(), 0);
 
         m_proxy_server = nullptr;
     }
-}
+}// namespace client

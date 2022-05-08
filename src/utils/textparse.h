@@ -5,50 +5,47 @@
 namespace utils {
     class TextParse {
     public:
-        TextParse() = default;
+        TextParse() : m_data() {};
         ~TextParse() = default;
+        explicit TextParse(const std::string& string) {
+            parse(string);
+        };
 
-        explicit TextParse(const std::string &string) {
+        void parse(const std::string& string) {
             m_data = string_tokenize(string, "\n");
             for (auto &data : m_data) {
                 std::replace(data.begin(), data.end(), '\r', '\0');
             }
-        };
+        }
 
         static std::vector<std::string> string_tokenize(const std::string &string, const std::string &delimiter = "|") {
             std::vector<std::string> tokens;
-            std::string::size_type last_pos = string.find_first_not_of(delimiter, 0);
-            std::string::size_type pos = string.find_first_of(delimiter, last_pos);
-
-            while (pos != std::string::npos || last_pos != std::string::npos) {
-                tokens.push_back(string.substr(last_pos, pos - last_pos));
-                last_pos = string.find_first_not_of(delimiter, pos);
-                pos = string.find_first_of(delimiter, last_pos);
-            }
+            size_t prev = 0, pos = 0;
+            do {
+                pos = string.find(delimiter, prev);
+                if (pos == std::string::npos) pos = string.length();
+                std::string token = string.substr(prev, pos - prev);
+                if (!token.empty()) tokens.push_back(token);
+                prev = pos + delimiter.length();
+            } while (pos < string.length() && prev < string.length());
             return tokens;
         }
 
         std::string get(const std::string &key, int index, const std::string &token = "|", int key_index = 0) {
-            if (m_data.empty()) {
+            if (m_data.empty())
                 return "";
-            }
 
             for (auto &data : m_data) {
-                if (data.empty()) {
+                if (data.empty())
                     continue;
-                }
 
                 std::vector<std::string> tokenize = string_tokenize(data, token);
                 if (tokenize[key_index] == key) {
-                    if (index < 0 || index >= tokenize.size()) {
+                    if (index < 0 || index >= tokenize.size())
                         return "";
-                    }
-
-                    // Found it.
                     return tokenize[key_index + index];
                 }
             }
-
             return "";
         }
 
@@ -59,13 +56,10 @@ namespace utils {
 
         template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
         T get(const std::string &key, int index, const std::string &token = "|") {
-            if (std::is_same_v<T, double>) {
+            if (std::is_same_v<T, double>)
                 return std::stod(get(key, index, token));
-            }
-            else if (std::is_same_v<T, long double>) {
+            else if (std::is_same_v<T, long double>)
                 return std::stold(get(key, index, token));
-            }
-
             return std::stof(get(key, index, token));
         }
 
@@ -80,9 +74,8 @@ namespace utils {
         }
 
         void set(const std::string &key, const std::string &value, const std::string &token = "|") {
-            if (m_data.empty()) {
+            if (m_data.empty())
                 return;
-            }
 
             for (auto &data : m_data) {
                 std::vector<std::string> tokenize = string_tokenize(data, token);
@@ -106,6 +99,7 @@ namespace utils {
                 ret.push_back(fmt::format("[{}]: {}", i, m_data[i]));
             return ret;
         }
+
         std::string get_all_raw() {
             std::string string{};
             for (int i = 0; i < m_data.size(); i++) {
@@ -121,6 +115,7 @@ namespace utils {
         bool empty() {
             return m_data.empty();
         }
+
         size_t get_line_count() {
             return m_data.size();
         }
