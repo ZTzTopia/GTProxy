@@ -32,7 +32,7 @@ namespace player {
         PlayerItems* get_inventory() { return m_player_items; }
         World* get_world() { return m_world; }
         bool toggle_fast_drop() { m_fast_drop = !m_fast_drop; return m_fast_drop; }
-        bool get_fast_drop() { return m_fast_drop; }
+        bool get_fast_drop() const { return m_fast_drop; }
 
     private:
         ENetPeer *m_peer;

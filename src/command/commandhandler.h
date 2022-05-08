@@ -8,10 +8,6 @@ namespace server {
     class Server;
 }
 
-namespace cmd {
-extern bool fastdrop;
-}
-
 namespace command {
     class CommandHandler {
     public:

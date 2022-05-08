@@ -74,8 +74,7 @@ int main()
                     "beta2_type|1\n"
                     "type2|1\n"
                     "meta|{}\n"
-                    "RTENDMARKERBS1001",
-                    meta),
+                    "RTENDMARKERBS1001", meta),
                 "text/html");
             return true;
         });

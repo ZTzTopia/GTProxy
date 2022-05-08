@@ -7,8 +7,6 @@
 #include "../utils/dialog_builder.h"
 #include "../utils/textparse.h"
 
-bool cmd::fastdrop = false;
-
 namespace command {
     CommandHandler::CommandHandler(server::Server *server)
         : m_server(server)
@@ -141,10 +139,10 @@ namespace command {
         );
         m_commands.push_back(
             new Command({ "fastdrop", { "fd" }, "When `Drop` Button Clicked instantly drop!" }, [this](const std::vector<std::string> &args) {
-                if (m_server->get_player()->toggle_fast_drop())
-                    m_server->get_player()->send_log("`2Fast Drop Enabled!");
+                if (m_server->get_client_player()->toggle_fast_drop())
+                    m_server->get_player()->send_log("Fast Drop: `2enabled``!");
                 else
-                    m_server->get_player()->send_log("`4Fast Drop Disabled!");
+                    m_server->get_player()->send_log("Fast Drop: `4disabled``!");
             })
         );
     }

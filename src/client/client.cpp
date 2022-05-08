@@ -115,29 +115,33 @@ namespace client {
                                 bool is_dialog_request = hash == "OnDialogRequest"_qh;
                                 bool is_captcha = hash == "onShowCaptcha"_qh;
 
+                                if (is_dialog_request) {
+                                    utils::TextParse text_parse{ variant_list.Get(1).GetString() };
+
+                                    if (variant_list.Get(1).GetString().find("drop_item") != std::string::npos) {
+                                        if (!m_player->get_fast_drop())
+                                            break;
+
+                                        uint8_t count{ text_parse.get<uint8_t>("add_text_input", 2) };
+                                        uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
+
+                                        m_proxy_server->get_player()->send_log(fmt::format("You dropping item id: {}", item_id));
+                                        m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
+                                            fmt::format(
+                                                "action|dialog_return\n"
+                                                "dialog_name|drop_item\n"
+                                                "itemID|{}\n"
+                                                "count|{}",
+                                                item_id, count));
+                                        return;
+                                    }
+                                }
+
                                 std::vector<std::string> tokenize{
                                     utils::TextParse::string_tokenize(variant_list.Get(1).GetString()) };
 
                                 for (auto& data: tokenize) {
                                     if (is_dialog_request) {
-                                        auto DialogText = variant_list.Get(1).GetString();
-                                        if (get_player()->get_fast_drop()) {
-                                            std::string itemid = DialogText.substr(DialogText.find("embed_data|itemID|") + 18, DialogText.length() - DialogText.find("embed_data|itemID|") - 1);
-                                            std::string count = DialogText.substr(DialogText.find("count||") + 7, DialogText.length() - DialogText.find("count||") - 1);
-                                            if (DialogText.find("embed_data|itemID|") != -1) {
-                                                if (DialogText.find("Drop") != -1) {
-                                                    m_proxy_server->get_player()->send_log(fmt::format("Dropping ItemID: {}", itemid));
-                                                    m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
-                                                    fmt::format("action|dialog_return\n"
-                                                        "dialog_name|drop_item\n"
-                                                        "itemID|{}|\n"
-                                                        "count|{}",
-                                                    itemid,count));
-                                                    return;
-                                                }
-                                            }
-                                        }
-
                                         if (data.find("Are you Human?") != std::string::npos)
                                             is_captcha = true;
                                     }
@@ -151,7 +155,7 @@ namespace client {
                                         uint16_t sum = num1 + num2;
 
                                         m_proxy_server->get_player()->send_log(
-                                            fmt::format("Captcha solver: {} + {} = {}", num1, num2, sum));
+                                            fmt::format("Solved captcha: {} + {} = {}", num1, num2, sum));
                                         m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
                                             fmt::format("action|dialog_return\n"
                                                 "dialog_name|captcha_submit\n"

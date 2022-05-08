@@ -1,6 +1,6 @@
 # Growtopia Proxy
 [![GitHub Release](https://img.shields.io/github/release/ZTzTopia/GTProxy.svg)](https://github.com/ZTzTopia/GTProxy/releases/latest) 
-![Github Action](https://github.com/ZTzTopia/GTProxy/actions/workflows/CMake.yml/badge.svg)
+![Github Action](https://github.com/ZTzTopia/GTProxy/actions/workflows/cmake_build.yml/badge.svg)
 
 This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it possible to debug incoming and outgoing packets and even modify them.
 

@@ -30,8 +30,8 @@ jobs:
         run: |
           mkdir ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\src\Debug\Main.exe ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\conan\bin\fmt.dll ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\conan\bin\spdlog.dll ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\conan\bin\fmtd.dll ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\conan\bin\spdlogd.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
