@@ -23,6 +23,11 @@ namespace client {
     {
         delete m_player;
         delete m_local_player;
+
+        for (auto& pair : m_remote_player) {
+            delete pair.second;
+        }
+
         m_remote_player.clear();
     }
 
@@ -90,6 +95,11 @@ namespace client {
                                     m_remote_player[net_id] = new player::RemotePlayer{};
                                     m_remote_player[net_id]->set_net_id(net_id);
                                 }
+                                break;
+                            }
+                            case "OnRemove"_qh: {
+                                utils::TextParse text_parse{ variant_list.Get(1).GetString() };
+                                delete m_remote_player[text_parse.get<uint32_t>("netID", 1)];
                                 break;
                             }
                             case "OnSendToServer"_qh: {
