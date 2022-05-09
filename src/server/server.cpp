@@ -10,14 +10,14 @@
 
 namespace server {
     Server::Server()
-        : enetwrapper::ENetServer(), m_proxy_client(nullptr), m_player(nullptr)
+        : enetwrapper::ENetServer(), m_client(nullptr), m_player(nullptr)
     {
         m_command_handler = new command::CommandHandler{ this };
     }
 
     Server::~Server()
     {
-        delete m_proxy_client;
+        delete m_client;
         delete m_player;
     }
 
@@ -34,23 +34,24 @@ namespace server {
         spdlog::info("Client connected to proxy server: {}", peer->connectID);
 
         // TODO: Fix all about client and server disconnecting.
-        if (!m_proxy_client) {
+        if (!m_client) {
 messy_code:
-            m_proxy_client = new client::Client{ this };
-            if (!m_proxy_client->initialize()) {
+            m_client = new client::Client{ this };
+            if (!m_client->initialize()) {
                 spdlog::error("Failed to initialize proxy client.");
 
-                delete m_proxy_client;
-                m_proxy_client = nullptr;
+                delete m_client;
+                m_client = nullptr;
             }
         }
         else {
-            if (m_proxy_client->is_on_send_to_server()) {
-                m_proxy_client->connect(m_proxy_client->get_host(), m_proxy_client->get_port(), 1);
-                m_proxy_client->start_service();
+            if (m_client->is_on_send_to_server()) {
+                m_client->create_host(1);
+                m_client->connect(m_client->get_host(), m_client->get_port());
+                m_client->start_service();
             }
             else {
-                delete m_proxy_client;
+                delete m_client;
                 goto messy_code;
             }
         }
@@ -59,7 +60,7 @@ messy_code:
     }
 
     void Server::on_receive(ENetPeer *peer, ENetPacket *packet) {
-        if (!m_player || !m_proxy_client)
+        if (!m_player || !m_client)
             return;
 
         player::eNetMessageType message_type{ player::message_type_to_string(packet) };
@@ -85,8 +86,8 @@ messy_code:
                         text_parse.set("hash", utils::proton_hash(device_id.c_str(), 0));
                         text_parse.set("hash2", utils::proton_hash(mac.c_str(), 0));
 
-                        if (m_proxy_client->get_player())
-                            m_proxy_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
+                        if (m_client->get_player())
+                            m_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
                         return;
                     }
                 }
@@ -104,55 +105,45 @@ messy_code:
                 break;
             }
             case player::NET_MESSAGE_GAME_PACKET: {
-                player::GameUpdatePacket* updatePacket{ player::get_struct(packet) };
-                if (!updatePacket)
-                    return;
+                player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
+                if (!game_update_packet) return;
 
-                switch(updatePacket->type) {
-                    case player::PACKET_STATE: {
-                        spdlog::debug("flags: {}", player::flag_to_string(
-                            static_cast<player::ePacketFlag>(updatePacket->flags)));
-
-                        if (m_proxy_client->get_player())
-                            m_proxy_client->get_player()->get_avatar()->pos = { updatePacket->pos_x, updatePacket->pos_y };
-                    }
+                switch(game_update_packet->type) {
                     case player::PACKET_CALL_FUNCTION: {
-                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
-                        if (!extended_data)
-                            break;
+                        uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+                        if (!extended_data) break;
 
                         VariantList variant_list{};
-                        variant_list.SerializeFromMem(extended_data, static_cast<int>(updatePacket->data_size));
+                        variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
                         spdlog::info("{}", variant_list.GetContentsAsDebugString());
                         break;
                     }
-                    case player::PACKET_DISCONNECT: {
+                    case player::PACKET_DISCONNECT:
                         enet_peer_disconnect_now(peer, 0);
                         break;
-                    }
                     default: {
-                        uint8_t* extended_data{ player::get_extended_data(updatePacket) };
+                        uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
 
                         std::vector<char> data_array;
-                        for (uint32_t i = 0; i < updatePacket->data_size; i++)
+                        for (uint32_t i = 0; i < game_update_packet->data_size; i++)
                             data_array.push_back(static_cast<char>(extended_data[i]));
 
-                        spdlog::info("Outgoing GameUpdatePacket:\n [{}]{}{}", 
-                            updatePacket->type, 
-                            player::packet_type_to_string(updatePacket->type),
+                        spdlog::info(
+                            "Outgoing TankUpdatePacket:\n [{}]{}{}",
+                            game_update_packet->type, 
+                            player::packet_type_to_string(game_update_packet->type),
                             extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(data_array)) : "");
                         break;
                     }
                 }
                 break;
             }
-            default: {
+            default:
                 spdlog::info("[{}]{}: {}", message_type, player::message_type_to_string(message_type), message_data);
                 break;
-            }
         }
 
-        if (m_proxy_client->get_player() && m_proxy_client->get_player()->send_packet_packet(packet) != 0)
+        if (m_client->get_player() && m_client->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia server");
 
         enet_host_flush(m_host);
@@ -168,7 +159,7 @@ messy_code:
         delete m_player;
         m_player = nullptr;
 
-        if (m_proxy_client && m_proxy_client->get_player())
-            enet_peer_disconnect_now(m_proxy_client->get_player()->get_peer(), 0);
+        if (m_client && m_client->get_player())
+            enet_peer_disconnect_now(m_client->get_player()->get_peer(), 0);
     }
 }

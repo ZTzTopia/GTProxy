@@ -3,8 +3,7 @@
 #include "enetserver.h"
 
 namespace enetwrapper {
-    ENetServer::ENetServer()
-        : m_host(nullptr)
+    ENetServer::ENetServer() : m_host(nullptr)
     {
         m_running.store(false);
     }
@@ -14,7 +13,7 @@ namespace enetwrapper {
         destroy_host();
     }
 
-    bool ENetServer::create_host(enet_uint16 port, size_t peer_count) {
+    bool ENetServer::create_host(enet_uint16 port, std::size_t peer_count) {
         if (m_host) destroy_host();
 
         ENetAddress address;

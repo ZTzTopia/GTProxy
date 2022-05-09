@@ -1,8 +1,7 @@
 #pragma once
 #include <cstdint>
-#include <unordered_map>
 
-#include "WorldTileMap.h"
+#include "world_tile_map.h"
 #include "../utils/binary_reader.h"
 
 #pragma pack(push, 1)
@@ -11,10 +10,10 @@ struct World {
     uint32_t unk;
     uint16_t name_len;
     std::string name;
-    WorldTileMap* tile_map;
+    WorldTileMap tile_map;
 
-    World() : version(0), unk(0), name_len(0), name(), tile_map() { tile_map = new WorldTileMap{}; }
-    ~World() { delete tile_map; }
+    World() : version{ 0 }, unk{ 0 }, name_len{ 0 }, name{}, tile_map{} {}
+    ~World() = default;
 
     void serialize(void* buffer) {
         BinaryReader br{ buffer };
@@ -24,6 +23,8 @@ struct World {
         name_len = br.read_u16();
         br.back(sizeof(uint16_t));
         name = br.read_string();
+
+        tile_map.serialize(buffer, br.position());
     }
 };
 #pragma pack(pop)

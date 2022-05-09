@@ -12,6 +12,9 @@
 
 int main()
 {
+    // Seed the random number generator.
+    srand(static_cast<unsigned int>(std::time(nullptr)) + clock());
+
     {
         // Initialize logger.
         std::vector <spdlog::sink_ptr> sinks;

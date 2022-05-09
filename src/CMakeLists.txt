@@ -23,7 +23,7 @@ file(GLOB SOURCE_FILES
 
 add_executable(${PROJECT_NAME}
     ${INCLUDE_FILES}
-    ${SOURCE_FILES} utils/math.h)
+    ${SOURCE_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11

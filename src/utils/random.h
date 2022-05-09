@@ -10,17 +10,20 @@ namespace randutils {
 
 namespace utils {
     namespace random {
-        inline randutils::pcg_rng get_generator_static() {
+        inline randutils::pcg_rng get_generator_static()
+        {
             static randutils::pcg_rng pcg_rng{};
             return pcg_rng;
         }
 
-        inline randutils::pcg_rng get_generator_thread_local() {
+        inline randutils::pcg_rng get_generator_thread_local()
+        {
             thread_local randutils::pcg_rng pcg_rng{};
             return pcg_rng;
         }
 
-        inline randutils::pcg_rng get_generator_local() {
+        inline randutils::pcg_rng get_generator_local()
+        {
             randutils::pcg_rng pcg_rng{};
             return pcg_rng;
         }
@@ -40,26 +43,30 @@ namespace utils {
         }
 
         template <typename T>
-        inline std::string generate_alpha(T gen, std::size_t length, bool uppercase_all = false) {
-            return generate(gen, length, uppercase_all
+        inline std::string generate_alpha(T gen, std::size_t length, bool uppercase = false)
+        {
+            return generate(gen, length, uppercase
                 ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
         }
 
         template <typename T>
-        inline std::string generate_number(T gen, std::size_t length) {
+        inline std::string generate_number(T gen, std::size_t length)
+        {
             return generate(gen, length, "0123456789");
         }
 
         template <typename T>
-        inline std::string generate_hex(T gen, std::size_t length, bool uppercase_all = true) {
-            return generate(gen, length * 2, uppercase_all
+        inline std::string generate_hex(T gen, std::size_t length, bool uppercase = true)
+        {
+            return generate(gen, length * 2, uppercase
                 ? "0123456789ABCDEF"
                 : "0123456789abcdef");
         }
 
         template <class T>
-        inline std::string generate_mac(T gen) {
+        inline std::string generate_mac(T gen)
+        {
             std::string result;
             result.reserve(17);
 

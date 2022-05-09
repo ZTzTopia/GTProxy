@@ -1,6 +1,7 @@
 #pragma once
 #include "../enetwrapper/enetclient.h"
 #include "../player/player.h"
+#include "../player/local_player.h"
 
 namespace client {
     class Client : public enetwrapper::ENetClient {
@@ -15,13 +16,15 @@ namespace client {
         void on_disconnect(ENetPeer* peer) override;
 
         player::Player* get_player() const { return m_player; }
+        player::LocalPlayer* get_local_player() const { return m_local_player; }
         bool is_on_send_to_server() const { return m_on_send_to_server.active; }
         std::string get_host() const { return m_on_send_to_server.host; }
         uint16_t get_port() const { return m_on_send_to_server.port; }
 
     private:
-        server::Server* m_proxy_server;
+        server::Server* m_server;
         player::Player* m_player;
+        player::LocalPlayer* m_local_player;
 
         struct {
             bool active;

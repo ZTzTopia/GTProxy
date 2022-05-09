@@ -9,8 +9,10 @@ namespace enetwrapper {
         ENetClient();
         ~ENetClient();
 
-        bool connect(const std::string &host, enet_uint16 port, size_t peer_count);
-        void disconnect();
+        bool create_host(std::size_t peer_count);
+        void destroy();
+
+        bool connect(const std::string& host, enet_uint16 port);
 
         void start_service();
         void service_thread();

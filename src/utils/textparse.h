@@ -5,20 +5,24 @@
 namespace utils {
     class TextParse {
     public:
-        TextParse() : m_data() {};
+        TextParse() : m_data() {}
         ~TextParse() = default;
-        explicit TextParse(const std::string& string) {
+        explicit TextParse(const std::string& string)
+        {
             parse(string);
-        };
+        }
 
-        void parse(const std::string& string) {
+        void parse(const std::string& string)
+        {
             m_data = string_tokenize(string, "\n");
             for (auto &data : m_data) {
                 std::replace(data.begin(), data.end(), '\r', '\0');
             }
         }
 
-        static std::vector<std::string> string_tokenize(const std::string &string, const std::string &delimiter = "|") {
+        static std::vector<std::string> string_tokenize(const std::string &string, const std::string &delimiter = "|")
+        {
+            // TODO: make this more readable.
             std::vector<std::string> tokens;
             size_t prev = 0, pos = 0;
             do {
@@ -31,7 +35,8 @@ namespace utils {
             return tokens;
         }
 
-        std::string get(const std::string &key, int index, const std::string &token = "|", int key_index = 0) {
+        std::string get(const std::string &key, int index, const std::string &token = "|", int key_index = 0)
+        {
             if (m_data.empty())
                 return "";
 
@@ -50,12 +55,14 @@ namespace utils {
         }
 
         template<typename T, typename std::enable_if_t<std::is_integral_v<T>, bool> = true>
-        T get(const std::string &key, int index, const std::string &token = "|") {
+        T get(const std::string &key, int index, const std::string &token = "|")
+        {
             return std::stoi(get(key, index, token));
         }
 
         template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
-        T get(const std::string &key, int index, const std::string &token = "|") {
+        T get(const std::string &key, int index, const std::string &token = "|")
+        {
             if (std::is_same_v<T, double>)
                 return std::stod(get(key, index, token));
             else if (std::is_same_v<T, long double>)
@@ -63,17 +70,20 @@ namespace utils {
             return std::stof(get(key, index, token));
         }
 
-        void add(const std::string &key, const std::string &value, const std::string &token = "|") {
+        void add(const std::string &key, const std::string &value, const std::string &token = "|")
+        {
             std::string data = key + token + value;
             m_data.push_back(data);
         }
 
         template<typename T, typename std::enable_if_t<std::is_integral_v<T> || std::is_floating_point_v<T>, bool> = true>
-        void add(const std::string &key, const T &value, const std::string &token = "|") {
+        void add(const std::string &key, const T &value, const std::string &token = "|")
+        {
             add(key, std::to_string(value), token);
         }
 
-        void set(const std::string &key, const std::string &value, const std::string &token = "|") {
+        void set(const std::string &key, const std::string &value, const std::string &token = "|")
+        {
             if (m_data.empty())
                 return;
 
@@ -89,18 +99,21 @@ namespace utils {
         }
 
         template<typename T, typename std::enable_if_t<std::is_integral_v<T> || std::is_floating_point_v<T>, bool> = true>
-        void set(const std::string &key, const T &value, const std::string &token = "|") {
+        void set(const std::string &key, const T &value, const std::string &token = "|")
+        {
             set(key, std::to_string(value), token);
         }
 
-        std::vector<std::string> get_all_array() {
+        std::vector<std::string> get_all_array()
+        {
             std::vector<std::string> ret{};
             for(int i = 0; i < m_data.size(); i++)
                 ret.push_back(fmt::format("[{}]: {}", i, m_data[i]));
             return ret;
         }
 
-        std::string get_all_raw() {
+        std::string get_all_raw()
+        {
             std::string string{};
             for (int i = 0; i < m_data.size(); i++) {
                 string += m_data.at(i);
@@ -112,13 +125,8 @@ namespace utils {
             return string;
         }
 
-        bool empty() {
-            return m_data.empty();
-        }
-
-        size_t get_line_count() {
-            return m_data.size();
-        }
+        bool empty() { return m_data.empty(); }
+        size_t get_line_count() { return m_data.size(); }
 
     private:
         std::vector<std::string> m_data;

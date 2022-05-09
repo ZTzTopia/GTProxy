@@ -9,7 +9,7 @@ namespace enetwrapper {
         ENetServer();
         ~ENetServer();
 
-        bool create_host(enet_uint16 port, size_t peer_count);
+        bool create_host(enet_uint16 port, std::size_t peer_count);
         void destroy_host();
 
         void start_service();

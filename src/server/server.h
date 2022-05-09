@@ -2,7 +2,7 @@
 #include "../player/packet.h"
 #include "../enetwrapper/enetserver.h"
 #include "../client/client.h"
-#include "../command/commandhandler.h"
+#include "../command/command_handler.h"
 #include "../player/player.h"
 
 namespace server {
@@ -17,11 +17,12 @@ namespace server {
         void on_receive(ENetPeer* peer, ENetPacket* packet) override;
         void on_disconnect(ENetPeer* peer) override;
 
+        client::Client* get_client() const { return m_client; }
         player::Player* get_player() const { return m_player; }
-        player::Player* get_client_player() const { return m_proxy_client->get_player(); }
+        player::Player* get_client_player() const { return m_client->get_player(); }
 
     private:
-        client::Client* m_proxy_client;
+        client::Client* m_client;
         player::Player* m_player;
         command::CommandHandler* m_command_handler;
     };

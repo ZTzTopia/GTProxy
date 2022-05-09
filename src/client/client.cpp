@@ -9,17 +9,20 @@
 #include "../utils/binary_reader.h"
 #include "../utils/quick_hash.h"
 #include "../utils/textparse.h"
-#include "../world/World.h"
-#include "../world/WorldTileMap.h"
+#include "../world/world.h"
+#include "../world/world_tile_map.h"
 #include "client.h"
 
 namespace client {
     Client::Client(server::Server* server)
-        : enetwrapper::ENetClient(), m_proxy_server(server), m_player(nullptr), m_on_send_to_server() {}
+        : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_on_send_to_server() {
+        m_local_player = new player::LocalPlayer{};
+    }
 
     Client::~Client()
     {
         delete m_player;
+        delete m_local_player;
     }
 
     bool Client::initialize()
@@ -32,11 +35,14 @@ namespace client {
             return false;
         }
 
-        utils::TextParse text_parse{response->body};
+        utils::TextParse text_parse{ response->body };
         std::string server{ text_parse.get("server", 1) };
         enet_uint16 port{ text_parse.get<enet_uint16>("port", 1) };
 
-        if (!connect(server, port, 1))
+        if (!create_host(1))
+            return false;
+
+        if (!connect(server, port))
             return false;
 
         start_service();
@@ -53,7 +59,7 @@ namespace client {
     void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
     {
         if (!m_player) return;
-        if (!m_proxy_server || !m_proxy_server->get_player())
+        if (!m_server || !m_server->get_player())
             return;
 
         player::eNetMessageType message_type{player::message_type_to_string(packet)};
@@ -62,6 +68,7 @@ namespace client {
             case player::NET_MESSAGE_GAME_PACKET: {
                 player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
                 switch (game_update_packet->type) {
+                    // TODO: Create new methode or file to handle these packets.
                     case player::PACKET_CALL_FUNCTION: {
                         uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
                         if (!extended_data) break;
@@ -74,15 +81,7 @@ namespace client {
                             case "OnSpawn"_qh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
                                 if (text_parse.get("type", 1) == "local") {
-                                    m_player->get_avatar()->name = text_parse.get("name", 1);
-                                    m_player->get_avatar()->AvatarData.net_id = text_parse.get<int32_t>("netID", 1);
-                                }
-                                else {
-                                    auto net_id = text_parse.get<int32_t>("netID", 1);
-                                    auto avatar = new NetAvatar{};
-                                    avatar->name = text_parse.get("name", 1);
-                                    avatar->AvatarData.net_id = net_id;
-                                    m_player->get_avatar_map().insert_or_assign(net_id, avatar);
+                                    m_local_player->set_net_id(text_parse.get<uint32_t>("netID", 1));
                                 }
                                 break;
                             }
@@ -94,7 +93,7 @@ namespace client {
                                 m_on_send_to_server.host = tokenize[0];
                                 m_on_send_to_server.port = static_cast<enet_uint16>(variant_list.Get(1).GetINT32());
 
-                                m_proxy_server->get_player()->send_variant({
+                                m_server->get_player()->send_variant({
                                     "OnSendToServer",
                                     17000,
                                     variant_list.Get(2).GetINT32(),
@@ -119,13 +118,13 @@ namespace client {
                                     utils::TextParse text_parse{ variant_list.Get(1).GetString() };
 
                                     if (variant_list.Get(1).GetString().find("drop_item") != std::string::npos) {
-                                        if (!m_player->get_fast_drop())
+                                        if (m_local_player->has_flags(player::eFlag::FAST_DROP))
                                             break;
 
                                         uint8_t count{ text_parse.get<uint8_t>("add_text_input", 2) };
                                         uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
 
-                                        m_proxy_server->get_player()->send_log(fmt::format("You dropping item id: {}", item_id));
+                                        m_server->get_player()->send_log(fmt::format("You dropping item id: {}", item_id));
                                         m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
                                             fmt::format(
                                                 "action|dialog_return\n"
@@ -154,7 +153,7 @@ namespace client {
                                         auto num2 = static_cast<uint8_t>(std::stoi(tokenize_[1]));
                                         uint16_t sum = num1 + num2;
 
-                                        m_proxy_server->get_player()->send_log(
+                                        m_server->get_player()->send_log(
                                             fmt::format("Solved captcha: {} + {} = {}", num1, num2, sum));
                                         m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
                                             fmt::format("action|dialog_return\n"
@@ -177,10 +176,8 @@ namespace client {
                         uint8_t* extended_data{player::get_extended_data(game_update_packet)};
                         if (!extended_data) break;
 
-                        World* world = m_player->get_world();
+                        World* world = m_local_player->get_world();
                         world->serialize(extended_data);
-
-                        m_player->get_avatar()->world_name = world->name;
                         break;
                     }
                     case player::PACKET_SEND_TILE_UPDATE_DATA: {
@@ -188,84 +185,23 @@ namespace client {
                         if (!extended_data) break;
 
                         Tile tile{};
-                        BinaryReader br{ extended_data };
-
-                        // TODO: Move to Tile::serialize()
-                        tile.foreground = br.read_u16();
-                        tile.background = br.read_u16();
-                        tile.parent_tile = br.read_u16();
-                        tile.flags = static_cast<Tile::TileFlag>(br.read_u16());
-
-                        if (tile.parent_tile) br.skip(2);
-                        if (!(tile.flags & Tile::EXTRA)) break;
-
-                        TileExtra* tile_extra{ tile.tile_extra };
-
-                        // TODO: Move to TileExtra::serialize()
-                        tile_extra->m_type = static_cast<TileExtra::ExtraType>(br.read_u8());
-                        if (tile_extra->m_type == TileExtra::TYPE_NONE) break;
-
-                        switch (tile_extra->m_type) {
-                            case TileExtra::TYPE_DOOR:
-                                tile_extra->m_door.label = br.read_string();
-                                tile_extra->m_door.unk = br.read_u8();
-                                break;
-                            case TileExtra::TYPE_SIGN:
-                                tile_extra->m_sign.label = br.read_string();
-                                tile_extra->m_sign.unk = br.read_u32();
-                                break;
-                            case TileExtra::TYPE_SEED:
-                                tile_extra->m_seed.growth_time = br.read_u32();
-                                tile_extra->m_seed.fruit_count = br.read_u8();
-                                break;
-                            case TileExtra::TYPE_PROVIDER: {
-                                tile_extra->m_provider.unk = br.read_u32();
-
-                                World* world = m_player->get_world();
-                                if (tile.foreground != 5318 && (tile.foreground != 10656 || world->version < 17) )
-                                    break;
-
-                                tile_extra->m_provider.unk2 = br.read_u32();
-                                break;
-                            }
-                            case TileExtra::TYPE_HEART_MONITOR:
-                                tile_extra->m_heart_monitor.unk = br.read_u32();
-                                tile_extra->m_heart_monitor.label = br.read_string();
-                                break;
-                            default:
-                                break;
-                        }
+                        tile.serialize(extended_data);
 
                         spdlog::info(
-                            "Incoming PACKET_SEND_TILE_UPDATE_DATA\n > TileExtra_Type -> [{}]:\n{}",
-                            TileExtra::GetTypeAsString(tile_extra->m_type), tile_extra->GetRawData());
-                        break;
-                    }
-                    case player::PACKET_SET_CHARACTER_STATE: {
-                        if (game_update_packet->net_id == m_player->get_avatar()->AvatarData.net_id) {
-                            std::memcpy(&m_player->get_avatar()->AvatarData, packet->data + 4, packet->dataLength - 4);
-                            break;
-                        }
-                        else {
-                            for (auto& avatar: m_player->get_avatar_map()) {
-                                if (avatar.first == game_update_packet->net_id) {
-                                    std::memcpy(&avatar.second->AvatarData, packet->data + 4, packet->dataLength - 4);
-                                    break;
-                                }
-                            }
-                        }
+                            "Incoming PACKET_SEND_TILE_UPDATE_DATA\n > Type -> [{}]:\n > TileExtra_Type -> [{}]:\n{}",
+                            Tile::flag_to_string(tile.flag), TileExtra::type_to_string(tile.tile_extra.type), tile.tile_extra.get_raw_data());
                         break;
                     }
                     case player::PACKET_SEND_INVENTORY_STATE: {
                         uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
                         if (!extended_data) break;
 
-                        PlayerItems* inventory = m_player->get_inventory();
+                        PlayerItems* inventory = m_local_player->get_items();
                         inventory->serialize(extended_data);
                         break;
                     }
                     case player::PACKET_MODIFY_ITEM_INVENTORY: {
-                        PlayerItems* inventory = m_player->get_inventory();
+                        PlayerItems* inventory = m_local_player->get_items();
 
                         bool found{ false };
                         for (auto& item: inventory->items) {
@@ -321,7 +257,7 @@ namespace client {
             }
         }
 
-        if (m_proxy_server->get_player()->send_packet_packet(packet) != 0)
+        if (m_server->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia client!");
 
         enet_host_flush(m_host);
@@ -339,9 +275,9 @@ namespace client {
         delete m_player;
         m_player = nullptr;
 
-        if (m_proxy_server->get_player())
-            enet_peer_disconnect_now(m_proxy_server->get_player()->get_peer(), 0);
+        if (m_server->get_player())
+            enet_peer_disconnect_now(m_server->get_player()->get_peer(), 0);
 
-        m_proxy_server = nullptr;
+        m_server = nullptr;
     }
 }// namespace client
