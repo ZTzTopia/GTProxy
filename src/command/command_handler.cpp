@@ -5,7 +5,7 @@
 #include "../config.h"
 #include "../server/server.h"
 #include "../utils/dialog_builder.h"
-#include "../utils/quick_hash.h"
+#include "../utils/hash.h"
 #include "../utils/textparse.h"
 
 namespace command {
@@ -87,15 +87,15 @@ namespace command {
                     ->add_label_with_icon(fmt::format("`wList {}``", args[0]), 18, dialog_builder::LEFT, dialog_builder::BIG)
                     ->add_spacer();
 
-                switch (utils::quick_hash(args[0])) {
-                    case "player"_qh:
+                switch (utils::fnv1a_hash(args[0])) {
+                    case "player"_fh:
                         db.add_smalltext(fmt::format("total: `w{}``", command_call_context.remote_player.size()));
                         for (auto& player : command_call_context.remote_player) {
                             db.add_smalltext(fmt::format("net id: `w{}``", player.second->get_net_id()));
                         }
                         break;
-                    case "inv"_qh:
-                    case "inventory"_qh: {
+                    case "inv"_fh:
+                    case "inventory"_fh: {
                         PlayerItems* player_items{ command_call_context.local_player->get_items() };
                         db.add_smalltext(fmt::format(
                             "version: `w{}``, max: `w{}``, total: `w{}``",
@@ -106,7 +106,7 @@ namespace command {
                         }
                         break;
                     }
-                    case "world"_qh: {
+                    case "world"_fh: {
                         World* world{ command_call_context.local_player->get_world() };
                         db.add_smalltext(fmt::format(
                             "version: `w{}``, unknown: `w{}``, name: `w{}`` (`w{}``)",
@@ -131,9 +131,42 @@ namespace command {
             {
                 command_call_context.local_player->toggle_flags(player::eFlag::FAST_DROP);
                 if (command_call_context.local_player->has_flags(player::eFlag::FAST_DROP))
-                    command_call_context.local_peer->send_log("Fast Drop: `2enabled``!");
+                    command_call_context.local_peer->send_log("Fast drop: `2enabled``!");
                 else
-                    command_call_context.local_peer->send_log("Fast Drop: `4disabled``!");
+                    command_call_context.local_peer->send_log("Fast drop: `4disabled``!");
+            })
+        );
+        m_commands.push_back(
+            new Command({ "fastwrench", { "fw", "wrench" }, "Fast pull, kick, ban when wrench clicked" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                if (args.empty()) {
+                    command_call_context.local_peer->send_log("`4Usage: ``!fastwrench <pull|kick|ban>");
+
+                    command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_PULL);
+                    command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_KICK);
+                    command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_BAN);
+
+                    command_call_context.local_peer->send_log("Fast wrench: `4disabled``!");
+                    return;
+                }
+
+                switch (utils::fnv1a_hash(args[0])) {
+                    case "pull"_fh:
+                        command_call_context.local_player->set_flags(player::eFlag::FAST_WRENCH_PULL);
+                        break;
+                    case "kick"_fh:
+                        command_call_context.local_player->set_flags(player::eFlag::FAST_WRENCH_KICK);
+                        break;
+                    case "ban"_fh:
+                        command_call_context.local_player->set_flags(player::eFlag::FAST_WRENCH_BAN);
+                        break;
+                    default:
+                        command_call_context.local_peer->send_log("`4Usage: ``!fastwrench <pull|kick|ban>");
+                        return;
+                }
+
+                command_call_context.local_peer->send_log(fmt::format("Fast wrench: `2{}``!", args[0]));
             })
         );
     }

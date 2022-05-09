@@ -7,7 +7,10 @@
 namespace player {
     enum eFlag : uint8_t {
         NONE = 0,
-        FAST_DROP
+        FAST_DROP = 1 << 0,
+        FAST_WRENCH_PULL = 1 << 1,
+        FAST_WRENCH_KICK = 1 << 2,
+        FAST_WRENCH_BAN = 1 << 3,
     };
 
     inline eFlag operator|(eFlag a, eFlag b)

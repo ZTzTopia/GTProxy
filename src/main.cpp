@@ -8,7 +8,6 @@
 #include "enetwrapper/enetwrapper.h"
 #include "server/server.h"
 #include "utils/textparse.h"
-#include "utils/quick_hash.h"
 
 int main()
 {

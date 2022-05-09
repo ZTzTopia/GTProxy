@@ -7,7 +7,7 @@
 #include "../config.h"
 #include "../server/server.h"
 #include "../utils/binary_reader.h"
-#include "../utils/quick_hash.h"
+#include "../utils/hash.h"
 #include "../utils/textparse.h"
 #include "../world/world.h"
 #include "../world/world_tile_map.h"
@@ -82,9 +82,9 @@ namespace client {
                         VariantList variant_list{};
                         variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
 
-                        std::size_t hash{ utils::quick_hash(variant_list.Get(0).GetString()) };
+                        std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
                         switch (hash) {
-                            case "OnSpawn"_qh: {
+                            case "OnSpawn"_fh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
 
                                 auto net_id = text_parse.get<uint32_t>("netID", 1);
@@ -103,12 +103,12 @@ namespace client {
                                 }
                                 break;
                             }
-                            case "OnRemove"_qh: {
+                            case "OnRemove"_fh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
                                 delete m_remote_player[text_parse.get<uint32_t>("netID", 1)];
                                 break;
                             }
-                            case "OnSendToServer"_qh: {
+                            case "OnSendToServer"_fh: {
                                 std::vector<std::string> tokenize{
                                     utils::TextParse::string_tokenize(variant_list.Get(4).GetString()) };
 
@@ -130,12 +130,14 @@ namespace client {
                                     "OnSendToServer: {}:{}",
                                     m_on_send_to_server.host,
                                     m_on_send_to_server.port);
+
+                                enet_host_flush(m_host);
                                 return;
                             }
-                            case "OnDialogRequest"_qh:
-                            case "onShowCaptcha"_qh: {
-                                bool is_dialog_request = hash == "OnDialogRequest"_qh;
-                                bool is_captcha = hash == "onShowCaptcha"_qh;
+                            case "OnDialogRequest"_fh:
+                            case "onShowCaptcha"_fh: {
+                                bool is_dialog_request = hash == "OnDialogRequest"_fh;
+                                bool is_captcha = hash == "onShowCaptcha"_fh;
 
                                 if (is_dialog_request) {
                                     utils::TextParse text_parse{ variant_list.Get(1).GetString() };
@@ -148,13 +150,16 @@ namespace client {
                                         uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
 
                                         m_server->get_player()->send_log(fmt::format("You dropping item id: {}", item_id));
-                                        m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
+                                        m_player->send_packet(
+                                            player::NET_MESSAGE_GENERIC_TEXT,
                                             fmt::format(
                                                 "action|dialog_return\n"
                                                 "dialog_name|drop_item\n"
                                                 "itemID|{}\n"
                                                 "count|{}",
                                                 item_id, count));
+
+                                        enet_host_flush(m_host);
                                         return;
                                     }
                                 }
@@ -183,6 +188,8 @@ namespace client {
                                                 "dialog_name|captcha_submit\n"
                                                 "captcha_answer|{}",
                                                 sum));
+
+                                        enet_host_flush(m_host);
                                         return;
                                     }
                                 }

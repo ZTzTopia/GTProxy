@@ -6,7 +6,7 @@
 #include "../config.h"
 #include "../utils/random.h"
 #include "../utils/textparse.h"
-#include "../utils/quick_hash.h"
+#include "../utils/hash.h"
 
 namespace server {
     Server::Server()
@@ -88,6 +88,8 @@ messy_code:
 
                         if (m_client->get_player())
                             m_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
+
+                        enet_host_flush(m_host);
                         return;
                     }
                 }
@@ -96,6 +98,36 @@ messy_code:
                     if (!text_parse.get("text", 1).empty()) {
                         if (m_command_handler->handle(text_parse.get("text", 1)))
                             return;
+                    }
+                }
+                else if (message_data.find("action|wrench") != std::string::npos) {
+                    spdlog::debug("Received wrench action. {}", message_data);
+
+                    utils::TextParse text_parse{ message_data };
+                    auto net_id = text_parse.get<uint32_t>("netid", 1);
+
+                    player::LocalPlayer* local_player{ m_client->get_local_player() };
+                    if (net_id != local_player->get_net_id()) {
+                        std::string button_clicked{};
+                        if (local_player->has_flags(player::eFlag::FAST_WRENCH_PULL))
+                            button_clicked = "pull";
+                        else if (local_player->has_flags(player::eFlag::FAST_WRENCH_KICK))
+                            button_clicked = "kick";
+                        else if (local_player->has_flags(player::eFlag::FAST_WRENCH_BAN))
+                            button_clicked = "worldban";
+
+                        if (!button_clicked.empty()) {
+                            m_client->get_player()->send_packet(
+                                player::NET_MESSAGE_GENERIC_TEXT,
+                                fmt::format(
+                                    "action|dialog_return\n"
+                                    "dialog_name|popup\n"
+                                    "netID|{}\n"
+                                    "buttonClicked|{}", net_id, button_clicked));
+
+                            enet_host_flush(m_host);
+                            return;
+                        }
                     }
                 }
                 else if (message_data.find("action|quit") != std::string::npos &&

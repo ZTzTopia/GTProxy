@@ -2,7 +2,7 @@
 #include <string_view>
 
 namespace utils {
-    constexpr std::size_t quick_hash(const std::string_view& data) {
+    constexpr std::size_t fnv1a_hash(const std::string_view& data) {
         // Fowler/Noll/Vo 1a variant.
         std::size_t prime;
         std::size_t basis;
@@ -43,8 +43,8 @@ namespace utils {
     }
 }
 
-constexpr std::size_t operator "" _qh(const char* str, std::size_t len) {
-    return utils::quick_hash(std::string_view{ str, len });
+constexpr std::size_t operator "" _fh(const char* str, std::size_t len) {
+    return utils::fnv1a_hash(std::string_view{ str, len });
 }
 
 constexpr uint32_t operator "" _ph(const char* str, std::size_t len) {
