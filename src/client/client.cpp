@@ -92,6 +92,7 @@ namespace client {
                                 if (text_parse.get("type", 1) == "local") {
                                     for (auto& pair : m_remote_player) {
                                         delete pair.second;
+                                        pair.second = nullptr;
                                     }
 
                                     m_remote_player.clear();
@@ -105,7 +106,11 @@ namespace client {
                             }
                             case "OnRemove"_fh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
-                                delete m_remote_player[text_parse.get<uint32_t>("netID", 1)];
+
+                                auto net_id = text_parse.get<uint32_t>("netID", 1);
+
+                                delete m_remote_player[net_id];
+                                m_remote_player[net_id] = nullptr;
                                 break;
                             }
                             case "OnSendToServer"_fh: {
