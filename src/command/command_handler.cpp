@@ -12,7 +12,9 @@ namespace command {
         : m_server(server)
     {
         m_commands.push_back(
-            new Command({ "help", { "?" }, "Displays this help message" }, [this](const std::vector<std::string>& args) {
+            new Command({ "help", { "?" }, "Displays this help message" },
+                [this](const CommandCallContext& command_call_context, const std::vector<std::string>& args)
+            {
                 if (!args.empty()) {
                     auto it = std::find_if(m_commands.begin(), m_commands.end(), [args](const Command* command) {
                         if (command->get_name() != args[0]) {
@@ -24,9 +26,9 @@ namespace command {
                     });
 
                     if (it != m_commands.end())
-                        m_server->get_player()->send_log((*it)->get_description());
+                        command_call_context.local_peer->send_log((*it)->get_description());
                     else
-                        m_server->get_player()->send_log("`4Unknown command. ``Enter `$!help`` for a list of valid commands.");
+                        command_call_context.local_peer->send_log("`4Unknown command. ``Enter `$!help`` for a list of valid commands.");
                     return;
                 }
 
@@ -38,29 +40,31 @@ namespace command {
                 }
 
                 commands.pop_back();
-                m_server->get_player()->send_log(commands);
+                command_call_context.local_peer->send_log(commands);
             })
         );
         m_commands.push_back(
-            new Command({ "warp", {}, "Warps you to a world" }, [this](const std::vector<std::string> &args) {
+            new Command({ "warp", {}, "Warps you to a world" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
                 if (args.empty()) {
-                    m_server->get_player()->send_log("`4Usage: ``!warp <world name>");
+                    command_call_context.local_peer->send_log("`4Usage: ``!warp <world name>");
                     return;
                 }
 
                 if (args[0] == "exit") {
-                    m_server->get_player()->send_log("`4You cannot warp to the exit world.");
+                    command_call_context.local_peer->send_log("`4You cannot warp to the exit world.");
                     return;
                 }
 
                 if (args[0].size() > 23) {
-                    m_server->get_player()->send_log("`4World name too long, try again.");
+                    command_call_context.local_peer->send_log("`4World name too long, try again.");
                     return;
                 }
 
-                m_server->get_client_player()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, "action|quit_to_exit");
-                m_server->get_player()->send_log(fmt::format("Warping to {}...", args[0]));
-                m_server->get_client_player()->send_packet(
+                command_call_context.server_peer->send_packet(player::NET_MESSAGE_GAME_MESSAGE, "action|quit_to_exit");
+                command_call_context.local_peer->send_log(fmt::format("Warping to {}...", args[0]));
+                command_call_context.server_peer->send_packet(
                     player::NET_MESSAGE_GAME_MESSAGE,
                     fmt::format(
                         "action|join_request\n"
@@ -69,9 +73,11 @@ namespace command {
             })
         );
         m_commands.push_back(
-            new Command({ "list", {}, "Used for debugging" }, [this](const std::vector<std::string> &args) {
+            new Command({ "list", {}, "Used for debugging" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
                 if (args.empty()) {
-                    m_server->get_player()->send_log("`4Usage: ``!list <player|inventory|world>");
+                    command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world>");
                     return;
                 }
 
@@ -79,34 +85,43 @@ namespace command {
                 db.set_default_color('o')
                     ->add_label_with_icon(fmt::format("`wList {}``", args[0]), 18, dialog_builder::LEFT, dialog_builder::BIG)
                     ->add_spacer();
+
                 if (args[0] == "player") {
-                    db.add_smalltext(fmt::format("total: `w{}``", m_server->get_client()->get_remote_players().size()));
-                    for (auto& player : m_server->get_client()->get_remote_players()) {
+                    db.add_smalltext(fmt::format("total: `w{}``", command_call_context.remote_player.size()));
+                    for (auto& player : command_call_context.remote_player) {
                         db.add_smalltext(fmt::format("net id: `w{}``", player.second->get_net_id()));
                     }
                 }
                 else if (args[0] == "inventory") {
-                    PlayerItems* player_items{ m_server->get_client()->get_local_player()->get_items() };
-                    db.add_smalltext(fmt::format("version: `w{}``, max: `w{}``, total: `w{}``", player_items->version, player_items->max_size, player_items->size));
+                    PlayerItems* player_items{ command_call_context.local_player->get_items() };
+                    db.add_smalltext(fmt::format(
+                        "version: `w{}``, max: `w{}``, total: `w{}``",
+                        player_items->version, player_items->max_size, player_items->size));
                     for (auto& inventory : player_items->items) {
-                        db.add_smalltext(fmt::format("id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
+                        db.add_smalltext(
+                            fmt::format("id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
                     }
                 }
                 else if (args[0] == "world") {
-                    World* world{ m_server->get_client()->get_local_player()->get_world() };
-                    db.add_smalltext(fmt::format("version: `w{}``, unknown: `w{}``, name: `w{}`` (`w{}``)", world->version, world->unk, world->name, world->name_len));
+                    World* world{ command_call_context.local_player->get_world() };
+                    db.add_smalltext(fmt::format(
+                        "version: `w{}``, unknown: `w{}``, name: `w{}`` (`w{}``)",
+                        world->version, world->unk, world->name, world->name_len));
                 }
+
                 db.end_dialog("", "Close", "");
-                m_server->get_player()->send_variant({ "OnDialogRequest", db.get() });
+                command_call_context.local_peer->send_variant({ "OnDialogRequest", db.get() });
             })
         );
         m_commands.push_back(
-            new Command({ "fastdrop", { "fd" }, "When `Drop` Button Clicked instantly drop!" }, [this](const std::vector<std::string> &args) {
-                m_server->get_client()->get_local_player()->toggle_flags(player::eFlag::FAST_DROP);
-                if (m_server->get_client()->get_local_player()->has_flags(player::eFlag::FAST_DROP))
-                    m_server->get_player()->send_log("Fast Drop: `2enabled``!");
+            new Command({ "fastdrop", { "fd" }, "When `Drop` Button Clicked instantly drop!" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                command_call_context.local_player->toggle_flags(player::eFlag::FAST_DROP);
+                if (command_call_context.local_player->has_flags(player::eFlag::FAST_DROP))
+                    command_call_context.local_peer->send_log("Fast Drop: `2enabled``!");
                 else
-                    m_server->get_player()->send_log("Fast Drop: `4disabled``!");
+                    command_call_context.local_peer->send_log("Fast Drop: `4disabled``!");
             })
         );
     }
@@ -138,7 +153,11 @@ namespace command {
             }
 
             m_server->get_player()->send_log(fmt::format("`6{}``", string));
-            command->call(args);
+            command->call({
+                m_server->get_player(),
+                m_server->get_client_player(),
+                m_server->get_client()->get_local_player(),
+                m_server->get_client()->get_remote_players() }, args);
             return true;
         }
         return false;
