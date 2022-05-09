@@ -30,7 +30,7 @@ namespace player {
         enet_packet_destroy(packet);
 
         int ret = enet_peer_send(m_peer, 0, packet_) != 0;
-        if (ret) enet_packet_destroy(packet);
+        if (ret) enet_packet_destroy(packet_);
         return ret;
     }
 
