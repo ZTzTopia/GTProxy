@@ -2,6 +2,7 @@
 #include "../enetwrapper/enetclient.h"
 #include "../player/player.h"
 #include "../player/local_player.h"
+#include "../player/remote_player.h"
 
 namespace client {
     class Client : public enetwrapper::ENetClient {
@@ -17,6 +18,8 @@ namespace client {
 
         player::Player* get_player() const { return m_player; }
         player::LocalPlayer* get_local_player() const { return m_local_player; }
+        player::RemotePlayer* get_remote_player(uint32_t net_id) const { return m_remote_player[net_id]; }
+        std::unordered_map<uint32_t, player::RemotePlayer*> get_remote_players() const { return m_remote_player; }
         bool is_on_send_to_server() const { return m_on_send_to_server.active; }
         std::string get_host() const { return m_on_send_to_server.host; }
         uint16_t get_port() const { return m_on_send_to_server.port; }
@@ -24,7 +27,9 @@ namespace client {
     private:
         server::Server* m_server;
         player::Player* m_player;
+
         player::LocalPlayer* m_local_player;
+        std::unordered_map<uint32_t, player::RemotePlayer*> m_remote_player;
 
         struct {
             bool active;

@@ -15,7 +15,7 @@
 
 namespace client {
     Client::Client(server::Server* server)
-        : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_on_send_to_server() {
+        : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_remote_player(), m_on_send_to_server() {
         m_local_player = new player::LocalPlayer{};
     }
 
@@ -23,6 +23,7 @@ namespace client {
     {
         delete m_player;
         delete m_local_player;
+        m_remote_player.clear();
     }
 
     bool Client::initialize()
@@ -80,8 +81,14 @@ namespace client {
                         switch (hash) {
                             case "OnSpawn"_qh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
-                                if (text_parse.get("type", 1) == "local") {
-                                    m_local_player->set_net_id(text_parse.get<uint32_t>("netID", 1));
+
+                                auto net_id = text_parse.get<uint32_t>("netID", 1);
+
+                                if (text_parse.get("type", 1) == "local")
+                                    m_local_player->set_net_id(net_id);
+                                else {
+                                    m_remote_player[net_id] = new player::RemotePlayer{};
+                                    m_remote_player[net_id]->set_net_id(net_id);
                                 }
                                 break;
                             }
