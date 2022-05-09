@@ -135,7 +135,7 @@ namespace client {
                                     utils::TextParse text_parse{ variant_list.Get(1).GetString() };
 
                                     if (variant_list.Get(1).GetString().find("drop_item") != std::string::npos) {
-                                        if (m_local_player->has_flags(player::eFlag::FAST_DROP))
+                                        if (!m_local_player->has_flags(player::eFlag::FAST_DROP))
                                             break;
 
                                         uint8_t count{ text_parse.get<uint8_t>("add_text_input", 2) };

@@ -100,6 +100,15 @@ namespace command {
                 m_server->get_player()->send_variant({ "OnDialogRequest", db.get() });
             })
         );
+        m_commands.push_back(
+            new Command({ "fastdrop", { "fd" }, "When `Drop` Button Clicked instantly drop!" }, [this](const std::vector<std::string> &args) {
+                m_server->get_client()->get_local_player()->toggle_flags(player::eFlag::FAST_DROP);
+                if (m_server->get_client()->get_local_player()->has_flags(player::eFlag::FAST_DROP))
+                    m_server->get_player()->send_log("Fast Drop: `2enabled``!");
+                else
+                    m_server->get_player()->send_log("Fast Drop: `4disabled``!");
+            })
+        );
     }
 
     CommandHandler::~CommandHandler() {
