@@ -89,8 +89,14 @@ namespace client {
 
                                 auto net_id = text_parse.get<uint32_t>("netID", 1);
 
-                                if (text_parse.get("type", 1) == "local")
+                                if (text_parse.get("type", 1) == "local") {
+                                    for (auto& pair : m_remote_player) {
+                                        delete pair.second;
+                                    }
+
+                                    m_remote_player.clear();
                                     m_local_player->set_net_id(net_id);
+                                }
                                 else {
                                     m_remote_player[net_id] = new player::RemotePlayer{};
                                     m_remote_player[net_id]->set_net_id(net_id);
