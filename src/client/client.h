@@ -18,7 +18,6 @@ namespace client {
 
         player::Player* get_player() const { return m_player; }
         player::LocalPlayer* get_local_player() const { return m_local_player; }
-        player::RemotePlayer* get_remote_player(uint32_t net_id) const { return m_remote_player[net_id]; }
         std::unordered_map<uint32_t, player::RemotePlayer*> get_remote_players() const { return m_remote_player; }
         bool is_on_send_to_server() const { return m_on_send_to_server.active; }
         std::string get_host() const { return m_on_send_to_server.host; }

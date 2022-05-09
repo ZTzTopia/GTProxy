@@ -4,6 +4,7 @@
 #include "command_handler.h"
 #include "../config.h"
 #include "../server/server.h"
+#include "../utils/dialog_builder.h"
 #include "../utils/textparse.h"
 
 namespace command {
@@ -65,6 +66,38 @@ namespace command {
                         "action|join_request\n"
                         "name|{}\n"
                         "invitedWorld|0", args[0]));
+            })
+        );
+        m_commands.push_back(
+            new Command({ "list", {}, "Used for debugging" }, [this](const std::vector<std::string> &args) {
+                if (args.empty()) {
+                    m_server->get_player()->send_log("`4Usage: ``!list <player|inventory|world>");
+                    return;
+                }
+
+                dialog_builder db;
+                db.set_default_color('o')
+                    ->add_label_with_icon(fmt::format("`wList {}``", args[0]), 18, dialog_builder::LEFT, dialog_builder::BIG)
+                    ->add_spacer();
+                if (args[0] == "player") {
+                    db.add_smalltext(fmt::format("total: `w{}``", m_server->get_client()->get_remote_players().size()));
+                    for (auto& player : m_server->get_client()->get_remote_players()) {
+                        db.add_smalltext(fmt::format("net id: `w{}``", player.second->get_net_id()));
+                    }
+                }
+                else if (args[0] == "inventory") {
+                    PlayerItems* player_items{ m_server->get_client()->get_local_player()->get_items() };
+                    db.add_smalltext(fmt::format("version: `w{}``, max: `w{}``, total: `w{}``", player_items->version, player_items->max_size, player_items->size));
+                    for (auto& inventory : player_items->items) {
+                        db.add_smalltext(fmt::format("id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
+                    }
+                }
+                else if (args[0] == "world") {
+                    World* world{ m_server->get_client()->get_local_player()->get_world() };
+                    db.add_smalltext(fmt::format("version: `w{}``, unknown: `w{}``, name: `w{}`` (`w{}``)", world->version, world->unk, world->name, world->name_len));
+                }
+                db.end_dialog("", "Close", "");
+                m_server->get_player()->send_variant({ "OnDialogRequest", db.get() });
             })
         );
     }
