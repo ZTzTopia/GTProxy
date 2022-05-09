@@ -5,6 +5,7 @@
 #include "../config.h"
 #include "../server/server.h"
 #include "../utils/dialog_builder.h"
+#include "../utils/quick_hash.h"
 #include "../utils/textparse.h"
 
 namespace command {
@@ -86,30 +87,41 @@ namespace command {
                     ->add_label_with_icon(fmt::format("`wList {}``", args[0]), 18, dialog_builder::LEFT, dialog_builder::BIG)
                     ->add_spacer();
 
-                if (args[0] == "player") {
-                    db.add_smalltext(fmt::format("total: `w{}``", command_call_context.remote_player.size()));
-                    for (auto& player : command_call_context.remote_player) {
-                        db.add_smalltext(fmt::format("net id: `w{}``", player.second->get_net_id()));
+                switch (utils::quick_hash(args[0])) {
+                    case "player"_qh:
+                        db.add_smalltext(fmt::format("total: `w{}``", command_call_context.remote_player.size()));
+                        for (auto& player : command_call_context.remote_player) {
+                            db.add_smalltext(fmt::format("net id: `w{}``", player.second->get_net_id()));
+                        }
+                        break;
+                    case "inv"_qh:
+                    case "inventory"_qh: {
+                        PlayerItems* player_items{ command_call_context.local_player->get_items() };
+                        db.add_smalltext(fmt::format(
+                            "version: `w{}``, max: `w{}``, total: `w{}``",
+                            player_items->version, player_items->max_size, player_items->size));
+                        for (auto& inventory : player_items->items) {
+                            db.add_smalltext(fmt::format(
+                                "id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
+                        }
+                        break;
                     }
-                }
-                else if (args[0] == "inventory") {
-                    PlayerItems* player_items{ command_call_context.local_player->get_items() };
-                    db.add_smalltext(fmt::format(
-                        "version: `w{}``, max: `w{}``, total: `w{}``",
-                        player_items->version, player_items->max_size, player_items->size));
-                    for (auto& inventory : player_items->items) {
-                        db.add_smalltext(
-                            fmt::format("id: `w{}``, [count, unused]: `w{}``", inventory.first, inventory.second));
+                    case "world"_qh: {
+                        World* world{ command_call_context.local_player->get_world() };
+                        db.add_smalltext(fmt::format(
+                            "version: `w{}``, unknown: `w{}``, name: `w{}`` (`w{}``)",
+                            world->version, world->unk, world->name, world->name_len));
+                        db.add_smalltext(fmt::format(
+                            "size: `w{}``, tile count: `w{}``",
+                            world->tile_map.size.to_pair(), world->tile_map.tile_count));
+                        break;
                     }
-                }
-                else if (args[0] == "world") {
-                    World* world{ command_call_context.local_player->get_world() };
-                    db.add_smalltext(fmt::format(
-                        "version: `w{}``, unknown: `w{}``, name: `w{}`` (`w{}``)",
-                        world->version, world->unk, world->name, world->name_len));
+                    default:
+                        command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world>");
+                        return;
                 }
 
-                db.end_dialog("", "Close", "");
+                db.end_dialog("", "", "Close");
                 command_call_context.local_peer->send_variant({ "OnDialogRequest", db.get() });
             })
         );
