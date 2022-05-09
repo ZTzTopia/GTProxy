@@ -9,16 +9,16 @@ namespace utils {
 
         if constexpr (sizeof(std::size_t) == 8) {
             // 64-bit
-            prime = 14695981039346656037ull;
-            basis = 1099511628211ull;
+            prime = 14695981039346656037ULL;
+            basis = 1099511628211ULL;
         }
         else {
             // 32-bit
-            prime = 2147483647u;
-            basis = 2166136261u;
+            prime = 16777619U;
+            basis = 2166136261U;
         }
 
-        std::size_t hash = basis;
+        std::size_t hash{ basis };
         for (auto& c : data) {
             hash ^= c;
             hash *= prime;
