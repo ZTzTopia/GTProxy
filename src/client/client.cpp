@@ -222,9 +222,7 @@ namespace client {
                         Tile tile{};
                         tile.serialize(extended_data);
 
-                        spdlog::info(
-                            "Incoming PACKET_SEND_TILE_UPDATE_DATA\n > Type -> [{}]:\n > TileExtra_Type -> [{}]:\n{}",
-                            Tile::flag_to_string(tile.flag), TileExtra::type_to_string(tile.tile_extra.type), tile.tile_extra.get_raw_data());
+                        spdlog::info("Incoming PACKET_SEND_TILE_UPDATE_DATA\n{}", tile.get_raw_data());
                         break;
                     }
                     case player::PACKET_SEND_INVENTORY_STATE: {

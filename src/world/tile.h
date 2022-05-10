@@ -35,7 +35,7 @@ struct Tile {
         : foreground(0), background(0), parent_tile(0), flag(NONE), lock_parent_tile(0), tile_extra() {}
     ~Tile() = default;
 
-    static std::string flag_to_string(uint8_t flag)
+    static std::string flag_to_string(eFlag flag)
     {
         if (flag == 0)
             return "NONE";
@@ -57,6 +57,11 @@ struct Tile {
         return flag_string;
     }
 
+    [[nodiscard]] std::string flag_to_string() const
+    {
+        return flag_to_string(flag);
+    }
+
     void serialize(void* buffer) {
         std::size_t temp{ 0 };
         serialize(buffer, temp);
@@ -75,7 +80,15 @@ struct Tile {
 
         position = br.position();
         if ((flag & Tile::EXTRA) == Tile::EXTRA)
-            tile_extra.serialize(buffer, position);
+            tile_extra.serialize(buffer, position, std::make_pair(foreground, background));
+    }
+
+    [[nodiscard]] std::string get_raw_data() const
+    {
+        if ((flag & Tile::EXTRA) != Tile::EXTRA)
+            return fmt::format("Tile::Type -> [{}]", flag_to_string());
+
+        return fmt::format("Tile::Type -> [{}]:\n{}", flag_to_string(), tile_extra.get_raw_data());
     }
 };
 #pragma pack(pop)

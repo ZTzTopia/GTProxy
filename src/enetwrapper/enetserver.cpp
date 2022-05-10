@@ -39,7 +39,6 @@ namespace enetwrapper {
         }
 
         if (m_host) {
-            enet_host_destroy(m_host);
             for (ENetPeer* current_peer = m_host->peers;
                 current_peer < &m_host->peers[m_host->peerCount];
                 ++current_peer)
@@ -47,6 +46,8 @@ namespace enetwrapper {
                 if (current_peer && current_peer->state == ENET_PEER_STATE_CONNECTED)
                     enet_peer_disconnect_now(current_peer, 0);
             }
+
+            enet_host_destroy(m_host);
         }
     }
 

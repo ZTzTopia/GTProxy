@@ -78,16 +78,19 @@ namespace command {
                 [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
                 if (args.empty()) {
-                    command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world>");
+                    command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world|tile|tileextra>");
                     return;
                 }
 
+                std::string lowercase_args{ args[0] };
+                std::transform(lowercase_args.begin(), lowercase_args.end(), lowercase_args.begin(), ::tolower);
+
                 dialog_builder db;
                 db.set_default_color('o')
-                    ->add_label_with_icon(fmt::format("`wList {}``", args[0]), 18, dialog_builder::LEFT, dialog_builder::BIG)
+                    ->add_label_with_icon(fmt::format("`wList {}``", lowercase_args), 18, dialog_builder::LEFT, dialog_builder::BIG)
                     ->add_spacer();
 
-                switch (utils::fnv1a_hash(args[0])) {
+                switch (utils::fnv1a_hash(lowercase_args)) {
                     case "player"_fh:
                         db.add_smalltext(fmt::format("total: `w{}``", command_call_context.remote_player.size()));
                         for (auto& player : command_call_context.remote_player) {
@@ -116,8 +119,40 @@ namespace command {
                             world->tile_map.size.to_pair(), world->tile_map.tile_count));
                         break;
                     }
+                    case "tile"_fh: {
+                        World* world{ command_call_context.local_player->get_world() };
+                        for (auto& tile : world->tile_map.tiles) {
+                            if (tile.foreground == 0 && tile.background == 0)
+                                continue;
+
+                            db.add_smalltext(fmt::format(
+                                "foreground: `w{}``, background: `w{}``",
+                                tile.foreground, tile.background));
+                        }
+                        break;
+                    }
+                    case "extratile"_fh:
+                    case "tileextra"_fh: {
+                        World* world{ command_call_context.local_player->get_world() };
+                        for (auto& tile : world->tile_map.tiles) {
+                            if (tile.foreground == 0 && tile.background == 0)
+                                continue;
+
+                            if ((tile.flag & Tile::EXTRA) != Tile::EXTRA)
+                                continue;
+
+                            db.add_smalltext(fmt::format(
+                                "foreground: `w{}``, background: `w{}``",
+                                tile.foreground, tile.background));
+
+                            db.add_smalltext(fmt::format(
+                                "extra type: `w[{}] ({})``",
+                                tile.tile_extra.type_to_string(), tile.tile_extra.type));
+                        }
+                        break;
+                    }
                     default:
-                        command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world>");
+                        command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world|tile|tileextra>");
                         return;
                 }
 

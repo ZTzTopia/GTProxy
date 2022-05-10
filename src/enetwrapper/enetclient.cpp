@@ -36,9 +36,10 @@ namespace enetwrapper {
         }
 
         if (m_host) {
-            enet_host_destroy(m_host);
             if (m_peer && m_peer->state == ENET_PEER_STATE_CONNECTED)
                 enet_peer_disconnect_now(m_peer, 0);
+
+            enet_host_destroy(m_host);
         }
     }
 

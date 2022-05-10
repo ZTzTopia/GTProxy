@@ -39,6 +39,7 @@ public:
     double read_double() { return read<double>(); }
 
     void skip(std::size_t len) { m_pos += len; }
+    void skip_string() { m_pos += read_u16(); }
     void back(std::size_t len) { m_pos -= len; }
 
     [[nodiscard]] std::size_t position() const { return m_pos; }
