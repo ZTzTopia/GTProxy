@@ -27,7 +27,7 @@ int main()
         spdlog::set_default_logger(logger);
 
         // Program logic.
-        spdlog::info("Starting Growtopia proxy...");
+        spdlog::info("Starting Growtopia proxy v{}...", GTPROXY_VERSION);
 
         // Load config file.
         Config::get().load("config.json");

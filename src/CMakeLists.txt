@@ -33,10 +33,17 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/proton/shared)
 
+if (GTPROXY_BUILD_VERSION)
+    set(GTPROXY_VERSION "${CMAKE_PROJECT_VERSION}.${GTPROXY_BUILD_VERSION}")
+else ()
+    set(GTPROXY_VERSION "${CMAKE_PROJECT_VERSION}")
+endif ()
+
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     NOMINMAX
     WIN32_LEAN_AND_MEAN
-    SPDLOG_FMT_EXTERNAL)
+    SPDLOG_FMT_EXTERNAL
+    GTPROXY_VERSION="${GTPROXY_VERSION}")
 
 target_link_libraries(${PROJECT_NAME} enet_static)
 
