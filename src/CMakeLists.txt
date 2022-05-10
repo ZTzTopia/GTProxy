@@ -46,7 +46,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../conan/conan.cmake)
 conan_cmake_configure(REQUIRES
         fmt/8.1.1
         spdlog/1.10.0
-        cpp-httplib/0.10.6
+        cpp-httplib/0.10.7
         nlohmann_json/3.10.5
     GENERATORS cmake_find_package
     IMPORTS "bin, *.dll -> ./bin"
