@@ -5,20 +5,20 @@ namespace utils {
     constexpr std::size_t fnv1a_hash(const std::string_view& data) {
         // Fowler/Noll/Vo 1a variant.
         std::size_t prime;
-        std::size_t basis;
+        std::size_t offset_basis;
 
         if constexpr (sizeof(std::size_t) == 8) {
             // 64-bit
-            prime = 14695981039346656037ULL;
-            basis = 1099511628211ULL;
+            prime = 1099511628211ULL;
+            offset_basis = 14695981039346656037ULL;
         }
         else {
             // 32-bit
             prime = 16777619U;
-            basis = 2166136261U;
+            offset_basis = 2166136261U;
         }
 
-        std::size_t hash{ basis };
+        std::size_t hash{ offset_basis };
         for (auto& c : data) {
             hash ^= c;
             hash *= prime;
