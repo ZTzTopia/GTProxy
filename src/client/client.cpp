@@ -84,18 +84,20 @@ namespace client {
 
                         std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
                         switch (hash) {
+                            case "OnRequestWorldSelectMenu"_fh: {
+                                for (auto& pair : m_remote_player) {
+                                    delete pair.second;
+                                    pair.second = nullptr;
+                                }
+
+                                m_remote_player.clear();
+                            }
                             case "OnSpawn"_fh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
 
                                 auto net_id = text_parse.get<uint32_t>("netID", 1);
 
                                 if (text_parse.get("type", 1) == "local") {
-                                    for (auto& pair : m_remote_player) {
-                                        delete pair.second;
-                                        pair.second = nullptr;
-                                    }
-
-                                    m_remote_player.clear();
                                     m_local_player->set_net_id(net_id);
                                 }
                                 else {
