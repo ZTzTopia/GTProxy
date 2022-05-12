@@ -62,12 +62,12 @@ struct Tile {
         return flag_to_string(flag);
     }
 
-    void serialize(void* buffer) {
+    void serialize(void* buffer, uint16_t version) {
         std::size_t temp{ 0 };
-        serialize(buffer, temp);
+        serialize(buffer, temp, version);
     }
 
-    void serialize(void* buffer, std::size_t& position) {
+    void serialize(void* buffer, std::size_t& position, uint16_t version) {
         BinaryReader br{ buffer };
         br.skip(position);
 
@@ -80,7 +80,7 @@ struct Tile {
 
         position = br.position();
         if ((flag & Tile::EXTRA) == Tile::EXTRA)
-            tile_extra.serialize(buffer, position, std::make_pair(foreground, background));
+            tile_extra.serialize(buffer, position, version, std::make_pair(foreground, background));
     }
 
     [[nodiscard]] std::string get_raw_data() const

@@ -24,7 +24,7 @@ struct World {
         br.back(sizeof(uint16_t));
         name = br.read_string();
 
-        tile_map.serialize(buffer, br.position());
+        tile_map.serialize(buffer, br.position(), version);
 
         // TODO: Serialize world object.
         uint32_t object_count = br.read_u32();

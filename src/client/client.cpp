@@ -223,7 +223,7 @@ namespace client {
                         if (!extended_data) break;
 
                         Tile tile{};
-                        tile.serialize(extended_data);
+                        tile.serialize(extended_data, m_local_player->get_world()->version);
 
                         spdlog::info("Incoming PACKET_SEND_TILE_UPDATE_DATA\n{}", tile.get_raw_data());
                         break;

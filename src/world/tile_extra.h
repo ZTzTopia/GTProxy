@@ -67,13 +67,6 @@ struct TileExtra {
         uint32_t owner_id;
         uint32_t access_size;
         std::vector<uint32_t> accesses;
-        union {
-            int32_t note_speed;
-            uint32_t unk2;
-        };
-        uint32_t unk3;
-        uint32_t unk4;
-        uint32_t unk5;
     } lock;
 
     struct {
@@ -186,7 +179,7 @@ struct TileExtra {
         , country_flag(), battle_cage(), weather_special(), vip_entrance(), geiger_charger() {}
     ~TileExtra() = default;
 
-    void serialize(void* buffer, std::size_t& position, const std::pair<uint16_t, uint16_t>& fg_bg)
+    void serialize(void* buffer, std::size_t& position, uint16_t version, const std::pair<uint16_t, uint16_t>& fg_bg)
     {
         BinaryReader br{ buffer };
         br.skip(position);
@@ -212,30 +205,10 @@ struct TileExtra {
                     lock.accesses.push_back(br.read_u32());
                 }
 
-                switch (fg_bg.first) {
-                    case 202: // Small Lock
-                    case 204: // Big Lock
-                    case 206: // Huge Lock
-                    case 4994: // Builder Lock
-                        lock.unk2 = br.read_u32();
-                        lock.unk3 = br.read_u32();
-                        break;
-                    default:
-                        lock.note_speed = br.read_i32();
-                        lock.unk3 = br.read_u32();
-                        lock.unk4 = br.read_u32();
-                        lock.unk5 = br.read_u32();
+                br.skip(8);
+                if (fg_bg.first == 5814) // Guild Lock
+                    br.skip(16);
 
-                        if (fg_bg.first == 5814) { // Guild Lock
-                            br.skip(4); // unk
-                            br.skip(4); // unk
-                            br.skip(4); // mascot fg
-                            br.skip(4); // mascot bg
-                            br.skip(4); // level
-                            br.skip(4); // unk
-                        }
-                        break;
-                }
                 break;
             }
             case TileExtra::SEED:
@@ -248,7 +221,7 @@ struct TileExtra {
             case TileExtra::PROVIDER: {
                 provider.unk = br.read_u32();
 
-                if (fg_bg.first != 5318 && (fg_bg.first != 10656))
+                if (fg_bg.first != 5318 && (fg_bg.first != 10656 || version < 17))
                     break;
 
                 provider.unk2 = br.read_u32();
@@ -361,6 +334,9 @@ struct TileExtra {
                 br.skip(br.read_u32() * 4);
                 br.skip(16);
                 break;
+            case 62:
+                br.skip(14);
+                break;
             case 66: // Growscan9000 (please move it).
                 br.skip(1);
                 break;
@@ -379,6 +355,9 @@ struct TileExtra {
                 break;
             case 71: // Sucker2 (please move it).
                 br.skip(44);
+                break;
+            case 72: // Storm Cloud (please move it).
+                br.skip(12);
                 break;
             case 77: // Infinity Weather Machine.
                 break;
