@@ -18,7 +18,7 @@ public:
 
         std::ifstream in{ path };
         if (!in.is_open()) {
-            json["server"]["host"] = "http://13.248.211.25"; // http://growtopia1.com
+            json["server"]["host"] = "52.86.208.1";
             json["server"]["gameVersion"] = GROWTOPIA_VERSION;
             json["server"]["protocol"] = GROWTOPIA_PROTOCOL;
             json["server"]["usingNewPacket"] = true;
@@ -31,6 +31,12 @@ public:
         else {
             in >> json;
             bool need_to_save{ false };
+
+            if (json["server"].contains("host")) {
+                if (json["server"]["host"] != "52.86.208.1")
+                    json["server"]["host"] = "52.86.208.1";
+                need_to_save = true;
+            }
 
             if (!json["server"].contains("usingNewPacket")) {
                 json["server"]["usingNewPacket"] = true;

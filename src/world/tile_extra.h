@@ -325,10 +325,13 @@ struct TileExtra {
                 br.skip(4);
                 break;
             case 42: // Data bedrock (please move it).
-                br.skip(22);
+                br.skip(21);
                 break;
             case 43: // Display shelf (please move it).
                 br.skip(16);
+                break;
+            case 49: // Stuff Weather (please move it).
+                br.skip(9);
                 break;
             case 55: // Home Oven (please move it).
                 br.skip(br.read_u32() * 4);
