@@ -91,6 +91,7 @@ namespace client {
                                 }
 
                                 m_remote_player.clear();
+                                break;
                             }
                             case "OnSpawn"_fh: {
                                 utils::TextParse text_parse{ variant_list.Get(1).GetString() };
@@ -303,7 +304,6 @@ namespace client {
         spdlog::info("Client disconnected from Growtopia Server: (peer->data! -> {})", peer->data);
 
         if (!m_player) return;
-
         if (m_player->get_peer())
             enet_peer_disconnect_now(m_player->get_peer(), 0);
 
