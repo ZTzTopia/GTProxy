@@ -3,6 +3,7 @@
 #include <spdlog/fmt/bin_to_hex.h>
 #include <spdlog/spdlog.h>
 #include <util/Variant.h>
+#include <algorithm>
 
 #include "../config.h"
 #include "../server/server.h"
@@ -259,6 +260,41 @@ namespace client {
                             inventory->items.insert(
                                 std::make_pair(game_update_packet->item_id,
                                 std::make_pair(game_update_packet->gained_item_count, 0)));
+                        break;
+                    }
+                    case player::PACKET_ITEM_CHANGE_OBJECT: {
+                        World* world = m_local_player->get_world();
+
+                        if (game_update_packet->object_change_type == -1) {
+                            world->object_map.count++;
+                            world->object_map.drop_id++;
+
+                            Object object{};
+                            object.pos = { game_update_packet->pos_x, game_update_packet->pos_y };
+                            object.item_id = game_update_packet->item_id;
+                            object.amount = static_cast<uint8_t>(game_update_packet->obj_alt_count);
+                            object.drop_id_offset = world->object_map.drop_id;
+                            world->object_map.objects.push_back(object);
+                        }
+
+                        for (auto& object : world->object_map.objects) {
+                            if (object.drop_id_offset == game_update_packet->item_net_id) {
+                                if (game_update_packet->object_change_type == -3) {
+                                    object.pos = { game_update_packet->pos_x, game_update_packet->pos_y };
+                                    object.item_id = game_update_packet->item_id;
+                                    object.amount = static_cast<uint8_t>(game_update_packet->obj_alt_count);
+                                }
+                            }
+                        }
+
+                        if (game_update_packet->object_change_type != -1 && game_update_packet->object_change_type != -3) {
+                            for (auto it = world->object_map.objects.begin(); it != world->object_map.objects.end();) {
+                                if (it->drop_id_offset == game_update_packet->object_id) {
+                                    it = world->object_map.objects.erase(it);
+                                    world->object_map.count--;
+                                }
+                            }
+                        }
                         break;
                     }
                     case player::PACKET_APP_INTEGRITY_FAIL:
