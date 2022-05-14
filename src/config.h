@@ -3,6 +3,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
+#define GROWTOPIA_HOST "52.86.208.1"
 #define GROWTOPIA_VERSION "3.87"
 #define GROWTOPIA_PROTOCOL 161
 
@@ -18,7 +19,7 @@ public:
 
         std::ifstream in{ path };
         if (!in.is_open()) {
-            json["server"]["host"] = "52.86.208.1";
+            json["server"]["host"] = GROWTOPIA_HOST; // growtopia1.com
             json["server"]["gameVersion"] = GROWTOPIA_VERSION;
             json["server"]["protocol"] = GROWTOPIA_PROTOCOL;
             json["server"]["usingNewPacket"] = true;
@@ -32,9 +33,9 @@ public:
             in >> json;
             bool need_to_save{ false };
 
-            if (json["server"].contains("host")) {
-                if (json["server"]["host"] != "52.86.208.1")
-                    json["server"]["host"] = "52.86.208.1";
+            if (json["server"].contains("game_version")) {
+                json["server"].erase("game_version");
+                json["server"]["gameVersion"] = GROWTOPIA_VERSION;
                 need_to_save = true;
             }
 
@@ -43,12 +44,12 @@ public:
                 need_to_save = true;
             }
 
-            if (json["server"].contains("game_version")) {
-                json["server"].erase("game_version");
-                json["server"]["gameVersion"] = GROWTOPIA_VERSION;
+			if (json["server"].contains("host")) {
+                if (json["server"]["host"] != GROWTOPIA_HOST)
+                    json["server"]["host"] = GROWTOPIA_HOST;
                 need_to_save = true;
             }
-            
+
             if (json["server"].contains("gameVersion")) {
                 if (json["server"]["gameVersion"] != GROWTOPIA_VERSION)
                     json["server"]["gameVersion"] = GROWTOPIA_VERSION;
@@ -81,5 +82,6 @@ private:
     nlohmann::json m_config;
 };
 
+#undef GROWTOPIA_HOST
 #undef GROWTOPIA_VERSION
 #undef GROWTOPIA_PROTOCOL
