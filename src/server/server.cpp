@@ -101,8 +101,6 @@ messy_code:
                     }
                 }
                 else if (message_data.find("action|wrench") != std::string::npos) {
-                    spdlog::debug("Received wrench action. {}", message_data);
-
                     utils::TextParse text_parse{ message_data };
                     auto net_id = text_parse.get<uint32_t>("netid", 1);
 
@@ -134,6 +132,9 @@ messy_code:
                     message_data.find("action|quit_to_exit") == std::string::npos) {
                     enet_peer_disconnect_now(peer, 0);
                 }
+                else {
+                    spdlog::info("[{}]{}:\n{}", player::message_type_to_string(message_type), message_type, message_data);
+                }
                 break;
             }
             case player::NET_MESSAGE_GAME_PACKET: {
@@ -146,6 +147,18 @@ messy_code:
                         local_player->set_pos({
                             static_cast<int>(game_update_packet->pos_x),
                             static_cast<int>(game_update_packet->pos_y) });
+
+                        if (game_update_packet->item_id != 0) {
+                            PlayerItems* inventory = get_client()->get_local_player()->get_items();
+                            for (auto& item: inventory->items) {
+                                if (item.first == game_update_packet->item_id) {
+                                    item.second.first -= 1;
+                                    if (item.second.first <= 0)
+                                        inventory->items.erase(item.first);
+                                    break;
+                                }
+                            }
+                        }
                         break;
                     }
                     case player::PACKET_CALL_FUNCTION: {

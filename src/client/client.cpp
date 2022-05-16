@@ -17,6 +17,10 @@ namespace client {
         : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_remote_player(), m_on_send_to_server() {
         m_local_player = new player::LocalPlayer{};
         m_items = new items::Items{};
+
+        m_on_update_thread_running.store(true);
+        std::thread th{ &Client::on_update, this };
+        m_on_update_thread = std::move(th);
     }
 
     Client::~Client()
@@ -30,6 +34,9 @@ namespace client {
         }
 
         m_remote_player.clear();
+
+        m_on_update_thread_running.store(false);
+        m_on_update_thread.join();
     }
 
     bool Client::initialize()
@@ -54,6 +61,21 @@ namespace client {
 
         start_service();
         return true;
+    }
+
+    void Client::on_update()
+    {
+        while (m_on_update_thread_running.load()) {
+            if (!m_local_player) continue;
+
+            World* world = m_local_player->get_world();
+            if (!world) continue;
+
+            // TODO: Handle path finding, etc here?
+
+            // 20 ticks per second (called every 0.05 seconds).
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
     }
 
     void Client::on_connect(ENetPeer* peer)
@@ -345,8 +367,9 @@ namespace client {
                         if (game_update_packet->object_change_type != -1 && game_update_packet->object_change_type != -3) {
                             for (auto it = world->object_map.objects.begin(); it != world->object_map.objects.end();) {
                                 if (it->drop_id_offset == game_update_packet->object_id) {
-                                    it = world->object_map.objects.erase(it);
+                                    world->object_map.objects.erase(it);
                                     world->object_map.count--;
+                                    break;
                                 }
                             }
                         }

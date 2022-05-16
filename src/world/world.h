@@ -106,7 +106,7 @@ struct World {
         open_set.emplace_back(nodes[start.x * tile_map.size.y + start.y]);
 
         bool is_found{ false };
-        Node *current{};
+        Node *current{ nullptr };
 
         while (!open_set.empty()) {
             current = open_set.front();
@@ -143,10 +143,11 @@ struct World {
                     auto it = std::find(open_set.begin(), open_set.end(), neighbor);
                     if (it == open_set.end()) {
                         open_set.emplace_back(neighbor);
-                        std::push_heap(open_set.begin(), open_set.end(), [](Node* lhs, Node* rhs) {
-                            return lhs->f > rhs->f;
-                        });
                     }
+
+                    std::make_heap(open_set.begin(), open_set.end(), [](Node* lhs, Node* rhs) {
+                        return lhs->f > rhs->f;
+                    });
                 }
             }
         }

@@ -13,6 +13,7 @@ namespace client {
 
         bool initialize();
 
+        void on_update();
         void on_connect(ENetPeer* peer) override;
         void on_receive(ENetPeer* peer, ENetPacket* packet) override;
         void on_disconnect(ENetPeer* peer) override;
@@ -38,5 +39,8 @@ namespace client {
             std::string host;
             enet_uint16 port;
         } m_on_send_to_server;
+
+        std::atomic<bool> m_on_update_thread_running;
+        std::thread m_on_update_thread;
     };
 }// namespace client
