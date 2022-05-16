@@ -93,9 +93,9 @@ namespace client {
         if (!m_player) return;
         if (!m_server || !m_server->get_player()) return;
 
-        process_packet(peer, packet);
+        bool process{ process_packet(peer, packet) };
 
-        if (m_server->get_player()->send_packet_packet(packet) != 0)
+        if (process && m_server->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia client!");
 
         enet_host_flush(m_host);
@@ -118,15 +118,14 @@ namespace client {
         m_server = nullptr;
     }
 
-    void Client::process_packet(ENetPeer* peer, ENetPacket* packet)
+    bool Client::process_packet(ENetPeer* peer, ENetPacket* packet)
     {
         player::eNetMessageType message_type{player::message_type_to_string(packet)};
         std::string message_data{ player::get_text(packet) };
         switch (message_type) {
             case player::NET_MESSAGE_GAME_PACKET: {
                 player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
-                process_tank_update_packet(peer, game_update_packet);
-                break;
+                return process_tank_update_packet(peer, game_update_packet);
             }
             default: {
                 utils::TextParse text_parse{message_data};
@@ -140,9 +139,11 @@ namespace client {
                 break;
             }
         }
+
+        return true;
     }
 
-    void Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
+    bool Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
     {
         switch (game_update_packet->type) {
             case player::PACKET_CALL_FUNCTION: {
@@ -210,7 +211,7 @@ namespace client {
                             m_on_send_to_server.port);
 
                         enet_host_flush(m_host);
-                        return;
+                        return false;
                     }
                     case "OnDialogRequest"_fh:
                     case "onShowCaptcha"_fh: {
@@ -238,7 +239,7 @@ namespace client {
                                         item_id, count));
 
                                 enet_host_flush(m_host);
-                                return;
+                                return false;
                             }
                         }
 
@@ -268,7 +269,7 @@ namespace client {
                                         sum));
 
                                 enet_host_flush(m_host);
-                                return;
+                                return false;
                             }
                         }
                         break;
@@ -437,7 +438,7 @@ namespace client {
                 break;
             }
             case player::PACKET_APP_INTEGRITY_FAIL:
-                return;
+                return false;
             default: {
                 uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
 
@@ -453,5 +454,7 @@ namespace client {
                 break;
             }
         }
+
+        return true;
     }
 }// namespace client

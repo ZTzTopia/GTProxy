@@ -18,8 +18,8 @@ namespace client {
         void on_receive(ENetPeer* peer, ENetPacket* packet) override;
         void on_disconnect(ENetPeer* peer) override;
 
-        void process_packet(ENetPeer* peer, ENetPacket* packet);
-        void process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
+        bool process_packet(ENetPeer* peer, ENetPacket* packet);
+        bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
 
         player::Player* get_player() const { return m_player; }
         player::LocalPlayer* get_local_player() const { return m_local_player; }

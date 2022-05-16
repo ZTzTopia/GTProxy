@@ -63,9 +63,9 @@ messy_code:
         if (!peer || !packet || packet->dataLength < 5) return;
         if (!m_player || !m_client) return;
 
-        process_packet(peer, packet);
+        bool process{ process_packet(peer, packet) };
 
-        if (m_client->get_player() && m_client->get_player()->send_packet_packet(packet) != 0)
+        if (process && m_client->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia server");
 
         enet_host_flush(m_host);
@@ -85,9 +85,9 @@ messy_code:
             enet_peer_disconnect_now(m_client->get_player()->get_peer(), 0);
     }
 
-    void Server::process_packet(ENetPeer* peer, ENetPacket* packet)
+    bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
     {
-player::eNetMessageType message_type{ player::message_type_to_string(packet) };
+        player::eNetMessageType message_type{ player::message_type_to_string(packet) };
         std::string message_data{ player::get_text(packet) };
         switch (message_type) {
             case player::NET_MESSAGE_GENERIC_TEXT:
@@ -95,8 +95,7 @@ player::eNetMessageType message_type{ player::message_type_to_string(packet) };
                 if (message_data.find("requestedName") != std::string::npos) {
                     utils::TextParse text_parse{ message_data };
                     if (!text_parse.get("requestedName", 1).empty()) {
-                        randutils::pcg_rng gen{ utils::random::get_generator_static() };
-
+                        static randutils::pcg_rng gen{ utils::random::get_generator_static() };
                         static std::string mac{ utils::random::generate_mac(gen) };
                         static std::string rid{ utils::random::generate_hex(gen, 16, true) };
                         static std::string wk{ utils::random::generate_hex(gen, 16, true) };
@@ -114,14 +113,14 @@ player::eNetMessageType message_type{ player::message_type_to_string(packet) };
                             m_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
 
                         enet_host_flush(m_host);
-                        return;
+                        return false;
                     }
                 }
                 else if (message_data.find("action|input") != std::string::npos) {
                     utils::TextParse text_parse{ message_data };
                     if (!text_parse.get("text", 1).empty()) {
                         if (m_command_handler->handle(text_parse.get("text", 1)))
-                            return;
+                            return false;
                     }
                 }
                 else if (message_data.find("action|wrench") != std::string::npos) {
@@ -148,7 +147,7 @@ player::eNetMessageType message_type{ player::message_type_to_string(packet) };
                                     "buttonClicked|{}", net_id, button_clicked));
 
                             enet_host_flush(m_host);
-                            return;
+                            return false;
                         }
                     }
                 }
@@ -163,16 +162,17 @@ player::eNetMessageType message_type{ player::message_type_to_string(packet) };
             }
             case player::NET_MESSAGE_GAME_PACKET: {
                 player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
-                process_tank_update_packet(peer, game_update_packet);
-                break;
+                return process_tank_update_packet(peer, game_update_packet);
             }
             default:
                 spdlog::info("[{}]{}: {}", message_type, player::message_type_to_string(message_type), message_data);
                 break;
         }
+
+        return true;
     }
 
-    void Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
+    bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
     {
         switch(game_update_packet->type) {
             case player::PACKET_STATE: {
@@ -221,5 +221,7 @@ player::eNetMessageType message_type{ player::message_type_to_string(packet) };
                 break;
             }
         }
+
+        return true;
     }
 }
