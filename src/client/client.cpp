@@ -365,9 +365,10 @@ namespace client {
                         }
 
                         if (game_update_packet->object_change_type != -1 && game_update_packet->object_change_type != -3) {
-                            for (auto it = world->object_map.objects.begin(); it != world->object_map.objects.end();) {
-                                if (it->drop_id_offset == game_update_packet->object_id) {
-                                    world->object_map.objects.erase(it);
+                            for (auto& object : world->object_map.objects) {
+                                if (object.drop_id_offset == game_update_packet->object_id) {
+                                    world->object_map.objects.erase(std::remove(world->object_map.objects.begin(),
+                                        world->object_map.objects.end(), object), world->object_map.objects.end());
                                     world->object_map.count--;
                                     break;
                                 }

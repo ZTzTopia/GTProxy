@@ -13,6 +13,11 @@ struct Object {
     uint8_t flags;
     uint32_t drop_id_offset;
 
+    bool operator==(const Object& other) const {
+        return item_id == other.item_id && pos == other.pos && amount == other.amount
+            && flags == other.flags && drop_id_offset == other.drop_id_offset;
+    }
+
     void serialize(void* buffer, std::size_t& position) {
         BinaryReader br{ buffer };
         br.skip(position);
