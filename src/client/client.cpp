@@ -415,6 +415,14 @@ namespace client {
                             world->object_map.objects.erase(std::remove(world->object_map.objects.begin(),
                                 world->object_map.objects.end(), object), world->object_map.objects.end());
                             world->object_map.count--;
+
+                            PlayerItems* inventory = m_local_player->get_items();
+                            for (auto& item: inventory->items) {
+                                if (item.first == object.item_id) {
+                                    item.second.first += object.amount;
+                                    break;
+                                }
+                            }
                             break;
                         }
                     }
