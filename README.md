@@ -5,11 +5,16 @@
 This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it possible to debug incoming and outgoing packets and even modify them.
 
 ## Features
-- Print incoming and outgoing packets (text, variant list, etc).
-- Built-in http server with metadata from [Growtopia](https://growtopiagame.com/) server data.
-- Works well with sub-server redirection.
-- Command.
-- Config file.
+- [x] Print incoming and outgoing packets (text, variant list, etc).
+- [x] Built-in http server with metadata from [Growtopia](https://growtopiagame.com/) server data.
+- [x] Works well with sub-server redirection.
+- [x] Command.
+- [x] Config file.
+- [x] Pathfinding for auto collect, etc.
+- [x] Loading items' database (items.dat) will request one from [Growtopia](https://growtopiagame.com/).
+- [x] Tile changes packet.
+- [ ] Local Player & Remote player.
+- [ ] Add more commands.
 
 ## Supported platforms
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.

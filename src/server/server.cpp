@@ -141,6 +141,13 @@ messy_code:
                 if (!game_update_packet) return;
 
                 switch(game_update_packet->type) {
+                    case player::PACKET_STATE: {
+                        player::LocalPlayer* local_player{ m_client->get_local_player() };
+                        local_player->set_pos({
+                            static_cast<int>(game_update_packet->pos_x),
+                            static_cast<int>(game_update_packet->pos_y) });
+                        break;
+                    }
                     case player::PACKET_CALL_FUNCTION: {
                         uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
                         if (!extended_data) break;

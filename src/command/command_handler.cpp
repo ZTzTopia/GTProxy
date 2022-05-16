@@ -74,6 +74,15 @@ namespace command {
             })
         );
         m_commands.push_back(
+            new Command({ "pos", {}, "Get player position" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                player::LocalPlayer* local_player{ command_call_context.local_player };
+                command_call_context.local_peer->send_log(
+                    fmt::format("Position: {}", local_player->get_pos().to_pair()));
+            })
+        );
+        m_commands.push_back(
             new Command({ "list", {}, "Used for debugging" },
                 [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {

@@ -55,11 +55,13 @@ conan_cmake_configure(REQUIRES
         spdlog/1.10.0
         cpp-httplib/0.10.7
         nlohmann_json/3.10.5
+        zlib/1.2.12
     GENERATORS cmake_find_package
     IMPORTS "bin, *.dll -> ./bin"
     OPTIONS
         fmt:shared=True
-        spdlog:shared=True)
+        spdlog:shared=True
+        zlib:shared=True)
 
 conan_cmake_autodetect(settings)
 conan_cmake_install(PATH_OR_REFERENCE .
@@ -92,4 +94,10 @@ find_package(nlohmann_json REQUIRED)
 if (nlohmann_json_FOUND)
     target_include_directories(${PROJECT_NAME} PUBLIC ${nlohmann_json_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} ${nlohmann_json_LIBRARIES})
+endif ()
+
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${ZLIB_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES})
 endif ()

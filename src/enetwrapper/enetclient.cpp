@@ -70,7 +70,7 @@ namespace enetwrapper {
         while (m_running.load()) {
             if (!m_host) continue;
 
-            if (enet_host_service(m_host, &event, 100) > 0) {
+            if (enet_host_service(m_host, &event, 8) > 0) {
                 switch (event.type) {
                     case ENET_EVENT_TYPE_CONNECT:
                         on_connect(event.peer);

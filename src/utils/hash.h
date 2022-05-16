@@ -26,20 +26,19 @@ namespace utils {
         return hash;
     }
 
-    constexpr std::uint32_t proton_hash(const char* data, uint32_t length) {
+    constexpr uint32_t proton_hash(const char* data, std::size_t length = 0) {
+        uint32_t hash = 0x55555555;
         if (data) {
-            uint32_t hash = 0x55555555;
-            if (length >= 1) {
+            if (length > 0) {
                 while (length--)
-                    hash = (hash >> 27) + (hash << 5) + *reinterpret_cast<const char*>(data++);
+                    hash = (hash >> 27) + (hash << 5) + *reinterpret_cast<const uint8_t*>(data++);
             }
             else {
                 while (*data)
-                    hash = (hash >> 27) + (hash << 5) + *reinterpret_cast<const char*>(data++);
+                    hash = (hash >> 27) + (hash << 5) + *reinterpret_cast<const uint8_t*>(data++);
             }
-            return hash;
         }
-        return 0;
+        return hash;
     }
 }
 

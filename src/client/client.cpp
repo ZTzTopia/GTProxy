@@ -7,22 +7,22 @@
 
 #include "../config.h"
 #include "../server/server.h"
-#include "../utils/binary_reader.h"
 #include "../utils/hash.h"
 #include "../utils/textparse.h"
-#include "../world/world.h"
-#include "../world/world_tile_map.h"
 #include "client.h"
+#include "util/ResourceUtils.h"
 
 namespace client {
     Client::Client(server::Server* server)
         : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_remote_player(), m_on_send_to_server() {
         m_local_player = new player::LocalPlayer{};
+        m_items = new items::Items{};
     }
 
     Client::~Client()
     {
         delete m_player;
+        delete m_items;
         delete m_local_player;
 
         for (auto& pair : m_remote_player) {
@@ -204,10 +204,65 @@ namespace client {
                                 }
                                 break;
                             }
+                            case "OnSuperMainStartAcceptLogonHrdxs47254722215a"_fh: {
+                                std::ifstream items_dat{ "items.dat", std::ofstream::binary };
+                                if (!items_dat.is_open()) {
+                                    m_player->send_packet(
+                                        player::NET_MESSAGE_GENERIC_TEXT,
+                                        "action|refresh_item_data\n");
+                                    break;
+                                }
+
+                                std::streampos begin, end;
+                                begin = items_dat.tellg();
+                                items_dat.seekg(0, std::ios::end);
+                                end = items_dat.tellg();
+                                items_dat.seekg(0, std::ios::beg);
+
+                                auto size = static_cast<std::size_t>(end - begin);
+
+                                char* data = new char[size];
+                                items_dat.read(data, static_cast<std::streamsize>(size));
+                                items_dat.close();
+
+                                if (utils::proton_hash(data, size) != variant_list.Get(1).GetUINT32()) {
+                                    m_player->send_packet(
+                                        player::NET_MESSAGE_GENERIC_TEXT,
+                                        "action|refresh_item_data\n");
+                                }
+                                else {
+                                    m_items->serialize(data);
+                                }
+                                break;
+                            }
                             default: {
                                 spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
                                 break;
                             }
+                        }
+                        break;
+                    }
+                    case player::PACKET_TILE_CHANGE_REQUEST: {
+                        spdlog::debug("PACKET_TILE_CHANGE_REQUEST: {}, {}, {}",
+                              game_update_packet->item_id, game_update_packet->int_x, game_update_packet->int_y);
+
+                        World* world = m_local_player->get_world();
+                        uint32_t index{ game_update_packet->int_x + game_update_packet->int_y * world->tile_map.size.x };
+
+                        if (game_update_packet->item_id == 18) {
+                            if (world->tile_map.tiles[index].foreground != 0) {
+                                world->tile_map.tiles[index].foreground = 0;
+                            }
+                            else {
+                                world->tile_map.tiles[index].background = 0;
+                            }
+                        }
+
+                        if (m_items->get_item(game_update_packet->item_id)->action_type == 17) {
+                            world->tile_map.tiles[index].foreground = game_update_packet->item_id;
+                        }
+                        else if (m_items->get_item(game_update_packet->item_id)->action_type == 18) {
+                            world->tile_map.tiles[index].background = game_update_packet->item_id;
                         }
                         break;
                     }
@@ -294,6 +349,22 @@ namespace client {
                                     world->object_map.count--;
                                 }
                             }
+                        }
+                        break;
+                    }
+                    case player::PACKET_SEND_ITEM_DATABASE_DATA: {
+                        std::ofstream items_dat{ "items.dat", std::ofstream::binary };
+                        if (items_dat.is_open()) {
+                            uint8_t* data = zLibInflateToMemory(
+                                player::get_extended_data(game_update_packet),
+                                game_update_packet->data_size,
+                                game_update_packet->dec_item_data_size);
+
+                            m_items->serialize(data);
+
+                            items_dat.write(reinterpret_cast<char *>(data), game_update_packet->dec_item_data_size);
+                            items_dat.close();
+                            delete[] data;
                         }
                         break;
                     }

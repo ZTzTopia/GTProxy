@@ -151,6 +151,7 @@ namespace player {
             int32_t hash;
             int32_t verify_pos;
             int32_t client_hack_type;
+            uint32_t dec_item_data_size;
         };
         union {
             float vec_x{};

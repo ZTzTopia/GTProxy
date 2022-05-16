@@ -1,7 +1,7 @@
 #include "local_player.h"
 
 namespace player {
-    LocalPlayer::LocalPlayer() : m_net_id{ 0 }, m_flags{ NONE }
+    LocalPlayer::LocalPlayer() : m_net_id(0), m_flags(NONE), m_pos()
     {
         m_items = new PlayerItems{};
         m_world = new World{};

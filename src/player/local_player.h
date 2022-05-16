@@ -71,11 +71,16 @@ namespace player {
         void set_world(World* world) { m_world = world; }
         [[nodiscard]] World* get_world() const { return m_world; }
 
+        void set_pos(const utils::math::Vec2<int>& pos) { m_pos = pos; }
+        [[nodiscard]] const utils::math::Vec2<int>& get_pos() const { return m_pos; }
+
     private:
         uint32_t m_net_id;
         eFlag m_flags;
 
         PlayerItems* m_items;
         World* m_world;
+
+        utils::math::Vec2<int> m_pos;
     };
 }

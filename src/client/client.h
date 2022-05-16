@@ -3,6 +3,7 @@
 #include "../player/player.h"
 #include "../player/local_player.h"
 #include "../player/remote_player.h"
+#include "../items/items.h"
 
 namespace client {
     class Client : public enetwrapper::ENetClient {
@@ -26,6 +27,8 @@ namespace client {
     private:
         server::Server* m_server;
         player::Player* m_player;
+
+        items::Items* m_items;
 
         player::LocalPlayer* m_local_player;
         std::unordered_map<uint32_t, player::RemotePlayer*> m_remote_player;
