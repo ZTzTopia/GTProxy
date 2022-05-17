@@ -3,9 +3,9 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-#define GROWTOPIA_HOST "52.86.208.1"
-#define GROWTOPIA_VERSION "3.87"
-#define GROWTOPIA_PROTOCOL 161
+#define GROWTOPIA_HOST "52.44.105.194"
+#define GROWTOPIA_VERSION "3.88"
+#define GROWTOPIA_PROTOCOL 162
 
 class Config {
 public:
@@ -45,14 +45,8 @@ public:
             }
 
 			if (json["server"].contains("host")) {
-                if (json["server"]["host"] != GROWTOPIA_HOST)
+                if (json["server"]["host"] == "52.86.208.1")
                     json["server"]["host"] = GROWTOPIA_HOST;
-                need_to_save = true;
-            }
-
-            if (json["server"].contains("gameVersion")) {
-                if (json["server"]["gameVersion"] != GROWTOPIA_VERSION)
-                    json["server"]["gameVersion"] = GROWTOPIA_VERSION;
                 need_to_save = true;
             }
 

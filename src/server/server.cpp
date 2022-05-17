@@ -101,13 +101,20 @@ messy_code:
                         static std::string wk{ utils::random::generate_hex(gen, 16, true) };
                         static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
 
-                        text_parse.set("protocol", Config::get().config()["server"]["protocol"].get<uint8_t>());
-                        text_parse.set("game_version", Config::get().config()["server"]["gameVersion"]);
+                        auto protocol{ Config::get().config()["server"]["protocol"].get<uint8_t>() };
+                        if (text_parse.get<uint8_t>("protocol", 1) < protocol)
+                            text_parse.set("protocol", protocol);
+
+                        std::string version{ Config::get().config()["server"]["gameVersion"] };
+                        version.erase(std::remove(version.begin(), version.end(), '.'), version.end());
+                        if (text_parse.get<uint32_t>("game_version", 1) < std::stoi(version))
+                            text_parse.set("game_version", Config::get().config()["server"]["gameVersion"]);
+
                         text_parse.set("mac", mac);
                         text_parse.set("rid", rid);
                         text_parse.set("wk", wk);
-                        text_parse.set("hash", utils::proton_hash(device_id.c_str(), 0));
-                        text_parse.set("hash2", utils::proton_hash(mac.c_str(), 0));
+                        text_parse.set("hash", utils::proton_hash(fmt::format("{}RT", device_id).c_str(), 0));
+                        text_parse.set("hash2", utils::proton_hash(fmt::format("{}RT", mac).c_str(), 0));
 
                         if (m_client->get_player())
                             m_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
