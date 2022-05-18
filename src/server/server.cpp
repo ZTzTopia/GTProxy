@@ -107,7 +107,7 @@ messy_code:
 
                         std::string version{ Config::get().config()["server"]["gameVersion"] };
                         version.erase(std::remove(version.begin(), version.end(), '.'), version.end());
-                        if (text_parse.get<uint32_t>("game_version", 1) < std::stoi(version))
+                        if (text_parse.get<uint32_t>("game_version", 1) < std::stoul(version))
                             text_parse.set("game_version", Config::get().config()["server"]["gameVersion"]);
 
                         text_parse.set("mac", mac);

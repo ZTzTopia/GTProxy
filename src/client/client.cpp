@@ -238,6 +238,8 @@ namespace client {
                         break;
                     }
                     case "OnSuperMainStartAcceptLogonHrdxs47254722215a"_fh: {
+                        if (m_items->version != 0) break;
+
                         std::ifstream items_dat{ "items.dat", std::ofstream::binary };
                         if (!items_dat.is_open()) {
                             m_player->send_packet(

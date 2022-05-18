@@ -129,7 +129,9 @@ struct TileExtra {
     } vending;
 
     struct {
-        uint32_t unk;
+        uint8_t unk;
+        uint32_t unk2;
+        std::vector<uint32_t> unk3;
     } solar;
 
     struct {
@@ -185,6 +187,9 @@ struct TileExtra {
         br.skip(position);
 
         type = static_cast<TileExtra::eType>(br.read_u8());
+
+        printf("Tile extra type: %d\n", type);
+
         switch (type) {
             case TileExtra::DOOR:
                 door.label = br.read_string();
@@ -261,7 +266,11 @@ struct TileExtra {
                 vending.price = br.read_u32();
                 break;
             case TileExtra::SOLAR:
-                solar.unk = br.read_u32();
+                solar.unk = br.read_u8();
+                solar.unk2 = br.read_u32();
+                for (uint32_t i = 0; i < solar.unk2; i++) {
+                    solar.unk3.push_back(br.read_u32());
+                }
                 break;
             case TileExtra::DECO:
                 deco.unk = br.read_u8();
@@ -298,7 +307,6 @@ struct TileExtra {
                 geiger_charger.unk = br.read_u32();
                 break;
             default:
-                printf("Unknown tile extra type: %d\n", type);
                 break;
         }
 
@@ -362,7 +370,11 @@ struct TileExtra {
             case 72: // Storm Cloud (please move it).
                 br.skip(12);
                 break;
+            case 74: // Safe Vault
+                break;
             case 77: // Infinity Weather Machine.
+                br.skip(4);
+                br.skip(br.read_u32() * 4);
                 break;
             case 81: // Friends Entrance. (please move it).
                 br.skip(8);
