@@ -213,64 +213,27 @@ namespace client {
                         enet_host_flush(m_host);
                         return false;
                     }
-                    case "OnDialogRequest"_fh:
-                    case "onShowCaptcha"_fh: {
-                        bool is_dialog_request = hash == "OnDialogRequest"_fh;
-                        bool is_captcha = hash == "onShowCaptcha"_fh;
+                    case "OnDialogRequest"_fh: {
+                        utils::TextParse text_parse{ variant_list.Get(1).GetString() };
+                        if (variant_list.Get(1).GetString().find("drop_item") != std::string::npos) {
+                            if (!m_local_player->has_flags(player::eFlag::FAST_DROP))
+                                break;
 
-                        if (is_dialog_request) {
-                            utils::TextParse text_parse{ variant_list.Get(1).GetString() };
+                            uint8_t count{ text_parse.get<uint8_t>("add_text_input", 2) };
+                            uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
 
-                            if (variant_list.Get(1).GetString().find("drop_item") != std::string::npos) {
-                                if (!m_local_player->has_flags(player::eFlag::FAST_DROP))
-                                    break;
+                            m_server->get_player()->send_log(fmt::format("You dropping item id: {}", item_id));
+                            m_player->send_packet(
+                                player::NET_MESSAGE_GENERIC_TEXT,
+                                fmt::format(
+                                    "action|dialog_return\n"
+                                    "dialog_name|drop_item\n"
+                                    "itemID|{}\n"
+                                    "count|{}",
+                                    item_id, count));
 
-                                uint8_t count{ text_parse.get<uint8_t>("add_text_input", 2) };
-                                uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
-
-                                m_server->get_player()->send_log(fmt::format("You dropping item id: {}", item_id));
-                                m_player->send_packet(
-                                    player::NET_MESSAGE_GENERIC_TEXT,
-                                    fmt::format(
-                                        "action|dialog_return\n"
-                                        "dialog_name|drop_item\n"
-                                        "itemID|{}\n"
-                                        "count|{}",
-                                        item_id, count));
-
-                                enet_host_flush(m_host);
-                                return false;
-                            }
-                        }
-
-                        std::vector<std::string> tokenize{
-                            utils::TextParse::string_tokenize(variant_list.Get(1).GetString()) };
-
-                        for (auto& data: tokenize) {
-                            if (is_dialog_request) {
-                                if (data.find("Are you Human?") != std::string::npos)
-                                    is_captcha = true;
-                            }
-
-                            if (is_captcha && data.find(" + ") != std::string::npos) {
-                                std::vector<std::string> tokenize_{
-                                    utils::TextParse::string_tokenize(data, " + ") };
-
-                                auto num1 = static_cast<uint8_t>(std::stoi(tokenize_[0]));
-                                auto num2 = static_cast<uint8_t>(std::stoi(tokenize_[1]));
-                                uint16_t sum = num1 + num2;
-
-                                m_server->get_player()->send_log(
-                                    fmt::format("Solved captcha: {} + {} = {}", num1, num2, sum));
-                                m_player->send_packet(player::NET_MESSAGE_GENERIC_TEXT,
-                                    fmt::format("action|dialog_return\n"
-                                        "dialog_name|captcha_submit\n"
-                                        "captcha_answer|{}",
-                                        sum));
-
-                                enet_host_flush(m_host);
-                                return false;
-                            }
+                            enet_host_flush(m_host);
+                            return false;
                         }
                         break;
                     }
