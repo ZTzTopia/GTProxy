@@ -176,17 +176,32 @@ namespace client {
                         utils::TextParse text_parse{ variant_list.Get(1).GetString() };
 
                         auto net_id = text_parse.get<uint32_t>("netID", 1);
+                        auto invis = text_parse.get<uint8_t>("invis", 1);
+                        auto mod_state = text_parse.get<uint8_t>("mstate", 1);
+                        auto supermod_state = text_parse.get<uint8_t>("smstate", 1);
 
                         if (text_parse.get("type", 1) == "local") {
                             m_local_player->set_net_id(net_id);
 
-                            // Infinity zoom?
-                            text_parse.set("mstate", 1);
+                            text_parse.set("mstate", "1");
                             variant_list.Get(1).Set(text_parse.get_all_raw());
+
+                            uint32_t size;
+                            uint8_t* data = variant_list.SerializeToMem(&size, nullptr);
+
+                            game_update_packet->data_size = size;
+
+                            m_server->get_player()->send_raw_packet(player::NET_MESSAGE_GAME_PACKET, game_update_packet,
+                                sizeof(player::GameUpdatePacket), data);
+                            return false;
                         }
                         else {
                             m_remote_player[net_id] = new player::RemotePlayer{};
                             m_remote_player[net_id]->set_net_id(net_id);
+
+                            if (invis == 1 || mod_state == 1 || supermod_state == 1) {
+                                m_server->get_player()->send_log("`4A moderator enters the world!");
+                            }
                         }
                         break;
                     }
