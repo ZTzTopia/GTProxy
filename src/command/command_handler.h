@@ -11,13 +11,13 @@ namespace server {
 namespace command {
     class CommandHandler {
     public:
-        CommandHandler(server::Server *server);
+        CommandHandler(server::Server* server);
         ~CommandHandler();
 
         bool handle(const std::string &string);
 
     private:
-        server::Server *m_server;
-        std::vector<Command *> m_commands;
+        server::Server* m_server;
+        std::vector<Command*> m_commands;
     };
 }

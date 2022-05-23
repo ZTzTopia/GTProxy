@@ -6,10 +6,11 @@
 #include "../server/server.h"
 #include "../utils/dialog_builder.h"
 #include "../utils/hash.h"
+#include "../utils/random.h"
 #include "../utils/text_parse.h"
 
 namespace command {
-    CommandHandler::CommandHandler(server::Server *server)
+    CommandHandler::CommandHandler(server::Server* server)
         : m_server(server)
     {
         m_commands.push_back(
@@ -35,7 +36,7 @@ namespace command {
 
                 std::string commands{ ">> Commands: " };
                 for (auto &command : m_commands) {
-                    commands.append(Config::get().config()["command"]["prefix"]);
+                    commands.append(command_call_context.prefix);
                     commands.append(command->get_name());
                     commands.push_back(' ');
                 }
@@ -71,6 +72,16 @@ namespace command {
                         "action|join_request\n"
                         "name|{}\n"
                         "invitedWorld|0", args[0]));
+            })
+        );
+        m_commands.push_back(
+            new Command({ "randomwarp", { "rw" }, "Warps you to a random world" },
+                [this](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                static randutils::pcg_rng gen{ utils::random::get_generator_local() };
+
+                std::string random_world{ utils::random::generate(gen, 16) };
+                handle(fmt::format("{}warp {}", command_call_context.prefix, random_world));
             })
         );
         m_commands.push_back(
@@ -230,7 +241,7 @@ namespace command {
         m_commands.clear();
     }
 
-    bool CommandHandler::handle(const std::string &string) {
+    bool CommandHandler::handle(const std::string& string) {
         std::vector<std::string> args = utils::TextParse::string_tokenize(string, " ");
         if (args.empty())
             return false;
@@ -252,6 +263,7 @@ namespace command {
 
             m_server->get_player()->send_log(fmt::format("`6{}``", string));
             command->call({
+                Config::get().config()["command"]["prefix"],
                 m_server->get_player(),
                 m_server->get_client_player(),
                 m_server->get_client()->get_local_player(),

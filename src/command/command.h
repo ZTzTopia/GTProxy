@@ -15,6 +15,7 @@ namespace command {
     };
 
     struct CommandCallContext {
+        std::string prefix;
         player::Player* local_peer;
         player::Player* server_peer;
         player::LocalPlayer* local_player;
