@@ -24,9 +24,13 @@ namespace server {
         player::Player* get_player() const { return m_player; }
         player::Player* get_client_player() const { return m_client->get_player(); }
 
+        bool is_disconnected() const { return m_disconnected; }
+
     private:
         client::Client* m_client;
         player::Player* m_player;
         command::CommandHandler* m_command_handler;
+
+        bool m_disconnected;
     };
 }

@@ -12,8 +12,13 @@ struct PlayerItems {
     std::unordered_map<uint16_t, std::pair<uint8_t, uint8_t>> items; // item id, (count, unused)
 
     PlayerItems() : version(0), max_size(0), size(0) {}
+    ~PlayerItems()
+    {
+        items.clear();
+    }
 
-    void serialize(void* buffer) {
+    void serialize(void* buffer)
+    {
         BinaryReader binary_reader{ buffer };
         version = binary_reader.read_u8();
         max_size = binary_reader.read_u32();

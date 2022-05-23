@@ -7,7 +7,7 @@
 #include "config.h"
 #include "enetwrapper/enetwrapper.h"
 #include "server/server.h"
-#include "utils/textparse.h"
+#include "utils/text_parse.h"
 
 int main()
 {
@@ -42,9 +42,11 @@ int main()
         httplib::Client http_client{ Config::get().config()["server"]["host"] };
         httplib::Result response{ http_client.Post("/growtopia/server_data.php") };
         if (response.error() != httplib::Error::Success || response->status != 200) {
-            spdlog::error("Failed to get server data. {}", response
-                ? fmt::format("HTTP status code: {} ({})", httplib::detail::status_message(response->status), response->status)
-                : fmt::format("HTTP error: {} ({})", httplib::to_string(response.error()), static_cast<int>(response.error())));
+            spdlog::error("Failed to get server data. {}",
+                response ? fmt::format("HTTP status code: {} ({})",
+                      httplib::detail::status_message(response->status), response->status)
+                : fmt::format("HTTP error: {} ({})",
+                      httplib::to_string(response.error()), static_cast<int>(response.error())));
             return EXIT_FAILURE;
         }
 

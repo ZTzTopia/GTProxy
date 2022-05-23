@@ -10,14 +10,20 @@ struct WorldObjectMap {
     uint32_t drop_id;
     std::vector<Object> objects;
 
-    void serialize(void* buffer, std::size_t position) {
+    WorldObjectMap() : count(0), drop_id(0) {}
+    ~WorldObjectMap()
+    {
+        objects.clear();
+    }
+
+    void serialize(void* buffer, std::size_t position)
+    {
         BinaryReader br{ buffer };
         br.skip(position);
 
         count = br.read_u32();
         drop_id = br.read_u32();
 
-        objects.clear();
         objects.reserve(count);
 
         position = br.position();

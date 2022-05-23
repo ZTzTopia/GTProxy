@@ -74,7 +74,8 @@ namespace items {
             return return_value;
         }
 
-        void serialize(void* buffer, uint16_t version, std::size_t& position) {
+        void serialize(void* buffer, uint16_t version, std::size_t& position)
+        {
             BinaryReader binary_reader{ buffer };
             binary_reader.skip(position);
 

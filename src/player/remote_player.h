@@ -4,7 +4,7 @@
 namespace player {
     class RemotePlayer {
     public:
-        RemotePlayer() = default;
+        RemotePlayer();
         ~RemotePlayer() = default;
 
         void set_net_id(uint32_t net_id) { m_net_id = net_id; }

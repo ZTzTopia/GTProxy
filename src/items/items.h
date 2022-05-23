@@ -12,8 +12,13 @@ namespace items {
         std::vector<ItemInfo*> items;
 
         Items() : version(0), count(0), items() {}
+        ~Items()
+        {
+            items.clear();
+        }
 
-        void serialize(void* buffer) {
+        void serialize(void* buffer)
+        {
             BinaryReader binary_reader{ buffer };
             version = binary_reader.read_u16();
             count = binary_reader.read_u32();

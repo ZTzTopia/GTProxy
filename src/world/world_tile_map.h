@@ -10,14 +10,20 @@ struct WorldTileMap {
     uint32_t count;
     std::vector<Tile> tiles;
 
-    void serialize(void* buffer, std::size_t& position, uint16_t version) {
+    WorldTileMap() : size(), count(0) {}
+    ~WorldTileMap()
+    {
+        tiles.clear();
+    }
+
+    void serialize(void* buffer, std::size_t& position, uint16_t version)
+    {
         BinaryReader br{ buffer };
         br.skip(position);
 
         size = br.read<utils::math::Vec2<int>>();
         count = br.read<uint32_t>();
 
-        tiles.clear();
         tiles.reserve(count);
 
         position = br.position();

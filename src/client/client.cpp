@@ -1,20 +1,22 @@
-#include "fmt/ranges.h"
+#include <algorithm>
+#include <fmt/ranges.h>
 #include <httplib.h>
 #include <spdlog/fmt/bin_to_hex.h>
 #include <spdlog/spdlog.h>
 #include <util/Variant.h>
-#include <algorithm>
+#include <util/ResourceUtils.h>
 
+#include "client.h"
 #include "../config.h"
 #include "../server/server.h"
 #include "../utils/hash.h"
-#include "../utils/textparse.h"
-#include "client.h"
-#include "util/ResourceUtils.h"
+#include "../utils/text_parse.h"
 
 namespace client {
     Client::Client(server::Server* server)
-        : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_remote_player(), m_on_send_to_server() {
+        : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_remote_player(), m_on_send_to_server()
+        , m_disconnected(true)
+    {
         m_local_player = new player::LocalPlayer{};
         m_items = new items::Items{};
 
@@ -25,7 +27,15 @@ namespace client {
 
     Client::~Client()
     {
+        m_on_update_thread_running.store(false);
+        m_on_update_thread.join();
+
         delete m_player;
+
+        for (auto& item_info : m_items->items) {
+            delete item_info;
+        }
+
         delete m_items;
         delete m_local_player;
 
@@ -34,9 +44,6 @@ namespace client {
         }
 
         m_remote_player.clear();
-
-        m_on_update_thread_running.store(false);
-        m_on_update_thread.join();
     }
 
     bool Client::initialize()
@@ -45,9 +52,11 @@ namespace client {
         httplib::Client http_client{ Config::get().config()["server"]["host"] };
         httplib::Result response = http_client.Post("/growtopia/server_data.php");
         if (response.error() != httplib::Error::Success || response->status != 200) {
-            spdlog::error("Failed to get server data. {}", response
-                ? fmt::format("HTTP status code: {} ({})", httplib::detail::status_message(response->status), response->status)
-                : fmt::format("HTTP error: {} ({})", httplib::to_string(response.error()), static_cast<int>(response.error())));
+            spdlog::error("Failed to get server data. {}",
+                response ? fmt::format("HTTP status code: {} ({})",
+                    httplib::detail::status_message(response->status), response->status)
+                : fmt::format("HTTP error: {} ({})",
+                    httplib::to_string(response.error()), static_cast<int>(response.error())));
             return false;
         }
 
@@ -83,39 +92,34 @@ namespace client {
     void Client::on_connect(ENetPeer* peer)
     {
         spdlog::info("Client connected to growtopia server: {}", peer->connectID);
+        m_disconnected = false;
         m_on_send_to_server.active = false;
         m_player = new player::Player{ peer };
     }
 
     void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
     {
-        if (!peer || !packet || packet->dataLength < 5) return;
-        if (!m_player) return;
-        if (!m_server || !m_server->get_player()) return;
+        if (!m_server)
+            return;
 
-        bool process{ process_packet(peer, packet) };
+        if (m_server->is_disconnected())
+            return;
 
-        if (process && m_server->get_player()->send_packet_packet(packet) != 0)
+        if (!process_packet(peer, packet))
+            return;
+
+        if (m_server->get_player()->send_packet_packet(packet) != 0)
             spdlog::error("Failed to send packet to growtopia client!");
-
-        enet_host_flush(m_host);
     }
 
     void Client::on_disconnect(ENetPeer* peer)
     {
         spdlog::info("Client disconnected from Growtopia Server: (peer->data! -> {})", peer->data);
 
-        if (!m_player) return;
-        if (m_player->get_peer())
-            enet_peer_disconnect_now(m_player->get_peer(), 0);
-
         delete m_player;
         m_player = nullptr;
 
-        if (m_server->get_player())
-            enet_peer_disconnect_now(m_server->get_player()->get_peer(), 0);
-
-        m_server = nullptr;
+        m_disconnected = true;
     }
 
     bool Client::process_packet(ENetPeer* peer, ENetPacket* packet)
@@ -128,7 +132,7 @@ namespace client {
                 return process_tank_update_packet(peer, game_update_packet);
             }
             default: {
-                utils::TextParse text_parse{message_data};
+                utils::TextParse text_parse{ message_data };
                 if (text_parse.empty()) break;
 
                 spdlog::info(
@@ -156,6 +160,10 @@ namespace client {
                 std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
                 switch (hash) {
                     case "OnRequestWorldSelectMenu"_fh: {
+                        m_local_player->get_items()->items.clear();
+                        m_local_player->get_world()->tile_map.tiles.clear();
+                        m_local_player->get_world()->object_map.objects.clear();
+
                         for (auto& pair : m_remote_player) {
                             delete pair.second;
                             pair.second = nullptr;
@@ -238,7 +246,8 @@ namespace client {
                         break;
                     }
                     case "OnSuperMainStartAcceptLogonHrdxs47254722215a"_fh: {
-                        if (m_items->version != 0) break;
+                        if (m_items->version != 0)
+                            break;
 
                         std::ifstream items_dat{ "items.dat", std::ofstream::binary };
                         if (!items_dat.is_open()) {
@@ -268,12 +277,25 @@ namespace client {
                         else {
                             m_items->serialize(data);
                         }
+
+                        delete[] data;
                         break;
                     }
                     default: {
                         spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
                         break;
                     }
+                }
+
+                switch (hash) {
+                    case "OnRequestWorldSelectMenu"_fh:
+                    case "OnSpawn"_fh:
+                    case "OnRemove"_fh:
+                    case "OnDialogRequest"_fh:
+                        spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
+                        break;
+                    default:
+                        break;
                 }
                 break;
             }
@@ -299,7 +321,7 @@ namespace client {
                 break;
             }
             case player::PACKET_SEND_MAP_DATA: {
-                uint8_t* extended_data{player::get_extended_data(game_update_packet)};
+                uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
                 if (!extended_data) break;
 
                 World* world = m_local_player->get_world();

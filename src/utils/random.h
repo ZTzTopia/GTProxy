@@ -47,7 +47,7 @@ namespace utils {
         {
             return generate(gen, length, uppercase
                 ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+                : "abcdefghijklmnopqrstuvwxyz");
         }
 
         template <typename T>

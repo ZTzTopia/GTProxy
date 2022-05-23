@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.0..3.23)
 project(Main LANGUAGES CXX)
 
 file(GLOB INCLUDE_FILES
@@ -5,20 +6,22 @@ file(GLOB INCLUDE_FILES
     client/*.h
     command/*.h
     enetwrapper/*.h
-    include/**/include/*.h
+    include/*.hpp
+    include/pcg/*.hpp
+    items/*.h
     player/*.h
     server/*.h
     utils/*.h
+    world/*.h
     ../vendor/proton/shared/util/*.h)
+
 file(GLOB SOURCE_FILES
     *.cpp
     client/*.cpp
     command/*.cpp
     enetwrapper/*.cpp
-    include/**/include/*.cpp
     player/*.cpp
     server/*.cpp
-    utils/*.cpp
     ../vendor/proton/shared/util/*.cpp)
 
 add_executable(${PROJECT_NAME}

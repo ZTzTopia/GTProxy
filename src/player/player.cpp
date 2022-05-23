@@ -5,7 +5,7 @@
 namespace player {
     Player::Player(ENetPeer *peer) : m_peer(peer)
     {
-        peer->data = reinterpret_cast<void *>(this);
+        peer->data = reinterpret_cast<void*>(this);
     }
 
     int Player::send_packet(eNetMessageType type, const std::string &data) {
@@ -76,6 +76,7 @@ namespace player {
     int Player::send_log(const std::string &log, bool on_console_message) {
         if (!on_console_message)
             return send_packet(NET_MESSAGE_GAME_MESSAGE, fmt::format("action|log\nmsg|{}", log));
+
         return send_variant({ "OnConsoleMessage", log });
     }
 }

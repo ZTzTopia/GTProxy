@@ -120,7 +120,7 @@ namespace player {
             uint8_t fruit_count;
         };
         union {
-            int32_t net_id{};
+            uint32_t net_id{};
             int32_t effect_flags_check;
             int32_t object_change_type;
             int32_t particle_emitter_id;

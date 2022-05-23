@@ -23,6 +23,7 @@ namespace utils {
             hash ^= c;
             hash *= prime;
         }
+
         return hash;
     }
 
@@ -38,6 +39,7 @@ namespace utils {
                     hash = (hash >> 27) + (hash << 5) + *reinterpret_cast<const uint8_t*>(data++);
             }
         }
+
         return hash;
     }
 }

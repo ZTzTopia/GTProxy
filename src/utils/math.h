@@ -16,9 +16,10 @@ namespace utils {
                 return x == v.x && y == v.y;
             }
 
-            void operator=(const Vec2& v) {
+            Vec2& operator=(const Vec2& v) {
                 x = v.x;
                 y = v.y;
+                return *this;
             }
 
             std::pair<T, T> to_pair() const {
@@ -37,6 +38,13 @@ namespace utils {
 
             bool operator==(const Vec3& v) const {
                 return x == v.x && y == v.y && z == v.z;
+            }
+
+            Vec3& operator=(const Vec3& v) {
+                x = v.x;
+                y = v.y;
+                z = v.z;
+                return *this;
             }
 
             std::tuple<T, T, T> to_tuple() const {

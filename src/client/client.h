@@ -28,14 +28,16 @@ namespace client {
         std::string get_host() const { return m_on_send_to_server.host; }
         uint16_t get_port() const { return m_on_send_to_server.port; }
 
+        bool is_disconnected() const { return m_disconnected; }
+
     private:
         server::Server* m_server;
         player::Player* m_player;
-
         items::Items* m_items;
-
         player::LocalPlayer* m_local_player;
         std::unordered_map<uint32_t, player::RemotePlayer*> m_remote_player;
+
+        bool m_disconnected;
 
         struct {
             bool active;

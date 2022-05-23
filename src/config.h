@@ -4,8 +4,8 @@
 #include <nlohmann/json.hpp>
 
 #define GROWTOPIA_HOST "52.44.105.194"
-#define GROWTOPIA_VERSION "3.88"
-#define GROWTOPIA_PROTOCOL 162
+#define GROWTOPIA_VERSION "3.89"
+#define GROWTOPIA_PROTOCOL 161
 
 class Config {
 public:
@@ -57,7 +57,7 @@ public:
             }
 
             if (need_to_save) {
-                std::ofstream out(path);
+                std::ofstream out{ path };
                 out << json.dump(4);
                 out.close();
             }

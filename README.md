@@ -14,7 +14,7 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 - [x] Loading items' database (items.dat) will request one from [Growtopia](https://growtopiagame.com/).
 - [x] Local Player & Remote player.
 
-## Supported platforms
+## Supported platform
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.
 
 ## Requirements
@@ -41,4 +41,4 @@ $ cmake --build .
 - Enjoy.
 
 ## Credits
-  - Thanks to my two friends who helped a lot with this project.
+- Thanks to my two friends who helped a lot with this project.

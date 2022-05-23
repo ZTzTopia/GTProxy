@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12...3.20)
+cmake_minimum_required(VERSION 2.8.12...3.23)
 project(enet)
 
 set(ENET_MAIN_PROJECT OFF)

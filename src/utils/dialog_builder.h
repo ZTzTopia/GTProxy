@@ -85,6 +85,10 @@ public:
         m_result.append("\nadd_quick_exit");
         return this;
     }
+    dialog_builder* add_button(const std::string& name, const std::string& text) {
+        m_result.append(fmt::format("\nadd_button|{}|{}|noflags|0|0", name, text));
+        return this;
+    }
 private:
     std::string m_result;
 };

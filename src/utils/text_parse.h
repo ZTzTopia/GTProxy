@@ -6,11 +6,11 @@ namespace utils {
     class TextParse {
     public:
         TextParse() : m_data() {}
-        ~TextParse() = default;
         explicit TextParse(const std::string& string)
         {
             parse(string);
         }
+        ~TextParse() = default;
 
         void parse(const std::string& string)
         {
@@ -48,9 +48,11 @@ namespace utils {
                 if (tokenize[key_index] == key) {
                     if (index < 0 || index >= tokenize.size())
                         return "";
+
                     return tokenize[key_index + index];
                 }
             }
+
             return "";
         }
 
@@ -67,6 +69,7 @@ namespace utils {
                 return std::stod(get(key, index, token));
             else if (std::is_same_v<T, long double>)
                 return std::stold(get(key, index, token));
+
             return std::stof(get(key, index, token));
         }
 
@@ -109,6 +112,7 @@ namespace utils {
             std::vector<std::string> ret{};
             for(int i = 0; i < m_data.size(); i++)
                 ret.push_back(fmt::format("[{}]: {}", i, m_data[i]));
+
             return ret;
         }
 
@@ -119,14 +123,16 @@ namespace utils {
                 string += m_data.at(i);
                 if (i + 1 >= m_data.size())
                     continue;
+
                 if (!m_data.at(i + 1).empty())
                     string += '\n';
             }
+
             return string;
         }
 
         bool empty() { return m_data.empty(); }
-        size_t get_line_count() { return m_data.size(); }
+        std::size_t size() { return m_data.size(); }
 
     private:
         std::vector<std::string> m_data;

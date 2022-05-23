@@ -6,7 +6,7 @@
 #include "../server/server.h"
 #include "../utils/dialog_builder.h"
 #include "../utils/hash.h"
-#include "../utils/textparse.h"
+#include "../utils/text_parse.h"
 
 namespace command {
     CommandHandler::CommandHandler(server::Server *server)
@@ -193,13 +193,12 @@ namespace command {
             new Command({ "fastwrench", { "fw", "wrench" }, "Fast pull, kick, ban when wrench clicked" },
                 [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
+                command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_PULL);
+                command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_KICK);
+                command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_BAN);
+
                 if (args.empty()) {
                     command_call_context.local_peer->send_log("`4Usage: ``!fastwrench <pull|kick|ban>");
-
-                    command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_PULL);
-                    command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_KICK);
-                    command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_BAN);
-
                     command_call_context.local_peer->send_log("Fast wrench: `4disabled``!");
                     return;
                 }
@@ -227,6 +226,7 @@ namespace command {
     CommandHandler::~CommandHandler() {
         for (auto &command : m_commands)
             delete command;
+
         m_commands.clear();
     }
 

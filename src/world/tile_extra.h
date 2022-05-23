@@ -187,9 +187,6 @@ struct TileExtra {
         br.skip(position);
 
         type = static_cast<TileExtra::eType>(br.read_u8());
-
-        printf("Tile extra type: %d\n", type);
-
         switch (type) {
             case TileExtra::DOOR:
                 door.label = br.read_string();
@@ -372,7 +369,7 @@ struct TileExtra {
                 break;
             case 74: // Safe Vault
                 break;
-            case 77: // Infinity Weather Machine.
+            case 77: // Infinity Weather Machine. (please move it).
                 br.skip(4);
                 br.skip(br.read_u32() * 4);
                 break;
