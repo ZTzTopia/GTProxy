@@ -179,6 +179,10 @@ namespace client {
 
                         if (text_parse.get("type", 1) == "local") {
                             m_local_player->set_net_id(net_id);
+
+                            // Infinity zoom?
+                            text_parse.set("mstate", 1);
+                            variant_list.Get(1).Set(text_parse.get_all_raw());
                         }
                         else {
                             m_remote_player[net_id] = new player::RemotePlayer{};
@@ -214,11 +218,9 @@ namespace client {
                             variant_list.Get(5).GetINT32() });
 
                         spdlog::info(
-                            "OnSendToServer: {}:{}",
+                            "Send to server: {}:{}",
                             m_on_send_to_server.host,
                             m_on_send_to_server.port);
-
-                        enet_host_flush(m_host);
                         return false;
                     }
                     case "OnDialogRequest"_fh: {
@@ -239,8 +241,6 @@ namespace client {
                                     "itemID|{}\n"
                                     "count|{}",
                                     item_id, count));
-
-                            enet_host_flush(m_host);
                             return false;
                         }
                         break;

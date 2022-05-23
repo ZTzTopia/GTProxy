@@ -166,7 +166,7 @@ initialize:
                 }
                 else if (message_data.find("action|quit") != std::string::npos &&
                     message_data.find("action|quit_to_exit") == std::string::npos) {
-                    enet_peer_disconnect(peer, 0);
+                    enet_peer_disconnect_now(peer, 0);
                 }
                 else {
                     utils::TextParse text_parse{ message_data };
@@ -232,7 +232,7 @@ initialize:
                 break;
             }
             case player::PACKET_DISCONNECT:
-                enet_peer_disconnect(peer, 0);
+                enet_peer_disconnect_now(peer, 0);
                 break;
             default: {
                 uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
