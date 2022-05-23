@@ -82,7 +82,7 @@ namespace client {
             World* world = m_local_player->get_world();
             if (!world) continue;
 
-            // TODO: Handle path finding, etc here?
+            m_local_player->on_update();
 
             // 20 ticks per second (called every 0.05 seconds).
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -232,12 +232,36 @@ namespace client {
                             uint8_t count{ text_parse.get<uint8_t>("add_text_input", 2) };
                             uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
 
-                            m_server->get_player()->send_log(fmt::format("You dropping item id: {}", item_id));
+                            m_server->get_player()->send_log(fmt::format("You dropped item id: {}", item_id));
                             m_player->send_packet(
                                 player::NET_MESSAGE_GENERIC_TEXT,
                                 fmt::format(
                                     "action|dialog_return\n"
                                     "dialog_name|drop_item\n"
+                                    "itemID|{}\n"
+                                    "count|{}",
+                                    item_id, count));
+                            return false;
+                        }
+                        if (variant_list.Get(1).GetString().find("trash_item") != std::string::npos) {
+                            if (!m_local_player->has_flags(player::eFlag::FAST_TRASH))
+                                break;
+
+                            uint8_t count{ 1 };
+                            uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
+
+                            PlayerItems* inventory = m_local_player->get_items();
+                            for (auto& item: inventory->items) {
+                                if (item.first == item_id)
+                                    count = item.second.first;
+                            }
+
+                            m_server->get_player()->send_log(fmt::format("You trashed item id: {}", item_id));
+                            m_player->send_packet(
+                                player::NET_MESSAGE_GENERIC_TEXT,
+                                fmt::format(
+                                    "action|dialog_return\n"
+                                    "dialog_name|trash_item\n"
                                     "itemID|{}\n"
                                     "count|{}",
                                     item_id, count));

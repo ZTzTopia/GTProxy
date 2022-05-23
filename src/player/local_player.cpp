@@ -12,4 +12,9 @@ namespace player {
         delete m_items;
         delete m_world;
     }
+
+    void LocalPlayer::on_update()
+    {
+        return;
+    }
 }

@@ -8,9 +8,10 @@ namespace player {
     enum eFlag : uint8_t {
         NONE = 0,
         FAST_DROP = 1 << 0,
-        FAST_WRENCH_PULL = 1 << 1,
-        FAST_WRENCH_KICK = 1 << 2,
-        FAST_WRENCH_BAN = 1 << 3,
+        FAST_TRASH = 1 << 1,
+        FAST_WRENCH_PULL = 1 << 2,
+        FAST_WRENCH_KICK = 1 << 3,
+        FAST_WRENCH_BAN = 1 << 4,
     };
 
     inline eFlag operator|(eFlag a, eFlag b)
@@ -55,6 +56,8 @@ namespace player {
     public:
         LocalPlayer();
         ~LocalPlayer();
+
+        void on_update();
 
         void set_net_id(uint32_t net_id) { m_net_id = net_id; }
         [[nodiscard]] uint32_t get_net_id() const { return m_net_id; }

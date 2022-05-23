@@ -201,6 +201,17 @@ namespace command {
             })
         );
         m_commands.push_back(
+            new Command({ "fasttrash", { "ft" }, "When `Trash` Button Clicked instantly trash!" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                command_call_context.local_player->toggle_flags(player::eFlag::FAST_TRASH);
+                if (command_call_context.local_player->has_flags(player::eFlag::FAST_TRASH))
+                    command_call_context.local_peer->send_log("Fast trash: `2enabled``!");
+                else
+                    command_call_context.local_peer->send_log("Fast trash: `4disabled``!");
+            })
+        );
+        m_commands.push_back(
             new Command({ "fastwrench", { "fw", "wrench" }, "Fast pull, kick, ban when wrench clicked" },
                 [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
