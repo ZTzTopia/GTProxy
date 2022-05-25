@@ -243,10 +243,79 @@ namespace command {
                 command_call_context.local_peer->send_log(fmt::format("Fast wrench: `2{}``!", args[0]));
             })
         );
+        m_commands.push_back(
+            new Command({ "pullall", { "pa" }, "Pull all the players in the world" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                if (command_call_context.local_player->get_user_id() != command_call_context.local_player->get_world()->world_owner_id) {
+                    command_call_context.local_peer->send_log("`4Oops: ``You are not the owner of this world!");
+                    return;
+                }
+
+                if (command_call_context.remote_player.empty()) {
+                    command_call_context.local_peer->send_log("`4Oops: ``No players in the world.");
+                    return;
+                }
+
+                for (auto& player : command_call_context.remote_player) {
+                    command_call_context.server_peer->send_packet(
+                        player::NET_MESSAGE_GENERIC_TEXT,
+                        fmt::format(
+                            "action|input\n"
+                            "text|/pull {}", player.second->get_raw_name()));
+                }
+            })
+        );
+        m_commands.push_back(
+            new Command({ "kickall", { "ka" }, "Kick all the players in the world" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                if (command_call_context.local_player->get_user_id() != command_call_context.local_player->get_world()->world_owner_id) {
+                    command_call_context.local_peer->send_log("`4Oops: ``You are not the owner of this world!");
+                    return;
+                }
+
+                if (command_call_context.remote_player.empty()) {
+                    command_call_context.local_peer->send_log("`4Oops: ``No players in the world.");
+                    return;
+                }
+
+                for (auto& player : command_call_context.remote_player) {
+                    command_call_context.server_peer->send_packet(
+                        player::NET_MESSAGE_GENERIC_TEXT,
+                        fmt::format(
+                            "action|input\n"
+                            "text|/kick {}", player.second->get_raw_name()));
+                }
+            })
+        );
+        m_commands.push_back(
+            new Command({ "worldbanall", { "wball", "wba" }, "World ban all the players in the world" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                if (command_call_context.local_player->get_user_id() != command_call_context.local_player->get_world()->world_owner_id) {
+                    command_call_context.local_peer->send_log("`4Oops: ``You are not the owner of this world!");
+                    return;
+                }
+
+                if (command_call_context.remote_player.empty()) {
+                    command_call_context.local_peer->send_log("`4Oops: ``No players in the world.");
+                    return;
+                }
+
+                for (auto& player : command_call_context.remote_player) {
+                    command_call_context.server_peer->send_packet(
+                        player::NET_MESSAGE_GENERIC_TEXT,
+                        fmt::format(
+                            "action|input\n"
+                            "text|/worldban {}", player.second->get_raw_name()));
+                }
+            })
+        );
     }
 
     CommandHandler::~CommandHandler() {
-        for (auto &command : m_commands)
+        for (auto& command : m_commands)
             delete command;
 
         m_commands.clear();

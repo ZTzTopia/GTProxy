@@ -68,6 +68,9 @@ namespace player {
         [[nodiscard]] eFlag get_flags() const { return m_flags; }
         [[nodiscard]] bool has_flags(eFlag flags) const { return (m_flags & flags) == flags; }
 
+        void set_user_id(uint32_t user_id) { m_user_id = user_id; }
+        [[nodiscard]] uint32_t get_user_id() const { return m_user_id; }
+
         void set_items(PlayerItems* items) { m_items = items; }
         [[nodiscard]] PlayerItems* get_items() const { return m_items; }
 
@@ -80,6 +83,7 @@ namespace player {
     private:
         uint32_t m_net_id;
         eFlag m_flags;
+        uint32_t m_user_id;
 
         PlayerItems* m_items;
         World* m_world;

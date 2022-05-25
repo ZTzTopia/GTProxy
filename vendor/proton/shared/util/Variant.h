@@ -13,6 +13,7 @@
 #include <cassert>
 #include <cstring>
 #include <functional>
+#include <vector>
 
 #include "../common.h"
 

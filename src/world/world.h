@@ -15,7 +15,9 @@ struct World {
     WorldTileMap tile_map;
     WorldObjectMap object_map;
 
-    World() : version(0), unk(0), name_len(0), name(), tile_map(), object_map() {}
+    uint32_t world_owner_id;
+
+    World() : version(0), unk(0), name_len(0), name(), tile_map(), object_map(), world_owner_id(0) {}
     ~World()
     {
         tile_map.tiles.clear();

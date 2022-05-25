@@ -131,6 +131,18 @@ namespace client {
                 player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
                 return process_tank_update_packet(peer, game_update_packet);
             }
+            case player::NET_MESSAGE_TRACK: {
+                utils::TextParse text_parse{ message_data };
+                uint8_t event_type{ text_parse.get<uint8_t>("eventType", 1) };
+                if (event_type == 0) {
+                    std::string event_name{ text_parse.get("eventName", 1) };
+                    if (event_name == "300_WORLD_VISIT") {
+                        uint32_t world_owner{ text_parse.get<uint32_t>("World_owner", 1) };
+                        if (world_owner != 0)
+                            m_local_player->get_world()->world_owner_id = world_owner;
+                    }
+                }
+            }
             default: {
                 utils::TextParse text_parse{ message_data };
                 if (text_parse.empty()) break;
@@ -175,13 +187,25 @@ namespace client {
                     case "OnSpawn"_fh: {
                         utils::TextParse text_parse{ variant_list.Get(1).GetString() };
 
-                        auto net_id = text_parse.get<uint32_t>("netID", 1);
-                        auto invis = text_parse.get<uint8_t>("invis", 1);
-                        auto mod_state = text_parse.get<uint8_t>("mstate", 1);
-                        auto supermod_state = text_parse.get<uint8_t>("smstate", 1);
+                        auto net_id{ text_parse.get<uint32_t>("netID", 1) };
+                        auto user_id{ text_parse.get<uint32_t>("userID", 1) };
+                        auto display_name{ text_parse.get("name", 1) };
+                        auto raw_name{ text_parse.get("name", 1) };
+                        auto invis{ text_parse.get<uint8_t>("invis", 1) };
+                        auto mod_state{ text_parse.get<uint8_t>("mstate", 1) };
+                        auto supermod_state{ text_parse.get<uint8_t>("smstate", 1) };
+
+                        bool prev_is_backtick = false;
+                        raw_name.erase(std::remove_if(raw_name.begin(), raw_name.end(),
+                            [&prev_is_backtick](unsigned char curr) {
+                                bool r = curr == '`' || prev_is_backtick;
+                                prev_is_backtick = curr == '`';
+                                return r;
+                            }), raw_name.end());
 
                         if (text_parse.get("type", 1) == "local") {
                             m_local_player->set_net_id(net_id);
+                            m_local_player->set_user_id(user_id);
 
                             text_parse.set("mstate", "1");
                             variant_list.Get(1).Set(text_parse.get_all_raw());

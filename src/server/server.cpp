@@ -42,6 +42,7 @@ namespace server {
             m_client = new client::Client{ this };
 initialize:
             if (!m_client->initialize()) {
+failed_initialize:
                 spdlog::error("Failed to initialize proxy client.");
 
                 delete m_player;
@@ -53,8 +54,12 @@ initialize:
         }
         else {
             if (m_client->is_on_send_to_server()) {
-                m_client->create_host(1);
-                m_client->connect(m_client->get_host(), m_client->get_port());
+                if (!m_client->create_host(1))
+                    goto failed_initialize;
+
+                if (!m_client->connect(m_client->get_host(), m_client->get_port()))
+                    goto failed_initialize;
+
                 m_client->start_service();
             }
             else {
