@@ -171,6 +171,17 @@ namespace client {
 
                 std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
                 switch (hash) {
+                    case "OnRequestWorldSelectMenu"_fh:
+                    case "OnSpawn"_fh:
+                    case "OnRemove"_fh:
+                    case "OnDialogRequest"_fh:
+                        spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
+                        break;
+                    default:
+                        break;
+                }
+
+                switch (hash) {
                     case "OnRequestWorldSelectMenu"_fh: {
                         m_local_player->get_items()->items.clear();
                         m_local_player->get_world()->tile_map.tiles.clear();
@@ -348,17 +359,6 @@ namespace client {
                         spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
                         break;
                     }
-                }
-
-                switch (hash) {
-                    case "OnRequestWorldSelectMenu"_fh:
-                    case "OnSpawn"_fh:
-                    case "OnRemove"_fh:
-                    case "OnDialogRequest"_fh:
-                        spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
-                        break;
-                    default:
-                        break;
                 }
                 break;
             }

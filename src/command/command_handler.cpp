@@ -50,17 +50,18 @@ namespace command {
                 [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
                 if (args.empty()) {
-                    command_call_context.local_peer->send_log("`4Usage: ``!warp <world name>");
+                    command_call_context.local_peer->send_log(fmt::format("`4Usage: ``{}warp <world name>",
+                        command_call_context.prefix));
                     return;
                 }
 
                 if (args[0] == "exit") {
-                    command_call_context.local_peer->send_log("`4You cannot warp to the exit world.");
+                    command_call_context.local_peer->send_log("`4Oops: ``You cannot warp to the exit world.");
                     return;
                 }
 
                 if (args[0].size() > 23) {
-                    command_call_context.local_peer->send_log("`4World name too long, try again.");
+                    command_call_context.local_peer->send_log("`4Oops: ``World name too long, try again.");
                     return;
                 }
 
@@ -124,7 +125,8 @@ namespace command {
                 [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
                 if (args.empty()) {
-                    command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world|tile|tileextra|object>");
+                    command_call_context.local_peer->send_log(fmt::format("`4Usage: ``{}list <player|inventory|world|tile|tileextra|object>",
+                        command_call_context.prefix));
                     return;
                 }
 
@@ -207,7 +209,8 @@ namespace command {
                         break;
                     }
                     default:
-                        command_call_context.local_peer->send_log("`4Usage: ``!list <player|inventory|world|tile|tileextra|object>");
+                        command_call_context.local_peer->send_log(fmt::format("`4Usage: ``{}list <player|inventory|world|tile|tileextra|object>",
+                            command_call_context.prefix));
                         return;
                 }
 
@@ -246,7 +249,8 @@ namespace command {
                 command_call_context.local_player->unset_flags(player::eFlag::FAST_WRENCH_BAN);
 
                 if (args.empty()) {
-                    command_call_context.local_peer->send_log("`4Usage: ``!fastwrench <pull|kick|ban>");
+                    command_call_context.local_peer->send_log(fmt::format("`4Usage: ``{}fastwrench <pull|kick|ban>",
+                        command_call_context.prefix));
                     command_call_context.local_peer->send_log("Fast wrench: `4disabled``!");
                     return;
                 }
@@ -335,6 +339,48 @@ namespace command {
                         fmt::format(
                             "action|input\n"
                             "text|/worldban {}", player.second->get_raw_name()));
+                }
+            })
+        );
+        m_commands.push_back(
+            new Command({ "msgall", { "ma" }, "Message all the players in the world" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                if (args.empty()) {
+                    command_call_context.local_peer->send_log(fmt::format("`4Usage: ``{}msgall <message>",
+                        command_call_context.prefix));
+                    return;
+                }
+
+                if (command_call_context.remote_player.empty()) {
+                    command_call_context.local_peer->send_log("`4Oops: ``No players in the world.");
+                    return;
+                }
+
+                for (auto& player : command_call_context.remote_player) {
+                    command_call_context.server_peer->send_packet(
+                        player::NET_MESSAGE_GENERIC_TEXT,
+                        fmt::format(
+                            "action|input\n"
+                            "text|/msg {}", player.second->get_raw_name()));
+                }
+            })
+        );
+        m_commands.push_back(
+            new Command({ "tradeall", { "ta" }, "Trade all the players in the world" },
+                [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                if (command_call_context.remote_player.empty()) {
+                    command_call_context.local_peer->send_log("`4Oops: ``No players in the world.");
+                    return;
+                }
+
+                for (auto& player : command_call_context.remote_player) {
+                    command_call_context.server_peer->send_packet(
+                        player::NET_MESSAGE_GENERIC_TEXT,
+                        fmt::format(
+                            "action|input\n"
+                            "text|/trade {}", player.second->get_raw_name()));
                 }
             })
         );
