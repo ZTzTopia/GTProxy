@@ -84,7 +84,7 @@ namespace command {
                 }
                 player::LocalPlayer* local_player{ command_call_context.local_player };
                 command_call_context.local_peer->send_variant({ "OnNameChanged", args[0]}, local_player->get_net_id());
-                command_call_context.local_peer->send_log(fmt::format("test change name to {}", args[0]));
+                command_call_context.local_peer->send_log(fmt::format("Display Name changed to {}", args[0]));
 
             })
         );
@@ -99,7 +99,7 @@ namespace command {
                 }
                 player::LocalPlayer* local_player{ command_call_context.local_player };
                 command_call_context.local_peer->send_variant({ "OnChangeSkin", code}, local_player->get_net_id());
-                command_call_context.local_peer->send_log(fmt::format("Changed Skin Code {}", args[0]));
+                command_call_context.local_peer->send_log(fmt::format("Skin changed to {}", args[0]));
 
             })
         );
