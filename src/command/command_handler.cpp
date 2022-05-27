@@ -88,7 +88,7 @@ namespace command {
 
             })
         );
-          m_commands.push_back(
+         m_commands.push_back(
             new Command({ "skin", {}, "Change Skin"},
             [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
