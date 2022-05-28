@@ -91,13 +91,12 @@ namespace command {
             new Command({ "skin", {}, "Change Skin"},
             [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
-                int code=atoi(args[0].c_str());
                 if (args.empty()) {
                     command_call_context.local_peer->send_log("`4Usage: ``!skin (code)");
                     return;
                 }
                 player::LocalPlayer* local_player{ command_call_context.local_player };
-                command_call_context.local_peer->send_variant({ "OnChangeSkin", code}, local_player->get_net_id());
+                command_call_context.local_peer->send_variant({ "OnChangeSkin", atoi(args[0].c_str())}, local_player->get_net_id());
                 command_call_context.local_peer->send_log(fmt::format("Skin changed to {}", args[0]));
             })
         );
