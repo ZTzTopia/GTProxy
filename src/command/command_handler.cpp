@@ -75,6 +75,32 @@ namespace command {
             })
         );
         m_commands.push_back(
+            new Command({ "nick", {}, "Change nickname"},
+            [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                 if (args.empty()) {
+                    command_call_context.local_peer->send_log("`4Usage: ``!nickname (code))");
+                    return;
+                }
+                player::LocalPlayer* local_player{ command_call_context.local_player };
+                command_call_context.local_peer->send_variant({ "OnNameChanged", args[0]}, local_player->get_net_id());
+                command_call_context.local_peer->send_log(fmt::format("Display Name changed to {}", args[0]));
+            })
+        );
+         m_commands.push_back(
+            new Command({ "skin", {}, "Change Skin"},
+            [](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
+            {
+                if (args.empty()) {
+                    command_call_context.local_peer->send_log("`4Usage: ``!skin (code)");
+                    return;
+                }
+                player::LocalPlayer* local_player{ command_call_context.local_player };
+                command_call_context.local_peer->send_variant({ "OnChangeSkin", atoi(args[0].c_str())}, local_player->get_net_id());
+                command_call_context.local_peer->send_log(fmt::format("Skin changed to {}", args[0]));
+            })
+        );
+        m_commands.push_back(
             new Command({ "randomwarp", { "rw" }, "Warps you to a random world" },
                 [this](const CommandCallContext& command_call_context, const std::vector<std::string> &args)
             {
