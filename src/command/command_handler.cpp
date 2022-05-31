@@ -98,9 +98,14 @@ namespace command {
                     return;
                 }
 
-                player::LocalPlayer* local_player{ command_call_context.local_player };
-                command_call_context.local_peer->send_variant({ "OnChangeSkin", std::stoi(args[0]) }, local_player->get_net_id());
-                command_call_context.local_peer->send_log(fmt::format("Skin changed to {}", args[0]));
+                try {
+                    player::LocalPlayer *local_player{ command_call_context.local_player };
+                    command_call_context.local_peer->send_variant({"OnChangeSkin", std::stoi(args[0]) }, local_player->get_net_id());
+                    command_call_context.local_peer->send_log(fmt::format("Skin changed to {}", args[0]));
+                }
+                catch (std::exception& e) {
+                    command_call_context.local_peer->send_log("`4Oops: ``Invalid skin code.");
+                }
             })
         );
         m_commands.push_back(
