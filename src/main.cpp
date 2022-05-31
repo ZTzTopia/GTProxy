@@ -1,4 +1,3 @@
-#include <iostream>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
@@ -35,7 +34,7 @@ int main()
         // Initialize enet.
         if (!enetwrapper::ENetWrapper::one_time_init()) {
             spdlog::error("Failed to initialize ENet server.");
-            return EXIT_FAILURE;
+            return 1;
         }
 
         // Get meta from server_data.php.
@@ -44,10 +43,10 @@ int main()
         if (response.error() != httplib::Error::Success || response->status != 200) {
             spdlog::error("Failed to get server data. {}",
                 response ? fmt::format("HTTP status code: {} ({})",
-                      httplib::detail::status_message(response->status), response->status)
+                    httplib::detail::status_message(response->status), response->status)
                 : fmt::format("HTTP error: {} ({})",
-                      httplib::to_string(response.error()), static_cast<int>(response.error())));
-            return EXIT_FAILURE;
+                    httplib::to_string(response.error()), static_cast<int>(response.error())));
+            return 1;
         }
 
         utils::TextParse text_parse{ response->body };
@@ -57,7 +56,7 @@ int main()
         auto proxy_server{ std::make_unique<server::Server>() };
         if (!proxy_server->initialize()) {
             spdlog::error("Failed to initialize proxy server.");
-            return EXIT_FAILURE;
+            return 1;
         }
 
         // Start http server.
@@ -82,11 +81,13 @@ int main()
                     "meta|{}\n"
                     "RTENDMARKERBS1001", meta),
                 "text/html");
+
             return true;
         });
 
         spdlog::info("HTTP Server listening to {}:{}", "0.0.0.0", 80);
         http_server.listen("0.0.0.0", 80);
     }
-    return EXIT_SUCCESS;
+
+    return 0;
 }

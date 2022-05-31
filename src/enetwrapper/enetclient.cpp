@@ -14,7 +14,8 @@ namespace enetwrapper {
         destroy();
     }
 
-    bool ENetClient::create_host(std::size_t peer_count) {
+    bool ENetClient::create_host(std::size_t peer_count)
+    {
         if (m_host) destroy();
 
         m_host = enet_host_create(nullptr, peer_count, 2, 0, 0);
@@ -56,7 +57,8 @@ namespace enetwrapper {
         return true;
     }
 
-    void ENetClient::start_service() {
+    void ENetClient::start_service()
+    {
         if (m_running.load()) return;
 
         m_running.store(true);

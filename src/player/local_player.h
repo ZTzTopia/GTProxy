@@ -2,7 +2,12 @@
 #include <cstdint>
 
 #include "player_items.h"
+#include "player.h"
 #include "../world/world.h"
+
+namespace client {
+    class Client;
+}
 
 namespace player {
     enum eFlag : uint8_t {
@@ -54,10 +59,10 @@ namespace player {
 
     class LocalPlayer {
     public:
-        LocalPlayer();
+        LocalPlayer(player::Player* player);
         ~LocalPlayer();
 
-        void on_update();
+        void on_update(client::Client* client, items::Items* items);
 
         void set_net_id(uint32_t net_id) { m_net_id = net_id; }
         [[nodiscard]] uint32_t get_net_id() const { return m_net_id; }
@@ -81,6 +86,8 @@ namespace player {
         [[nodiscard]] const utils::math::Vec2<int>& get_pos() const { return m_pos; }
 
     private:
+        player::Player* m_player;
+
         uint32_t m_net_id;
         eFlag m_flags;
         uint32_t m_user_id;
@@ -89,5 +96,9 @@ namespace player {
         World* m_world;
 
         utils::math::Vec2<int> m_pos;
+
+    public:
+        utils::math::Vec2<int> m_goal_pos;
+        utils::math::Vec2<int> m_next_move_pos;
     };
 }

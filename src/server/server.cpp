@@ -4,9 +4,9 @@
 
 #include "server.h"
 #include "../config.h"
+#include "../utils/hash.h"
 #include "../utils/random.h"
 #include "../utils/text_parse.h"
-#include "../utils/hash.h"
 
 namespace server {
     Server::Server()
@@ -106,7 +106,7 @@ failed_initialize:
             case player::NET_MESSAGE_GAME_MESSAGE: {
                 if (message_data.find("requestedName") != std::string::npos) {
                     utils::TextParse text_parse{ message_data };
-                    if (text_parse.empty())
+                    if (text_parse.get("requestedName", 1).empty())
                         break;
 
                     static randutils::pcg_rng gen{ utils::random::get_generator_local() };
@@ -143,10 +143,16 @@ failed_initialize:
                 }
                 else if (message_data.find("action|wrench") != std::string::npos) {
                     utils::TextParse text_parse{ message_data };
+                    if (text_parse.get("netid", 1).empty())
+                        break;
+
                     auto net_id = text_parse.get<uint32_t>("netid", 1);
 
                     player::LocalPlayer* local_player{ m_client->get_local_player() };
                     if (net_id == local_player->get_net_id())
+                        break;
+
+                    if (net_id != local_player->get_world()->world_owner_id)
                         break;
 
                     std::string button_clicked{};

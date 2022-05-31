@@ -21,6 +21,7 @@ namespace client {
         bool process_packet(ENetPeer* peer, ENetPacket* packet);
         bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
 
+        server::Server* get_server() const { return m_server; }
         player::Player* get_player() const { return m_player; }
         player::LocalPlayer* get_local_player() const { return m_local_player; }
         std::unordered_map<uint32_t, player::RemotePlayer*> get_remote_players() const { return m_remote_player; }

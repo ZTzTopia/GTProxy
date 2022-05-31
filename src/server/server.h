@@ -1,8 +1,8 @@
 #pragma once
-#include "../player/packet.h"
-#include "../enetwrapper/enetserver.h"
 #include "../client/client.h"
 #include "../command/command_handler.h"
+#include "../enetwrapper/enetserver.h"
+#include "../player/packet.h"
 #include "../player/player.h"
 
 namespace server {

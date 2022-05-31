@@ -33,6 +33,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON)
 
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /EHsc)
+else ()
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)
+endif ()
+
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/proton/shared)
 

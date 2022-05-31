@@ -17,7 +17,7 @@ namespace client {
         : enetwrapper::ENetClient(), m_server(server), m_player(nullptr), m_remote_player(), m_on_send_to_server()
         , m_disconnected(true)
     {
-        m_local_player = new player::LocalPlayer{};
+        m_local_player = new player::LocalPlayer{ m_player };
         m_items = new items::Items{};
 
         m_on_update_thread_running.store(true);
@@ -82,10 +82,10 @@ namespace client {
             World* world = m_local_player->get_world();
             if (!world) continue;
 
-            m_local_player->on_update();
+            m_local_player->on_update(this, m_items);
 
-            // 20 ticks per second (called every 0.05 seconds).
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            // 100 ticks per second (called every 0.01 seconds).
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 
@@ -467,11 +467,20 @@ namespace client {
                             world->object_map.count--;
 
                             PlayerItems* inventory = m_local_player->get_items();
+
+                            bool found{ false };
                             for (auto& item: inventory->items) {
                                 if (item.first == object.item_id) {
                                     item.second.first += object.amount;
+                                    found = true;
                                     break;
                                 }
+                            }
+
+                            if (!found) {
+                                inventory->items.insert(
+                                    std::make_pair(object.item_id,
+                                    std::make_pair(object.amount, 0)));
                             }
                             break;
                         }

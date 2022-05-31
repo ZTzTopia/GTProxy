@@ -288,7 +288,9 @@ void Variant::Interpolate(Variant *pA, Variant *pB, float curPos, eInterpolateTy
             curPos = EASE_FROM(curPos);
             break;
         case INTERPOLATE_EASE_TO_QUARTIC:
-            curPos = 1 - (curPos = 1 - curPos) * curPos * curPos * curPos;
+            curPos = EASE_TO(curPos);
+            curPos = EASE_TO(curPos);
+            curPos = EASE_TO(curPos);
             break;
         case INTERPOLATE_EASE_FROM_QUARTIC:
             curPos = curPos * curPos * curPos * curPos;
@@ -298,13 +300,16 @@ void Variant::Interpolate(Variant *pA, Variant *pB, float curPos, eInterpolateTy
                 curPos = 7.5625f * curPos * curPos;
             }
             else if (curPos < 0.72727273f) {
-                curPos = 7.5625f * (curPos -= 0.54545455f) * curPos + 0.75f;
+                curPos -= 0.54545455f;
+                curPos = 7.5625f * curPos * curPos + 0.75f;
             }
             else if (curPos < 0.90909091f) {
-                curPos = 7.5625f * (curPos -= 0.81818182f) * curPos + 0.9375f;
+                curPos -= 0.81818182f;
+                curPos = 7.5625f * curPos * curPos + 0.9375f;
             }
             else {
-                curPos = 7.5625f * (curPos -= 0.95454545f) * curPos + 0.984375f;
+                curPos -= 0.95454545f;
+                curPos = 7.5625f * curPos * curPos + 0.984375f;
             }
             break;
         case INTERPOLATE_LINEAR:
@@ -312,10 +317,9 @@ void Variant::Interpolate(Variant *pA, Variant *pB, float curPos, eInterpolateTy
         default:
             // LogError("Unknown interpolation type");
             assert(0);
-        }
+    }
 
-        switch (pA->GetType())
-        {
+    switch (pA->GetType()) {
         case eVariantType::TYPE_FLOAT: {
             Set(pA->GetFloat() + ((pB->GetFloat() - pA->GetFloat()) * curPos));
         }

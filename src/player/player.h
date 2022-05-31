@@ -23,7 +23,7 @@ namespace player {
             size_t length = sizeof(GameUpdatePacket), uint8_t* extended_data = nullptr,
             enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
         int send_variant(VariantList&& variant_list, uint32_t net_id = -1,
-             enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
+            enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE);
         int send_log(const std::string& log, bool on_console_message = false);
 
         [[nodiscard]] ENetPeer* get_peer() const { return m_peer; }

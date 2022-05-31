@@ -1032,7 +1032,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
         return 0;
       if (ENET_NET_TO_HOST_16(newHeader -> integrity[2]) <= 0x7FFF)
         return 0;
-      if ((ENET_NET_TO_HOST_16(newHeader -> integrity[2]) & 0x9005 | 0x67DA) != 0xF7DF)
+      if (((ENET_NET_TO_HOST_16(newHeader -> integrity[2]) & 0x9005) | 0x67DA) != 0xF7DF)
         return 0;
       if ((ENET_NET_TO_HOST_16(newHeader -> integrity[2]) | 0x67DA) != 0xF7DF)
         return 0;
