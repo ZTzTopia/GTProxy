@@ -37,21 +37,6 @@ int main()
             return 1;
         }
 
-        // Get meta from server_data.php.
-        httplib::Client http_client{ Config::get().config()["server"]["host"] };
-        httplib::Result response{ http_client.Post("/growtopia/server_data.php") };
-        if (response.error() != httplib::Error::Success || response->status != 200) {
-            spdlog::error("Failed to get server data. {}",
-                response ? fmt::format("HTTP status code: {} ({})",
-                    httplib::detail::status_message(response->status), response->status)
-                : fmt::format("HTTP error: {} ({})",
-                    httplib::to_string(response.error()), static_cast<int>(response.error())));
-            return 1;
-        }
-
-        utils::TextParse text_parse{ response->body };
-        std::string meta{ text_parse.get("meta", 1) };
-
         // Start proxy server.
         auto proxy_server{ std::make_unique<server::Server>() };
         if (!proxy_server->initialize()) {
@@ -61,9 +46,27 @@ int main()
 
         // Start http server.
         httplib::Server http_server{};
-        http_server.Post("/growtopia/server_data.php", [meta](const httplib::Request &req, httplib::Response &res) {
+        http_server.Post("/growtopia/server_data.php", [](const httplib::Request &req, httplib::Response &res) {
             if (!req.body.empty())
                 spdlog::info("Request body from growtopia client: {}", req.body);
+
+            // Get meta from server_data.php.
+            httplib::Client http_client{ Config::get().config()["server"]["host"] };
+            httplib::Result response{ http_client.Post("/growtopia/server_data.php") };
+            if (response.error() != httplib::Error::Success || response->status != 200) {
+                spdlog::error("Failed to get server data. {}",
+                    response ? fmt::format("HTTP status code: {} ({})",
+                        httplib::detail::status_message(response->status), response->status)
+                    : fmt::format("HTTP error: {} ({})",
+                        httplib::to_string(response.error()), static_cast<int>(response.error())));
+                return false;
+            }
+
+            utils::TextParse text_parse{ response->body };
+            if (text_parse.get("meta", 1).empty())
+                return false;
+
+            std::string meta{ text_parse.get("meta", 1) };
 
             res.set_content(
                 fmt::format(
