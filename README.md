@@ -13,6 +13,7 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 - [x] Pathfinding for auto collect, etc.
 - [x] Loading items' database (items.dat) will request one from [Growtopia](https://growtopiagame.com/).
 - [x] Local Player & Remote player.
+- [x] Auto puzzle captcha solver.
 
 ## Supported platform
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.
