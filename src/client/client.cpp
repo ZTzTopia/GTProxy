@@ -169,18 +169,9 @@ namespace client {
                 VariantList variant_list{};
                 variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
 
-                std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
-                switch (hash) {
-                    case "OnRequestWorldSelectMenu"_fh:
-                    case "OnSpawn"_fh:
-                    case "OnRemove"_fh:
-                    case "OnDialogRequest"_fh:
-                        spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
-                        break;
-                    default:
-                        break;
-                }
+                spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
 
+                std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
                 switch (hash) {
                     case "OnRequestWorldSelectMenu"_fh: {
                         m_local_player->get_items()->items.clear();
@@ -266,11 +257,6 @@ namespace client {
                                 "127.0.0.1|{}|{}", tokenize.size() == 2 ? "" : tokenize.at(1)
                                 , tokenize.size() == 2 ? tokenize.at(1) : tokenize.at(2)),
                             variant_list.Get(5).GetINT32() });
-
-                        spdlog::info(
-                            "Send to server: {}:{}",
-                            m_on_send_to_server.host,
-                            m_on_send_to_server.port);
                         return false;
                     }
                     case "OnDialogRequest"_fh: {
@@ -355,10 +341,47 @@ namespace client {
                         delete[] data;
                         break;
                     }
-                    default: {
-                        spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
+                    case "onShowCaptcha"_fh: {
+                        utils::TextParse text_parse{ variant_list.Get(1).GetString() };
+                        std::string captcha_uuid{ text_parse.get("add_puzzle_captcha", 1) };
+
+                        captcha_uuid.erase(0, captcha_uuid.find("0098/captcha/generated/") + 23);
+                        captcha_uuid.erase(captcha_uuid.find("-PuzzleWithMissingPiece.rttex"), std::string::npos);
+
+                        httplib::Client http_client{ "puzzlecaptchasolverv2.herokuapp.com" };
+
+                        httplib::Params params;
+                        params.emplace("type", "puzzlecaptchasolver");
+                        params.emplace("uuid", captcha_uuid);
+
+                        httplib::Headers headers;
+                        headers.emplace(
+                            "User-Agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5095.0 Safari/537.36");
+
+                        httplib::Result response{ http_client.Get("/api", params, headers) };
+                        if (response.error() != httplib::Error::Success || response->status != 200) {
+                            spdlog::error("Failed to get server data. {}",
+                                response ? fmt::format("HTTP status code: {} ({})",
+                                    httplib::detail::status_message(response->status), response->status)
+                                : fmt::format("HTTP error: {} ({})",
+                                    httplib::to_string(response.error()), static_cast<int>(response.error())));
+                            return false;
+                        }
+
+                        if (response->body != "failed") {
+                            m_player->send_packet(
+                                player::NET_MESSAGE_GENERIC_TEXT,
+                                fmt::format(
+                                    "action|dialog_return\n"
+                                    "dialog_name|puzzle_captcha_submit\n"
+                                    "captcha_answer|{}|CaptchaID|{}", response->body, captcha_uuid));
+                            return false;
+                        }
                         break;
                     }
+                    default:
+                        break;
                 }
                 break;
             }
