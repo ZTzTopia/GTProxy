@@ -6,7 +6,7 @@
 
 #pragma pack(push, 1)
 struct WorldTileMap {
-    utils::math::Vec2<int> size;
+    utils::math::Vec2<int32_t> size;
     uint32_t count;
     std::vector<Tile> tiles;
 
@@ -21,7 +21,7 @@ struct WorldTileMap {
         BinaryReader br{ buffer };
         br.skip(position);
 
-        size = br.read<utils::math::Vec2<int>>();
+        size = br.read<utils::math::Vec2<int32_t>>();
         count = br.read<uint32_t>();
 
         tiles.reserve(count);

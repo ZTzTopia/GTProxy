@@ -17,7 +17,11 @@ struct Node {
     int32_t h;
     int32_t f;
 
-    Node() : pos(), came_from(nullptr), neighbors(), g(0), f(0) {}
+    Node() : pos(), came_from(nullptr), g(0), h(0), f(0) {}
+    ~Node()
+    {
+        neighbors.clear();
+    }
 
     bool operator==(const Node& other) const
     {
@@ -43,6 +47,12 @@ struct World {
     {
         tile_map.tiles.clear();
         object_map.objects.clear();
+
+        for (auto& node : nodes) {
+            delete node;
+        }
+
+        nodes.clear();
     }
 
     void serialize(void* buffer)
@@ -59,28 +69,38 @@ struct World {
         tile_map.serialize(buffer, position, version);
         object_map.serialize(buffer, position);
 
-        for (int i = 0; i < tile_map.size.x * tile_map.size.y; i++) {
-            uint8_t x = i % tile_map.size.x;
-            uint8_t y = std::floor(i / tile_map.size.x);
+        if (nodes.size() < tile_map.size.x * tile_map.size.y) {
+            for (int i = 0; i < tile_map.size.x * tile_map.size.y; i++) {
+                uint8_t x = i % tile_map.size.x;
+                uint8_t y = std::floor(i / tile_map.size.x);
 
-            Node node{};
-            node.pos = { x, y };
-            nodes.emplace_back(new Node{ node });
-        }
+                if (nodes.size() <= i) {
+                    Node node{};
+                    node.pos = { x, y };
+                    nodes.emplace_back(new Node{ node });
+                }
+            }
 
-        for (auto& node : nodes) {
-            node->neighbors.clear();
-            if (node->pos.x > 0) {
-                node->neighbors.emplace_back(nodes[node->pos.y * tile_map.size.x + node->pos.x - 1]);
-            }
-            if (node->pos.x < tile_map.size.x - 1) {
-                node->neighbors.emplace_back(nodes[node->pos.y * tile_map.size.x + node->pos.x + 1]);
-            }
-            if (node->pos.y > 0) {
-                node->neighbors.emplace_back(nodes[(node->pos.y - 1) * tile_map.size.x + node->pos.x]);
-            }
-            if (node->pos.y < tile_map.size.y - 1) {
-                node->neighbors.emplace_back(nodes[(node->pos.y + 1) * tile_map.size.x + node->pos.x]);
+            for (auto &node: nodes) {
+                if (!node->neighbors.empty())
+                    continue;
+
+                node->neighbors.reserve(4);
+                if (node->pos.x > 0) {
+                    node->neighbors.emplace_back(nodes[node->pos.y * tile_map.size.x + node->pos.x - 1]);
+                }
+
+                if (node->pos.x < tile_map.size.x - 1) {
+                    node->neighbors.emplace_back(nodes[node->pos.y * tile_map.size.x + node->pos.x + 1]);
+                }
+
+                if (node->pos.y > 0) {
+                    node->neighbors.emplace_back(nodes[(node->pos.y - 1) * tile_map.size.x + node->pos.x]);
+                }
+
+                if (node->pos.y < tile_map.size.y - 1) {
+                    node->neighbors.emplace_back(nodes[(node->pos.y + 1) * tile_map.size.x + node->pos.x]);
+                }
             }
         }
     }
