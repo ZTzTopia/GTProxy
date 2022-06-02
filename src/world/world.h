@@ -71,8 +71,8 @@ struct World {
 
         if (nodes.size() < tile_map.size.x * tile_map.size.y) {
             for (int i = 0; i < tile_map.size.x * tile_map.size.y; i++) {
-                uint8_t x = i % tile_map.size.x;
-                uint8_t y = std::floor(i / tile_map.size.x);
+                auto x = static_cast<uint8_t>(i % tile_map.size.x);
+                auto y = static_cast<uint8_t>(std::floor(i / tile_map.size.x));
 
                 if (nodes.size() <= i) {
                     Node node{};
