@@ -27,6 +27,7 @@ namespace command {
         void command_world_ban_all(const CommandContext& ctx);
         void command_message_all(const CommandContext& ctx);
         void command_trade_all(const CommandContext& ctx);
+        void command_auto_collect(const CommandContext& ctx);
 
     private:
         std::unordered_map<std::string, Command*> m_commands;

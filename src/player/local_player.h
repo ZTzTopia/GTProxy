@@ -10,13 +10,14 @@ namespace client {
 }
 
 namespace player {
-    enum eFlag : uint8_t {
+    enum eFlag : uint16_t {
         NONE = 0,
         FAST_DROP = 1 << 0,
         FAST_TRASH = 1 << 1,
         FAST_WRENCH_PULL = 1 << 2,
         FAST_WRENCH_KICK = 1 << 3,
         FAST_WRENCH_BAN = 1 << 4,
+        AUTO_COLLECT = 1 << 5,
     };
 
     inline eFlag operator|(eFlag a, eFlag b)
@@ -100,5 +101,6 @@ namespace player {
     public:
         utils::math::Vec2<int> m_goal_pos;
         utils::math::Vec2<int> m_next_move_pos;
+        uint8_t m_auto_collect_radius;
     };
 }

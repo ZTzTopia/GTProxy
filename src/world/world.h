@@ -117,7 +117,7 @@ struct World {
     }
 
     std::vector<utils::math::Vec2<int32_t>> find_path(
-        const utils::math::Vec2<int>& start, const utils::math::Vec2<int>& end, items::Items* items)
+        const utils::math::Vec2<int>& start, const utils::math::Vec2<int>& end, items::Items* items, bool return_best_node = true)
     {
         open_set.clear();
 
@@ -185,6 +185,11 @@ struct World {
                     });
                 }
             }
+        }
+
+        if (!return_best_node) {
+            std::vector<utils::math::Vec2<int32_t>> path{};
+            return path;
         }
 
         return reconstruct_path(best_node);

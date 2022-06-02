@@ -120,6 +120,15 @@ namespace command {
             command_trade_all(std::forward<decltype(PH1)>(PH1));
         });
         m_commands.insert({ cmd_trade_all.get_name(), new Command{ cmd_trade_all } });
+
+        Command cmd_auto_collect{};
+        cmd_auto_collect.set_name("autocollect");
+        cmd_auto_collect.set_aliases({ "acollect", "autocollect", "ac" });
+        cmd_auto_collect.set_description("Auto collect dropped items/objects in the world within radius.");
+        cmd_auto_collect.set_function([this](auto&& PH1) {
+            command_auto_collect(std::forward<decltype(PH1)>(PH1));
+        });
+        m_commands.insert({ cmd_auto_collect.get_name(), new Command{ cmd_auto_collect } });
     }
 
     CommandManager::~CommandManager()

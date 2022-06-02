@@ -84,8 +84,8 @@ namespace client {
 
             m_local_player->on_update(this, m_items);
 
-            // 100 ticks per second (called every 0.01 seconds).
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // 20 ticks per second (called every 0.05 seconds).
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
     }
 

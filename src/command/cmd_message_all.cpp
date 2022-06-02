@@ -3,6 +3,11 @@
 namespace command {
     void CommandManager::command_message_all(const CommandContext& ctx)
     {
+        if (ctx.args.empty()) {
+            ctx.server_peer->send_log(fmt::format("`4Usage: ``{}messageall <message>", ctx.prefix));
+            return;
+        }
+
         if (ctx.local_player->get_user_id() != ctx.local_player->get_world()->world_owner_id) {
             ctx.server_peer->send_log("`4Oops: ``You are not the owner of this world!");
             return;
