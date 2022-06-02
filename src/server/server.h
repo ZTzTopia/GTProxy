@@ -1,6 +1,6 @@
 #pragma once
 #include "../client/client.h"
-#include "../command/command_handler.h"
+#include "../command/command_manager.h"
 #include "../enetwrapper/enetserver.h"
 #include "../player/packet.h"
 #include "../player/player.h"
@@ -29,7 +29,7 @@ namespace server {
     private:
         client::Client* m_client;
         player::Player* m_player;
-        command::CommandHandler* m_command_handler;
+        command::CommandManager* m_command_manager;
 
         bool m_disconnected;
     };

@@ -9,38 +9,39 @@
 
 namespace command {
     struct CommandContext {
-        std::string name;
-        std::vector<std::string> aliases;
-        std::string description;
-    };
-
-    struct CommandCallContext {
         std::string prefix;
-        player::Player* local_peer;
         player::Player* server_peer;
+        player::Player* client_peer;
         player::LocalPlayer* local_player;
-        std::unordered_map<uint32_t, player::RemotePlayer*> remote_player;
+        std::vector<std::pair<std::string, player::RemotePlayer*>> remote_players;
+        std::vector<std::string> args;
     };
 
     class Command {
     public:
-        Command(CommandContext context,
-            std::function<void(const CommandCallContext&, const std::vector<std::string>&)> callback)
-            : m_context(std::move(context)), m_callback(std::move(callback)) {}
-        ~Command() = default;
-
-        void call(const CommandCallContext& command_call_context, const std::vector<std::string>& args)
+        Command() = default;
+        ~Command()
         {
-            m_callback(command_call_context, args);
+            m_aliases.clear();
         }
 
-        [[nodiscard]] CommandContext get_context() const { return m_context; }
-        [[nodiscard]] std::string get_name() const { return m_context.name; }
-        [[nodiscard]] std::vector<std::string> get_aliases() const { return m_context.aliases; }
-        [[nodiscard]] std::string get_description() const { return m_context.description; }
+        [[nodiscard]] std::string get_name() const { return m_name; }
+        void set_name(const std::string& name) { m_name = name; }
+
+        [[nodiscard]] std::vector<std::string> get_aliases() const { return m_aliases; }
+        void set_aliases(const std::vector<std::string>& aliases) { m_aliases = aliases; }
+
+        [[nodiscard]] std::string get_description() const { return m_description; }
+        void set_description(const std::string& description) { m_description = description; }
+
+        [[nodiscard]] std::function<void(const CommandContext&)> get_function() const { return m_function; }
+        void set_function(const std::function<void(const CommandContext&)>& function) { m_function = function; }
 
     private:
-        CommandContext m_context;
-        std::function<void(const CommandCallContext&, const std::vector<std::string>&)> m_callback;
+        std::string m_name;
+        std::vector<std::string> m_aliases;
+        std::string m_description;
+
+        std::function<void(const CommandContext&)> m_function;
     };
 }// namespace command

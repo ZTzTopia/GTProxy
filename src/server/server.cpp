@@ -12,14 +12,14 @@ namespace server {
     Server::Server()
         : enetwrapper::ENetServer(), m_client(nullptr), m_player(nullptr), m_disconnected(true)
     {
-        m_command_handler = new command::CommandHandler{ this };
+        m_command_manager = new command::CommandManager{};
     }
 
     Server::~Server()
     {
         delete m_client;
         delete m_player;
-        delete m_command_handler;
+        delete m_command_manager;
     }
 
     bool Server::initialize()
@@ -138,7 +138,7 @@ failed_initialize:
                     if (text_parse.get("text", 1).empty())
                         break;
 
-                    if (m_command_handler->handle(text_parse.get("text", 1)))
+                    if (m_command_manager->try_find_and_fire_command(this, text_parse.get("text", 1)))
                         return false;
                 }
                 else if (message_data.find("action|wrench") != std::string::npos) {
