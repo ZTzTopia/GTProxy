@@ -343,8 +343,10 @@ namespace client {
                     }
                     case "onShowCaptcha"_fh: {
                         utils::TextParse text_parse{ variant_list.Get(1).GetString() };
-                        std::string captcha_uuid{ text_parse.get("add_puzzle_captcha", 1) };
+                        if (text_parse.get("add_puzzle_captcha", 1).empty())
+                            break;
 
+                        std::string captcha_uuid{ text_parse.get("add_puzzle_captcha", 1) };
                         captcha_uuid.erase(0, captcha_uuid.find("0098/captcha/generated/") + 23);
                         captcha_uuid.erase(captcha_uuid.find("-PuzzleWithMissingPiece.rttex"), std::string::npos);
 
@@ -359,6 +361,7 @@ namespace client {
                             "User-Agent",
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5095.0 Safari/537.36");
 
+try_request_again:
                         httplib::Result response{ http_client.Get("/api", params, headers) };
                         if (response.error() != httplib::Error::Success || response->status != 200) {
                             spdlog::error("Failed to get server data. {}",
@@ -366,6 +369,10 @@ namespace client {
                                     httplib::detail::status_message(response->status), response->status)
                                 : fmt::format("HTTP error: {} ({})",
                                     httplib::to_string(response.error()), static_cast<int>(response.error())));
+
+                            if (static_cast<int>(response.error()) == 4)
+                                goto try_request_again;
+
                             return false;
                         }
 
