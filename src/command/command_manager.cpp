@@ -123,7 +123,7 @@ namespace command {
 
         Command cmd_auto_collect{};
         cmd_auto_collect.set_name("autocollect");
-        cmd_auto_collect.set_aliases({ "acollect", "autocollect", "ac" });
+        cmd_auto_collect.set_aliases({ "acollect", "autoc", "ac" });
         cmd_auto_collect.set_description("Auto collect dropped items/objects in the world within radius.");
         cmd_auto_collect.set_function([this](auto&& PH1) {
             command_auto_collect(std::forward<decltype(PH1)>(PH1));

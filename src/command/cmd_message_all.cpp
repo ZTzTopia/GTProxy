@@ -8,14 +8,14 @@ namespace command {
             return;
         }
 
-        if (ctx.local_player->get_user_id() != ctx.local_player->get_world()->world_owner_id) {
-            ctx.server_peer->send_log("`4Oops: ``You are not the owner of this world!");
-            return;
-        }
-
         if (ctx.remote_players.empty()) {
             ctx.server_peer->send_log("`4Oops: ``No players in the world.");
             return;
+        }
+
+        std::string message{ ctx.args.front() };
+        for (size_t i = 1; i < ctx.args.size(); ++i) {
+            message += " " + ctx.args[i];
         }
 
         for (auto& player : ctx.remote_players) {
@@ -23,7 +23,7 @@ namespace command {
                 player::NET_MESSAGE_GENERIC_TEXT,
                 fmt::format(
                     "action|input\n"
-                    "text|/msg {}", player.second->get_raw_name()));
+                    "text|/msg {} {}", player.second->get_raw_name(), message));
         }
     }
 }
