@@ -6,6 +6,8 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(ENET_MAIN_PROJECT ON)
 endif ()
 
+option(ENET_BUILD_SHARED "Build shared library" OFF)
+
 # The "configure" step.
 include(CheckFunctionExists)
 include(CheckStructHasMember)
@@ -89,38 +91,37 @@ set(SOURCE_FILES
 source_group(include FILES ${INCLUDE_FILES})
 source_group(source FILES ${SOURCE_FILES})
 
-add_library(enet SHARED
-    ${INCLUDE_FILES}
-    ${SOURCE_FILES}
-)
-add_library(enet_static STATIC
-    ${INCLUDE_FILES}
-    ${SOURCE_FILES}
-)
+if(ENET_BUILD_SHARED OR BUILD_SHARED_LIBS)
+    add_library(enet SHARED
+        ${INCLUDE_FILES}
+        ${SOURCE_FILES}
+    )
+else ()
+    add_library(enet STATIC
+        ${INCLUDE_FILES}
+        ${SOURCE_FILES}
+    )
+endif ()
 
 target_compile_definitions(enet PRIVATE _WINSOCK_DEPRECATED_NO_WARNINGS)
-target_compile_definitions(enet_static PRIVATE _WINSOCK_DEPRECATED_NO_WARNINGS)
 
-if (MSVC)
-    target_compile_definitions(enet
-        PRIVATE
-            ENET_DLL=1
-            ENET_BUILDING_LIB=1
-    )
+if (ENET_BUILD_SHARED OR BUILD_SHARED_LIBS)
+    if (MSVC)
+        target_compile_definitions(enet
+            PRIVATE
+                ENET_DLL=1
+                ENET_BUILDING_LIB=1
+        )
+    endif()
 endif()
 
 target_include_directories(enet
     PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
-target_include_directories(enet_static
-    PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-)
 
 if (WIN32)
     target_link_libraries(enet PRIVATE winmm ws2_32)
-    target_link_libraries(enet_static PRIVATE winmm ws2_32)
 endif()
 
 # Install enet binary.
@@ -131,7 +132,7 @@ if (ENET_MAIN_PROJECT)
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
-    install(TARGETS enet enet_static
+    install(TARGETS enet
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

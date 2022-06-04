@@ -54,7 +54,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     SPDLOG_FMT_EXTERNAL
     GTPROXY_VERSION="${GTPROXY_VERSION}")
 
-target_link_libraries(${PROJECT_NAME} enet_static)
+target_link_libraries(${PROJECT_NAME} enet)
 
 # Install all needed packages.
 include(${CMAKE_CURRENT_SOURCE_DIR}/../conan/conan.cmake)
@@ -82,31 +82,16 @@ conan_cmake_install(PATH_OR_REFERENCE .
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}/conan")
 
 find_package(fmt REQUIRED)
-if (fmt_FOUND)
-    target_include_directories(${PROJECT_NAME} PUBLIC ${fmt_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} ${fmt_LIBRARIES})
-endif ()
+target_link_libraries(${PROJECT_NAME} fmt::fmt)
 
 find_package(spdlog REQUIRED)
-if (spdlog_FOUND)
-    target_include_directories(${PROJECT_NAME} PUBLIC ${spdlog_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} ${spdlog_LIBRARIES})
-endif ()
+target_link_libraries(${PROJECT_NAME} spdlog::spdlog)
 
 find_package(httplib REQUIRED)
-if (httplib_FOUND)
-    target_include_directories(${PROJECT_NAME} PUBLIC ${httplib_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} ${httplib_LIBRARIES})
-endif ()
+target_link_libraries(${PROJECT_NAME} httplib::httplib)
 
 find_package(nlohmann_json REQUIRED)
-if (nlohmann_json_FOUND)
-    target_include_directories(${PROJECT_NAME} PUBLIC ${nlohmann_json_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} ${nlohmann_json_LIBRARIES})
-endif ()
+target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 
 find_package(ZLIB REQUIRED)
-if (ZLIB_FOUND)
-    target_include_directories(${PROJECT_NAME} PUBLIC ${ZLIB_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES})
-endif ()
+target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
