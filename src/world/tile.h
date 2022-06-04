@@ -21,7 +21,7 @@ struct Tile {
         RED = 1 << 13,
         GREEN = 1 << 14,
         BLUE = 1 << 15,
-        MAX = 15
+        MAX = 16
     };
 
     uint16_t foreground;
