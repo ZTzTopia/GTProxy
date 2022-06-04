@@ -41,7 +41,7 @@ struct Tile {
             return "NONE";
 
         std::array<std::string, eFlag::MAX> flags{
-            "EXTRA", "LOCKED", "UNK", "UNK2" "SEED", "FLIPPED", "OPEN", "PUBLIC", "UNK3", "SILENCED", "WATER",
+            "EXTRA", "LOCKED", "UNK", "UNK2", "SEED", "FLIPPED", "OPEN", "PUBLIC", "UNK3", "SILENCED", "WATER",
             "GLUE", "FIRE", "RED", "GREEN", "BLUE"
         };
 

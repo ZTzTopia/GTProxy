@@ -187,6 +187,9 @@ struct TileExtra {
         br.skip(position);
 
         type = static_cast<TileExtra::eType>(br.read_u8());
+
+        spdlog::debug("TileExtra::serialize: type: {}", type);
+
         switch (type) {
             case TileExtra::DOOR:
                 door.label = br.read_string();
@@ -335,6 +338,10 @@ struct TileExtra {
             case 43: // Display shelf (please move it).
                 br.skip(16);
                 break;
+            case 48: // Potrait (please move it).
+                br.skip_string();
+                br.skip(26);
+                break;
             case 49: // Stuff Weather (please move it).
                 br.skip(9);
                 break;
@@ -342,30 +349,39 @@ struct TileExtra {
                 br.skip(br.read_u32() * 4);
                 br.skip(16);
                 break;
-            case 62:
-                br.skip(14);
-                break;
-            case 66: // Growscan9000 (please move it).
-                br.skip(1);
-                break;
-            case 48: // Potrait (please move it).
-                br.skip_string();
-                br.skip(26);
-                break;
             case 56: // Audio Gear, Lucky Token.
                 br.skip_string();
                 br.skip(4);
                 break;
             case 58: // Adventure begins.
                 break;
+            case 61:
+                br.skip(35);
+                break;
+            case 62:
+                br.skip(14);
+                break;
+            case 63: // Robot
+                br.skip(br.read_u32() * 15);
+                br.skip(8);
+                break;
             case 65: // This is guild item (please move it).
                 br.skip(17);
+                break;
+            case 66: // Growscan9000 (please move it).
+                br.skip(1);
+                break;
+            case 69:
+                br.skip(16);
                 break;
             case 71: // Sucker2 (please move it).
                 br.skip(44);
                 break;
             case 72: // Storm Cloud (please move it).
                 br.skip(12);
+                break;
+            case 73:
+                br.skip(4);
                 break;
             case 74: // Safe Vault
                 break;
