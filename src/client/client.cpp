@@ -266,7 +266,7 @@ namespace client {
                                 break;
 
                             uint8_t count{ text_parse.get<uint8_t>("add_text_input", 2) };
-                            uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
+                            uint16_t item_id{ text_parse.get<uint16_t>("embed_data", 2) };
 
                             m_server->get_player()->send_log(fmt::format("You dropped item id: {}", item_id));
                             m_player->send_packet(
@@ -284,7 +284,7 @@ namespace client {
                                 break;
 
                             uint8_t count{ 1 };
-                            uint16_t item_id{ text_parse.get<uint8_t>("embed_data", 2) };
+                            uint16_t item_id{ text_parse.get<uint16_t>("embed_data", 2) };
 
                             PlayerItems* inventory = m_local_player->get_items();
                             for (auto& item: inventory->items) {
