@@ -352,6 +352,9 @@ namespace client {
 
                         httplib::Client http_client{ "puzzlecaptchasolverv2.herokuapp.com" };
 
+                        // Set timeout to 2secs.
+                        http_client.set_read_timeout(2, 0);
+
                         httplib::Params params;
                         params.emplace("type", "puzzlecaptchasolver");
                         params.emplace("uuid", captcha_uuid);
