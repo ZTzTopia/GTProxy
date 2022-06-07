@@ -8,11 +8,14 @@
 struct WorldObjectMap {
     uint32_t count;
     uint32_t drop_id;
-    std::vector<Object> objects;
+    std::vector<Object*> objects;
 
     WorldObjectMap() : count(0), drop_id(0) {}
     ~WorldObjectMap()
     {
+        for (auto& object : objects)
+            delete object;
+
         objects.clear();
     }
 
@@ -30,7 +33,7 @@ struct WorldObjectMap {
         for (uint32_t i = 0; i < count; i++) {
             Object object{};
             object.serialize(buffer, position);
-            objects.push_back(object);
+            objects.push_back(new Object{ object });
         }
     }
 };

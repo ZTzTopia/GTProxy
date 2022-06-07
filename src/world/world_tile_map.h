@@ -8,11 +8,14 @@
 struct WorldTileMap {
     utils::math::Vec2<int32_t> size;
     uint32_t count;
-    std::vector<Tile> tiles;
+    std::vector<Tile*> tiles;
 
     WorldTileMap() : size(), count(0) {}
     ~WorldTileMap()
     {
+        for (auto& tile : tiles)
+            delete tile;
+
         tiles.clear();
     }
 
@@ -30,7 +33,7 @@ struct WorldTileMap {
         for (uint32_t i = 0; i < count; i++) {
             Tile tile{};
             tile.serialize(buffer, position, version);
-            tiles.push_back(tile);
+            tiles.push_back(new Tile{ tile });
         }
     }
 };

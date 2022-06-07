@@ -22,14 +22,14 @@ namespace player {
         // Auto collect dropped items/objects.
         if (has_flags(AUTO_COLLECT)) {
             for (auto& object : m_world->object_map.objects) {
-                utils::math::Vec2<int> object_pos{ static_cast<int>(object.pos.x), static_cast<int>(object.pos.y) };
+                utils::math::Vec2<int> object_pos{ static_cast<int>(object->pos.x), static_cast<int>(object->pos.y) };
                 if (utils::math::distance(object_pos, m_pos) <= 5 * 32) {
                     if (utils::math::distance(object_pos, m_pos) <= m_auto_collect_radius * 32) {
                         player::GameUpdatePacket game_update_packet;
                         game_update_packet.type = PACKET_ITEM_ACTIVATE_OBJECT_REQUEST;
-                        game_update_packet.pos_x = object.pos.x;
-                        game_update_packet.pos_y = object.pos.y;
-                        game_update_packet.object_id = static_cast<int32_t>(object.drop_id_offset);
+                        game_update_packet.pos_x = object->pos.x;
+                        game_update_packet.pos_y = object->pos.y;
+                        game_update_packet.object_id = static_cast<int32_t>(object->drop_id_offset);
                         client->get_player()->send_raw_packet(player::NET_MESSAGE_GAME_PACKET, &game_update_packet);
                     }
                 }

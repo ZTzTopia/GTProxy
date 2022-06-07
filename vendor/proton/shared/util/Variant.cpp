@@ -528,19 +528,26 @@ void VariantList::GetVariantListStartingAt(VariantList *pOut, int startIndex) {
 
 std::vector<std::string>  VariantList::GetContentsAsArray() {
     std::vector<std::string>  ret{};
-     for (int i = 0; i < C_MAX_VARIANT_LIST_PARMS; i++) {
-        if (m_variant[i].GetType() == eVariantType::TYPE_UNUSED)
+     for (auto & variant : m_variant) {
+        if (variant.GetType() == eVariantType::TYPE_UNUSED) {
             continue;
-        ret.push_back(m_variant[i].Print());
+        }
+
+        ret.push_back(variant.Print());
      }
+
      return ret;
 }
 std::string VariantList::GetContentsAsDebugString() {
-    const auto& data = this->GetContentsAsArray();
-    if(data.empty())
+    const auto& data = GetContentsAsArray();
+    if (data.empty()) {
         return "(None)";
+    }
+
     std::string ret{};
-    for(int i = 0; i < data.size(); i++)
+    for (int i = 0; i < data.size(); i++) {
         ret.append(fmt::format("[{}] {}\r\n", i, data[i]));
+    }
+
     return ret;
 }

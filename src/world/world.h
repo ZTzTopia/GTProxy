@@ -159,8 +159,8 @@ struct World {
                     continue;
                 }
 
-                Tile tile = tile_map.tiles[neighbor->pos.y * tile_map.size.x + neighbor->pos.x];
-                if (items->get_item(tile.foreground)->collision_type == 1) {
+                Tile* tile = tile_map.tiles[neighbor->pos.y * tile_map.size.x + neighbor->pos.x];
+                if (items->get_item(tile->foreground)->collision_type == 1) {
                     continue;
                 }
 

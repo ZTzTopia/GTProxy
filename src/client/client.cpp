@@ -175,7 +175,17 @@ namespace client {
                 switch (hash) {
                     case "OnRequestWorldSelectMenu"_fh: {
                         m_local_player->get_items()->items.clear();
+
+                        for (auto& tile : m_local_player->get_world()->tile_map.tiles) {
+                            delete tile;
+                        }
+
                         m_local_player->get_world()->tile_map.tiles.clear();
+
+                        for (auto& object : m_local_player->get_world()->object_map.objects) {
+                            delete object;
+                        }
+
                         m_local_player->get_world()->object_map.objects.clear();
 
                         for (auto& pair : m_remote_player) {
@@ -352,9 +362,6 @@ namespace client {
 
                         httplib::Client http_client{ "puzzlecaptchasolverv2.herokuapp.com" };
 
-                        // Set timeout to 2secs.
-                        http_client.set_read_timeout(2, 0);
-
                         httplib::Params params;
                         params.emplace("type", "puzzlecaptchasolver");
                         params.emplace("uuid", captcha_uuid);
@@ -400,19 +407,19 @@ try_request_again:
                 uint32_t index{ game_update_packet->int_x + game_update_packet->int_y * world->tile_map.size.x };
 
                 if (game_update_packet->item_id == 18) {
-                    if (world->tile_map.tiles[index].foreground != 0) {
-                        world->tile_map.tiles[index].foreground = 0;
+                    if (world->tile_map.tiles[index]->foreground != 0) {
+                        world->tile_map.tiles[index]->foreground = 0;
                     }
                     else {
-                        world->tile_map.tiles[index].background = 0;
+                        world->tile_map.tiles[index]->background = 0;
                     }
                 }
 
                 if (m_items->get_item(game_update_packet->item_id)->action_type == 17) {
-                    world->tile_map.tiles[index].foreground = game_update_packet->item_id;
+                    world->tile_map.tiles[index]->foreground = game_update_packet->item_id;
                 }
                 else if (m_items->get_item(game_update_packet->item_id)->action_type == 18) {
-                    world->tile_map.tiles[index].background = game_update_packet->item_id;
+                    world->tile_map.tiles[index]->background = game_update_packet->item_id;
                 }
                 break;
             }
@@ -479,22 +486,22 @@ try_request_again:
                     object.item_id = game_update_packet->item_id;
                     object.amount = static_cast<uint8_t>(game_update_packet->obj_alt_count);
                     object.drop_id_offset = world->object_map.drop_id;
-                    world->object_map.objects.push_back(object);
+                    world->object_map.objects.push_back(new Object{ object });
                 }
 
                 for (auto& object : world->object_map.objects) {
-                    if (object.drop_id_offset == game_update_packet->item_net_id) {
+                    if (object->drop_id_offset == game_update_packet->item_net_id) {
                         if (game_update_packet->object_change_type == -3) {
-                            object.pos = { game_update_packet->pos_x, game_update_packet->pos_y };
-                            object.item_id = game_update_packet->item_id;
-                            object.amount = static_cast<uint8_t>(game_update_packet->obj_alt_count);
+                            object->pos = { game_update_packet->pos_x, game_update_packet->pos_y };
+                            object->item_id = game_update_packet->item_id;
+                            object->amount = static_cast<uint8_t>(game_update_packet->obj_alt_count);
                         }
                     }
                 }
 
                 if (game_update_packet->object_change_type != -1 && game_update_packet->object_change_type != -3) {
                     for (auto& object : world->object_map.objects) {
-                        if (object.drop_id_offset == game_update_packet->object_id) {
+                        if (object->drop_id_offset == game_update_packet->object_id) {
                             world->object_map.objects.erase(std::remove(world->object_map.objects.begin(),
                                 world->object_map.objects.end(), object), world->object_map.objects.end());
                             world->object_map.count--;
@@ -503,8 +510,8 @@ try_request_again:
 
                             bool found{ false };
                             for (auto& item: inventory->items) {
-                                if (item.first == object.item_id) {
-                                    item.second.first += object.amount;
+                                if (item.first == object->item_id) {
+                                    item.second.first += object->amount;
                                     found = true;
                                     break;
                                 }
@@ -512,9 +519,11 @@ try_request_again:
 
                             if (!found) {
                                 inventory->items.insert(
-                                    std::make_pair(object.item_id,
-                                    std::make_pair(object.amount, 0)));
+                                    std::make_pair(object->item_id,
+                                    std::make_pair(object->amount, 0)));
                             }
+
+                            delete object;
                             break;
                         }
                     }

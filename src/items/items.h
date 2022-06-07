@@ -14,6 +14,9 @@ namespace items {
         Items() : version(0), count(0), items() {}
         ~Items()
         {
+            for (auto item : items)
+                delete item;
+
             items.clear();
         }
 

@@ -24,9 +24,9 @@ enum eVariantType {
     TYPE_VECTOR2,
     TYPE_VECTOR3,
     TYPE_UINT32,
-    /*TYPE_ENTITY,
-    TYPE_COMPONENT,*/
-    TYPE_RECT = 8,
+    TYPE_ENTITY,
+    TYPE_COMPONENT,
+    TYPE_RECT,
     TYPE_INT32
 };
 

@@ -94,6 +94,7 @@ failed_initialize:
 
         delete m_player;
         m_player = nullptr;
+
         m_disconnected = true;
     }
 
@@ -178,6 +179,8 @@ failed_initialize:
                 else if (message_data.find("action|quit") != std::string::npos &&
                     message_data.find("action|quit_to_exit") == std::string::npos) {
                     enet_peer_disconnect_now(peer, 0);
+
+                    m_disconnected = true;
                 }
                 else {
                     utils::TextParse text_parse{ message_data };
@@ -244,6 +247,8 @@ failed_initialize:
             }
             case player::PACKET_DISCONNECT:
                 enet_peer_disconnect_now(peer, 0);
+
+                m_disconnected = true;
                 break;
             default: {
                 uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
