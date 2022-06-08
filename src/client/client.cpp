@@ -49,14 +49,14 @@ namespace client {
     bool Client::initialize()
     {
         // Get server and port from server_data.php.
-        httplib::Client http_client{ Config::get().config()["server"]["host"] };
-        httplib::Result response = http_client.Post("/growtopia/server_data.php");
+        httplib::Client cli{ Config::get().config()["server"]["host"] };
+        httplib::Result response{ cli.Post("/growtopia/server_data.php") };
         if (response.error() != httplib::Error::Success || response->status != 200) {
-            spdlog::error("Failed to get server data. {}",
-                response ? fmt::format("HTTP status code: {} ({})",
-                    httplib::detail::status_message(response->status), response->status)
-                : fmt::format("HTTP error: {} ({})",
-                    httplib::to_string(response.error()), static_cast<int>(response.error())));
+            if (response.error() == httplib::Error::Success)
+                spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
+            else
+                spdlog::error("Failed to get server data. HTTP error: {}", httplib::to_string(response.error()));
+
             return false;
         }
 
@@ -162,6 +162,8 @@ namespace client {
     bool Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
     {
         switch (game_update_packet->type) {
+            case player::PACKET_STATE:
+                break;
             case player::PACKET_CALL_FUNCTION: {
                 uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
                 if (!extended_data) break;
@@ -360,7 +362,7 @@ namespace client {
                         captcha_uuid.erase(0, captcha_uuid.find("0098/captcha/generated/") + 23);
                         captcha_uuid.erase(captcha_uuid.find("-PuzzleWithMissingPiece.rttex"), std::string::npos);
 
-                        httplib::Client http_client{ "puzzlecaptchasolverv2.herokuapp.com" };
+                        httplib::Client cli{ "puzzlecaptchasolverv2.herokuapp.com" };
 
                         httplib::Params params;
                         params.emplace("type", "puzzlecaptchasolver");
@@ -372,13 +374,12 @@ namespace client {
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5095.0 Safari/537.36");
 
 try_request_again:
-                        httplib::Result response{ http_client.Get("/api", params, headers) };
+                        httplib::Result response{ cli.Get("/api", params, headers) };
                         if (response.error() != httplib::Error::Success || response->status != 200) {
-                            spdlog::error("Failed to get server data. {}",
-                                response ? fmt::format("HTTP status code: {} ({})",
-                                    httplib::detail::status_message(response->status), response->status)
-                                : fmt::format("HTTP error: {} ({})",
-                                    httplib::to_string(response.error()), static_cast<int>(response.error())));
+                            if (response.error() == httplib::Error::Success)
+                                spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
+                            else
+                                spdlog::error("Failed to get server data. HTTP error: {}", httplib::to_string(response.error()));
 
                             if (static_cast<int>(response.error()) == 4)
                                 goto try_request_again;
@@ -475,6 +476,11 @@ try_request_again:
                 break;
             }
             case player::PACKET_ITEM_CHANGE_OBJECT: {
+                if (game_update_packet->object_change_type > 0) {
+                    // TODO: Implement
+                    break;
+                }
+
                 World* world = m_local_player->get_world();
 
                 if (game_update_packet->object_change_type == -1) {
