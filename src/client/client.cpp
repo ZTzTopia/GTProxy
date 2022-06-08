@@ -236,6 +236,7 @@ namespace client {
                         else {
                             m_remote_player[net_id] = new player::RemotePlayer{};
                             m_remote_player[net_id]->set_net_id(net_id);
+                            m_remote_player[net_id]->set_raw_name(raw_name);
 
                             if (invis == 1 || mod_state == 1 || supermod_state == 1) {
                                 m_server->get_player()->send_log("`4A moderator enters the world!");

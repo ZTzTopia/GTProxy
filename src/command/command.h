@@ -13,7 +13,7 @@ namespace command {
         player::Player* server_peer;
         player::Player* client_peer;
         player::LocalPlayer* local_player;
-        std::vector<std::pair<std::string, player::RemotePlayer*>> remote_players;
+        std::unordered_map<uint32_t, player::RemotePlayer*> remote_players;
         std::vector<std::string> args;
     };
 

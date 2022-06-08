@@ -165,6 +165,7 @@ namespace command {
                 ctx.server_peer = server->get_player();
                 ctx.client_peer = server->get_client_player();
                 ctx.local_player = server->get_client()->get_local_player();
+                ctx.remote_players = server->get_client()->get_remote_players();
                 ctx.args = args;
 
                 command.second->get_function()(ctx);
