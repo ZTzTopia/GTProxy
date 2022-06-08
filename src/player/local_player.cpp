@@ -21,10 +21,28 @@ namespace player {
     {
         // Auto collect dropped items/objects.
         if (has_flags(AUTO_COLLECT)) {
+            if (m_world->object_map.objects.empty())
+                return;
+
             for (auto& object : m_world->object_map.objects) {
                 utils::math::Vec2<int> object_pos{ static_cast<int>(object->pos.x), static_cast<int>(object->pos.y) };
                 if (utils::math::distance(object_pos, m_pos) <= 5 * 32) {
+                    if (m_world->tile_map.tiles.empty())
+                        return;
+
+                    int x = m_pos.x / 32;
+                    int y = m_pos.y / 32;
+
+                    int goal_x = object_pos.x / 32;
+                    int goal_y = object_pos.y / 32;
+
+                    std::vector<utils::math::Vec2<int32_t>> path{ m_world->find_path({ x, y }, { goal_x, goal_y }, items, false) };
+                    if (path.empty()) {
+                        return;
+                    }
+
                     if (utils::math::distance(object_pos, m_pos) <= m_auto_collect_radius * 32) {
+                        // TODO: This is send many times.
                         player::GameUpdatePacket game_update_packet;
                         game_update_packet.type = PACKET_ITEM_ACTIVATE_OBJECT_REQUEST;
                         game_update_packet.pos_x = object->pos.x;
@@ -35,13 +53,18 @@ namespace player {
                 }
                 else {
                     // If the object radius is greater than 5, we need to use pathfinding to take the object.
+#if 0
                     if (utils::math::distance(object_pos, m_pos) <= m_auto_collect_radius * 32) {
                         m_goal_pos = object_pos;
                         break;
                     }
+#endif
                 }
             }
         }
+
+        if (m_world->tile_map.tiles.empty())
+            return;
 
         // Pathfinding.
         if (m_goal_pos.x == -1 && m_goal_pos.y == -1)
@@ -63,7 +86,7 @@ namespace player {
         int goal_x = m_goal_pos.x / 32;
         int goal_y = m_goal_pos.y / 32;
 
-        std::vector<utils::math::Vec2<int32_t>> path{ m_world->find_path({ x, y }, { goal_x, goal_y }, items) };
+        std::vector<utils::math::Vec2<int32_t>> path{ m_world->find_path({ x, y }, { goal_x, goal_y }, items, false) };
         if (path.empty()) {
             m_goal_pos = { -1, -1 };
             return;

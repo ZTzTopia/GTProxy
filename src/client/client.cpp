@@ -477,11 +477,6 @@ try_request_again:
                 break;
             }
             case player::PACKET_ITEM_CHANGE_OBJECT: {
-                if (game_update_packet->object_change_type > 0) {
-                    // TODO: Implement
-                    break;
-                }
-
                 World* world = m_local_player->get_world();
 
                 if (game_update_packet->object_change_type == -1) {
@@ -512,6 +507,11 @@ try_request_again:
                             world->object_map.objects.erase(std::remove(world->object_map.objects.begin(),
                                 world->object_map.objects.end(), object), world->object_map.objects.end());
                             world->object_map.count--;
+
+                            if (game_update_packet->object_change_type != m_local_player->get_net_id()) {
+                                delete object;
+                                break;
+                            }
 
                             PlayerItems* inventory = m_local_player->get_items();
 

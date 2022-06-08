@@ -141,6 +141,11 @@ struct World {
         auto start_time = std::chrono::high_resolution_clock::now();
         while (!open_set.empty()) {
             if (start_time + std::chrono::seconds(1) < std::chrono::high_resolution_clock::now()) {
+                if (!return_best_node) {
+                    std::vector<utils::math::Vec2<int32_t>> path{};
+                    return path;
+                }
+
                 return reconstruct_path(best_node);
             }
 
@@ -160,7 +165,324 @@ struct World {
                 }
 
                 Tile* tile = tile_map.tiles[neighbor->pos.y * tile_map.size.x + neighbor->pos.x];
-                if (items->get_item(tile->foreground)->collision_type == 1) {
+
+                const auto is_collidable{
+                    [tile](items::Items* items, bool apanih = false) {
+                        uint8_t v19{ 0 };
+                        uint8_t v20{ items->get_item(tile->foreground)->collision_type };
+                        if (v20 != 5) v19 = 1;
+                        uint8_t wut = (v20 != 0) & v19;
+
+                        // From Tile::IsCollidable(Tile *this, int a2, World *a3, bool a4, float a5)
+                        if (!wut) return false;
+                        if (apanih) {
+                            switch (v20) {
+                                case 2:
+                                case 5:
+                                case 7:
+                                    return false;
+                                case 3:
+                                    // goto LABEL_6;
+                                    break;
+                                default:
+                                    goto LABEL_23;
+                            }
+                        }
+                        if (v20 == 5) return false;
+                        /*if ( v7 == 3 )
+                        {
+LABEL_6:
+                            v9 = *(TileExtra **)(v4 + 40);
+                            if ( v9 && *((_BYTE *)v9 + 4) == 3 )
+                            {
+                                v10 = (Tile *)v4;
+                            }
+                            else
+                            {
+                                v11 = *(unsigned __int16 *)(v4 + 104);
+                                v12 = v11 == 0;
+                                if ( !*(_WORD *)(v4 + 104) )
+                                    v12 = *((_DWORD *)a3 + 41) == 0;
+                                if ( v12 )
+                                    return 0;
+                                if ( !v9 || (v10 = (Tile *)v4, *((_BYTE *)v9 + 4) != 3) )
+                                {
+                                    if ( !*(_WORD *)(v4 + 104) )
+                                    {
+                                        v13 = *((_DWORD *)a3 + 41);
+                                        if ( v13 )
+                                            v11 = *(unsigned __int16 *)(v13 + 12);
+                                        else
+                                            v11 = 0;
+                                    }
+                                    v10 = (Tile *)(*((_DWORD *)a3 + 6) + 140 * v11);
+                                    if ( !v10 )
+                                    {
+LABEL_21:
+                                        v8 = 0;
+                                        if ( *(unsigned __int8 *)(v4 + 8) >> 7 )
+                                            return v8;
+                                        v7 = *(_DWORD *)(v4 + 20);
+                                        goto LABEL_23;
+                                    }
+                                    v9 = (TileExtra *)*((_DWORD *)v10 + 10);
+                                }
+                            }
+                            if ( TileExtra::HasKeyToLock(v9, a2, v10, 1) )
+                                return 0;
+                            goto LABEL_21;
+                        }*/
+LABEL_23:
+                        if (v20 != 6)
+                            goto LABEL_27;
+                        if ((tile->flag & Tile::eFlag::EXTRA) == Tile::eFlag::EXTRA)
+                            return true;
+                        /*if (TileExtra::HasKeyToLock(v14, a2, (Tile *)v4, 1))
+                            return false;*/
+LABEL_27:
+                        if (v20 == 13) {
+                            if ((tile->flag & Tile::eFlag::EXTRA) == Tile::eFlag::EXTRA)
+                                return true;
+                            /*if (TileExtra::IsAllowedThroughFriendsEntrance(v15, a2, (Tile *)v4))
+                                return false;*/
+                        }
+                        /*if ( v7 == 8 )
+                        {
+                            if ( GetWorldRenderer()
+                                 && (WorldRenderer = (WorldRenderer *)GetWorldRenderer(),
+                                    WorldRenderer::IsDisguised(WorldRenderer, (const Tile *)v4))
+                                 && !*(_WORD *)(v4 + 4) )
+                            {
+                                v18 = *(_DWORD *)(v4 + 128);
+                            }
+                            else
+                            {
+                                LOWORD(v18) = *(_WORD *)(v4 + 4);
+                            }
+                            if ( (unsigned __int16)v18 == 4698 )
+                            {
+                                GameLogic = (GameLogicComponent *)GetGameLogic();
+                                if ( GameLogicComponent::GetLocalPlayer(GameLogic) )
+                                {
+                                    v20 = (GameLogicComponent *)GetGameLogic();
+                                    LocalPlayer = GameLogicComponent::GetLocalPlayer(v20);
+                                    return PlayerAdventure::HasItemID((PlayerAdventure *)(LocalPlayer + 520), 1696) == 0;
+                                }
+                                return 1;
+                            }
+                            if ( GetWorldRenderer()
+                                 && (v22 = (WorldRenderer *)GetWorldRenderer(), WorldRenderer::IsDisguised(v22, (const Tile *)v4))
+                                 && !*(_WORD *)(v4 + 4) )
+                            {
+                                v23 = *(_DWORD *)(v4 + 128);
+                            }
+                            else
+                            {
+                                LOWORD(v23) = *(_WORD *)(v4 + 4);
+                            }
+                            if ( (unsigned __int16)v23 == 4706 )
+                            {
+                                v24 = (GameLogicComponent *)GetGameLogic();
+                                if ( !GameLogicComponent::GetLocalPlayer(v24) )
+                                    return (*(_BYTE *)(v4 + 8) & 0x40) == 0;
+                                v25 = (GameLogicComponent *)GetGameLogic();
+                                if ( !*(_BYTE *)(GameLogicComponent::GetLocalPlayer(v25) + 544) )
+                                    return (*(_BYTE *)(v4 + 8) & 0x40) == 0;
+                                return (*(unsigned __int8 *)(v4 + 8) >> 6) & 1;
+                            }
+                            if ( GetWorldRenderer()
+                                 && (v26 = (WorldRenderer *)GetWorldRenderer(), WorldRenderer::IsDisguised(v26, (const Tile *)v4))
+                                 && !*(_WORD *)(v4 + 4) )
+                            {
+                                v27 = *(_DWORD *)(v4 + 128);
+                            }
+                            else
+                            {
+                                LOWORD(v27) = *(_WORD *)(v4 + 4);
+                            }
+                            if ( (unsigned __int16)v27 == 4710 )
+                            {
+                                v28 = (GameLogicComponent *)GetGameLogic();
+                                if ( !GameLogicComponent::GetLocalPlayer(v28) )
+                                    return (*(_BYTE *)(v4 + 8) & 0x40) == 0;
+                                v29 = (GameLogicComponent *)GetGameLogic();
+                                if ( !*(_BYTE *)(GameLogicComponent::GetLocalPlayer(v29) + 545) )
+                                    return (*(_BYTE *)(v4 + 8) & 0x40) == 0;
+                                return (*(unsigned __int8 *)(v4 + 8) >> 6) & 1;
+                            }
+                            if ( GetWorldRenderer()
+                                 && (v30 = (WorldRenderer *)GetWorldRenderer(), WorldRenderer::IsDisguised(v30, (const Tile *)v4))
+                                 && !*(_WORD *)(v4 + 4) )
+                            {
+                                v31 = *(_DWORD *)(v4 + 128);
+                            }
+                            else
+                            {
+                                LOWORD(v31) = *(_WORD *)(v4 + 4);
+                            }
+                            if ( (unsigned __int16)v31 == 4744 )
+                            {
+                                v32 = (GameLogicComponent *)GetGameLogic();
+                                if ( !GameLogicComponent::GetLocalPlayer(v32) )
+                                    return (*(_BYTE *)(v4 + 8) & 0x40) == 0;
+                                v33 = (GameLogicComponent *)GetGameLogic();
+                                if ( !*(_BYTE *)(GameLogicComponent::GetLocalPlayer(v33) + 546) )
+                                    return (*(_BYTE *)(v4 + 8) & 0x40) == 0;
+                                return (*(unsigned __int8 *)(v4 + 8) >> 6) & 1;
+                            }
+                            v7 = *(_DWORD *)(v4 + 20);
+                        }*/
+                        switch (v20) {
+                            case 4:
+                                return (tile->flag & 0x40) == 0;
+                            case 5:
+                            case 6:
+                            case 7:
+                            case 8:
+                                return true;
+                            case 9:
+                                return static_cast<bool>((tile->flag >> 6) & 1);
+                            /*case 10:
+                                v34 = *(_WORD *)(v4 + 8);
+                                v35 = (GameLogicComponent *)GetGameLogic();
+                                v36 = v34 & 0x80;
+                                if ( !GameLogicComponent::GetLocalPlayer(v35)
+                                     || (v37 = (GameLogicComponent *)GetGameLogic(),
+                                         v38 = *(unsigned __int8 *)(GameLogicComponent::GetLocalPlayer(v37) + 448),
+                                         v39 = (GameLogicComponent *)GetGameLogic(),
+                                         v40 = GameLogicComponent::GetLocalPlayer(v39),
+                                        !v38) )
+                                {
+                                    if ( v36 )
+                                        return 0;
+                                    v53 = *(TileExtra **)(v4 + 40);
+                                    if ( !v53 || *((_BYTE *)v53 + 4) != 3 )
+                                    {
+                                        v54 = *(unsigned __int16 *)(v4 + 104);
+                                        v55 = v54 == 0;
+                                        if ( !*(_WORD *)(v4 + 104) )
+                                            v55 = *((_DWORD *)a3 + 41) == 0;
+                                        if ( v55 )
+                                            return 0;
+                                        if ( !v53 || *((_BYTE *)v53 + 4) != 3 )
+                                        {
+                                            if ( !*(_WORD *)(v4 + 104) )
+                                            {
+                                                v56 = *((_DWORD *)a3 + 41);
+                                                if ( v56 )
+                                                    v54 = *(unsigned __int16 *)(v56 + 12);
+                                                else
+                                                    v54 = 0;
+                                            }
+                                            v4 = *((_DWORD *)a3 + 6) + 140 * v54;
+                                            v8 = 1;
+                                            if ( !v4 )
+                                                return v8;
+                                            v53 = *(TileExtra **)(v4 + 40);
+                                        }
+                                    }
+                                    return TileExtra::HasKeyToLock(v53, a2, (Tile *)v4, 1) == 0;
+                                }
+                                v41 = *(TileExtra **)(v4 + 40);
+                                v42 = *(_DWORD *)(v40 + 436);
+                                v43 = *((unsigned __int8 *)v41 + 40);
+                                if ( v36 )
+                                    return v42 != v43;
+                                if ( v41 && *((_BYTE *)v41 + 4) == 3 )
+                                    goto LABEL_116;
+                                v57 = *(unsigned __int16 *)(v4 + 104);
+                                v58 = v57 == 0;
+                                if ( !*(_WORD *)(v4 + 104) )
+                                    v58 = *((_DWORD *)a3 + 41) == 0;
+                                if ( v58 )
+                                {
+                                    v60 = 0;
+                                }
+                                else
+                                {
+                                    if ( v41 && *((_BYTE *)v41 + 4) == 3 )
+                                        goto LABEL_116;
+                                    if ( !*(_WORD *)(v4 + 104) )
+                                    {
+                                        v59 = *((_DWORD *)a3 + 41);
+                                        if ( v59 )
+                                            v57 = *(unsigned __int16 *)(v59 + 12);
+                                        else
+                                            v57 = 0;
+                                    }
+                                    v4 = *((_DWORD *)a3 + 6) + 140 * v57;
+                                    if ( v4 )
+                                    {
+                                        v41 = *(TileExtra **)(v4 + 40);
+LABEL_116:
+                                        v60 = TileExtra::HasKeyToLock(v41, a2, (Tile *)v4, 1) ^ 1;
+                                        return v60 | (v42 != v43);
+                                    }
+                                    v60 = 1;
+                                }
+                                return v60 | (v42 != v43);
+                            case 11:
+                                v44 = *(_DWORD *)(v4 + 40);
+                                v45 = (GameLogicComponent *)GetGameLogic();
+                                v46 = (_DWORD *)GameLogicComponent::GetLocalPlayer(v45);
+                                if ( !v46 || !v44 )
+                                    return 1;
+                                v47 = *(unsigned __int8 *)(v44 + 5);
+                                v48 = 0;
+                                if ( v47 <= 0xBF )
+                                {
+                                    v48 = 3;
+                                    if ( v47 >= 0x40 )
+                                        v48 = 2 - (v47 >> 7);
+                                }
+                                v8 = 0;
+                                if ( v46[30] >= v48 && v46[27] == *(_DWORD *)(v44 + 100) )
+                                    return v8;
+                                v49 = *(TileExtra **)(v4 + 40);
+                                v50 = v46[57];
+                                if ( v49 && *((_BYTE *)v49 + 4) == 3 )
+                                {
+                                    v51 = (Tile *)v4;
+                                }
+                                else
+                                {
+                                    v61 = *(unsigned __int16 *)(v4 + 104);
+                                    v62 = v61 == 0;
+                                    if ( !*(_WORD *)(v4 + 104) )
+                                        v62 = *((_DWORD *)a3 + 41) == 0;
+                                    if ( v62 )
+                                        return v8;
+                                    if ( !v49 || (v51 = (Tile *)v4, *((_BYTE *)v49 + 4) != 3) )
+                                    {
+                                        if ( !*(_WORD *)(v4 + 104) )
+                                        {
+                                            v63 = *((_DWORD *)a3 + 41);
+                                            if ( v63 )
+                                                v61 = *(unsigned __int16 *)(v63 + 12);
+                                            else
+                                                v61 = 0;
+                                        }
+                                        v51 = (Tile *)(*((_DWORD *)a3 + 6) + 140 * v61);
+                                        if ( !v51 )
+                                            return *(unsigned __int8 *)(v4 + 8) >> 7 == 0;
+                                        v49 = (TileExtra *)*((_DWORD *)v51 + 10);
+                                    }
+                                }
+                                if ( TileExtra::HasKeyToLock(v49, v50, v51, 1) )
+                                    return v8;
+                                return *(unsigned __int8 *)(v4 + 8) >> 7 == 0;*/
+                            case 12:
+                                if ((tile->flag & Tile::eFlag::EXTRA) == Tile::eFlag::EXTRA)
+                                    return false/**(_DWORD *)(v52 + 172) > 0*/; // Timer?
+                                return true;
+                            default:
+                                break;
+                        }
+                        return true;
+                    }
+                };
+
+                if (is_collidable(items)) {
                     continue;
                 }
 
