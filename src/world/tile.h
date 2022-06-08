@@ -21,7 +21,7 @@ struct Tile {
         RED = 1 << 13,
         GREEN = 1 << 14,
         BLUE = 1 << 15,
-        MAX = 16
+        MAX = 17
     };
 
     uint16_t foreground;
@@ -41,8 +41,8 @@ struct Tile {
             return "NONE";
 
         std::array<std::string, eFlag::MAX> flags{
-            "EXTRA", "LOCKED", "UNK", "UNK2", "SEED", "FLIPPED", "OPEN", "PUBLIC", "UNK3", "SILENCED", "WATER",
-            "GLUE", "FIRE", "RED", "GREEN", "BLUE"
+            "NONE", "EXTRA", "LOCKED", "UNK", "UNK2", "SEED", "FLIPPED", "OPEN", "PUBLIC", "UNK3",
+            "SILENCED", "WATER", "GLUE", "FIRE", "RED", "GREEN", "BLUE"
         };
 
         std::string flag_string;
