@@ -385,6 +385,12 @@ struct TileExtra {
                 break;
             case 74: // Safe Vault
                 break;
+            case 75:
+                // This is likely to be wrong.
+                for (uint32_t i = 0; i < 3; i++)
+                    br.skip(104);
+
+                break;
             case 77: // Infinity Weather Machine. (please move it).
                 br.skip(4);
                 br.skip(br.read_u32() * 4);
