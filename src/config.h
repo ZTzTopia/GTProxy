@@ -4,7 +4,7 @@
 #include <nlohmann/json.hpp>
 
 #define GROWTOPIA_HOST "52.44.105.194"
-#define GROWTOPIA_VERSION "3.90"
+#define GROWTOPIA_VERSION "3.91"
 #define GROWTOPIA_PROTOCOL 161
 
 class Config {

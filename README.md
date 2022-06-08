@@ -34,6 +34,13 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build .
 ```
 
+## For Growtopia version 3.91
+- You need add `www.` before growtopia[1-2].com in `hosts` file.
+```text
+127.0.0.1 www.growtopia1.com
+127.0.0.1 www.growtopia2.com
+```
+
 ## Running the program
 - If you on Windows, you need move needed dynamic binary from `/path/to/binary/conan/bin` to `/path/to/program/`.
 - Run the program.
