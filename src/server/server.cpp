@@ -36,38 +36,18 @@ namespace server {
 
         m_peer = new player::Peer{ peer };
 
-#if 0
+        // Request server data using saved headers and params from the growtopia client.
+        utils::TextParse text_parse{ m_http->request_server_data() }; // TODO: Handle crash.
+        std::string host = text_parse.get("server", 1);
+        auto port = text_parse.get<enet_uint16>("port", 1);
+
         m_client = new client::Client{ m_config, this };
+        if (!m_client->start(host, port)) {
+            spdlog::error("Failed to connect to client!");
 
-        httplib::Headers headers;
-        headers.emplace("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5110.0 Safari/537.36");
-
-        httplib::Params params;
-        params.emplace("platform", "0");
-        params.emplace("protocol", std::to_string(m_config->m_server.protocol));
-        params.emplace("version", m_config->m_server.game_version);
-
-        httplib::Client cli{ m_config->m_server.host };
-        httplib::Result response{ cli.Post("/growtopia/server_data.php", headers, params) };
-        if (response.error() == httplib::Error::Success && response->status == 200) {
-            utils::TextParse text_parse{ response->body };
-            std::string host{ text_parse.get("server", 1) };
-            enet_uint16 port{ text_parse.get<enet_uint16>("port", 1) };
-
-            if (!m_client->start(host, port)) {
-                spdlog::error("Failed to connect to client!");
-
-                delete m_client;
-                m_client = nullptr;
-            }
+            delete m_client;
+            m_client = nullptr;
         }
-        else {
-            if (response.error() == httplib::Error::Success)
-                spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
-            else
-                spdlog::error("Failed to get server data. HTTP error: {}", httplib::to_string(response.error()));
-        }
-#endif
     }
 
     void Server::on_receive(ENetPeer* peer, ENetPacket* packet)

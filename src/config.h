@@ -12,7 +12,7 @@ public:
     bool create(const std::string& file)
     {
         m_server.host = "growtopia1.com";
-        m_server.game_version = "3.91";
+        m_server.game_version = "3.92";
         m_server.protocol = 161;
         m_server.using_new_packet = true;
         m_command.prefix = "!";
@@ -23,6 +23,7 @@ public:
         j["server"]["protocol"] = m_server.protocol;
         j["server"]["usingNewPacket"] = m_server.using_new_packet;
         j["command"]["prefix"] = m_command.prefix;
+        j["ssl"]["enabled"] = m_ssl.enabled;
 
         std::ofstream ofs{ file };
         if (!ofs.is_open()) {
@@ -52,6 +53,7 @@ public:
             m_server.protocol = j["server"]["protocol"].get<int>();
             m_server.using_new_packet = j["server"]["usingNewPacket"];
             m_command.prefix = j["command"]["prefix"];
+            m_ssl.enabled = j["ssl"]["enabled"];
         }
         catch (const nlohmann::json::exception& ex) {
             spdlog::error("{}", ex.what());
@@ -72,4 +74,8 @@ public:
     struct {
         std::string prefix;
     } m_command;
+
+    struct {
+        bool enabled;
+    } m_ssl;
 };

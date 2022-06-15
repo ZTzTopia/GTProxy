@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0..3.23)
-project(MAIN LANGUAGES CXX)
+project(Main LANGUAGES CXX)
 
 set(GTPROXY_VERSION "${CMAKE_PROJECT_VERSION}")
 if (GTPROXY_BUILD_VERSION)
