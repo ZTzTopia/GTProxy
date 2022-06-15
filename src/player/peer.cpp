@@ -1,14 +1,20 @@
 #include <memory>
 
-#include "player.h"
+#include "peer.h"
+#include "../utils/random.h"
 
 namespace player {
-    Player::Player(ENetPeer *peer) : m_peer(peer)
+    Peer::Peer(ENetPeer *peer) : m_peer{ peer }
     {
-        peer->data = reinterpret_cast<void*>(this);
+        static randutils::pcg_rng rng{ utils::random::get_generator_local() };
+        std::string uid{ utils::random::generate_unicode(rng, 32) };
+
+        m_peer->data = new uint8_t[32]; // FIXME: memory leak
+        std::memcpy(m_peer->data, &uid[0], uid.length());
     }
 
-    int Player::send_packet(eNetMessageType type, const std::string &data) {
+    int Peer::send_packet(eNetMessageType type, const std::string& data)
+    {
         if (!m_peer) return -1;
 
         ENetPacket *packet = enet_packet_create(nullptr, data.length() + 5, ENET_PACKET_FLAG_RELIABLE);
@@ -20,7 +26,8 @@ namespace player {
         return ret;
     }
 
-    int Player::send_packet_packet(ENetPacket *packet) {
+    int Peer::send_packet_packet(ENetPacket* packet)
+    {
         if (!m_peer) return -1;
 
         ENetPacket *packet_ = enet_packet_create(nullptr, packet->dataLength, packet->flags);
@@ -34,7 +41,8 @@ namespace player {
         return ret;
     }
 
-    int Player::send_raw_packet(eNetMessageType type, GameUpdatePacket *game_update_packet, size_t length, uint8_t *extended_data, enet_uint32 flags) {
+    int Peer::send_raw_packet(eNetMessageType type, GameUpdatePacket* game_update_packet, size_t length, uint8_t* extended_data, enet_uint32 flags)
+    {
         if (!m_peer) return -1;
         if (length > 0xF4240) return -1;
 
@@ -56,7 +64,8 @@ namespace player {
         return ret;
     }
 
-    int Player::send_variant(VariantList &&variant_list, uint32_t net_id, enet_uint32 flags) {
+    int Peer::send_variant(VariantList&& variant_list, uint32_t net_id, enet_uint32 flags)
+    {
         if (variant_list.Get(0).GetType() == eVariantType::TYPE_UNUSED)
             return -1;
 
@@ -71,12 +80,5 @@ namespace player {
         int ret{ send_raw_packet(NET_MESSAGE_GAME_PACKET, &game_update_packet, sizeof(GameUpdatePacket), data, flags) };
         delete data;
         return ret;
-    }
-
-    int Player::send_log(const std::string &log, bool on_console_message) {
-        if (!on_console_message)
-            return send_packet(NET_MESSAGE_GAME_MESSAGE, fmt::format("action|log\nmsg|{}", log));
-
-        return send_variant({ "OnConsoleMessage", log });
     }
 }

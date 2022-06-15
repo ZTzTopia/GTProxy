@@ -1,28 +1,24 @@
 #include <spdlog/spdlog.h>
-#include <spdlog/fmt/bin_to_hex.h>
-#include <util/Variant.h>
 
 #include "server.h"
-#include "../config.h"
-#include "../utils/hash.h"
-#include "../utils/random.h"
+#include "../client/client.h"
 #include "../utils/text_parse.h"
 
 namespace server {
-    Server::Server()
-        : enetwrapper::ENetServer(), m_client(nullptr), m_player(nullptr), m_disconnected(true)
+    Server::Server(Config* config) : enetwrapper::ENetServer{}, m_config{ config }, m_client{ nullptr }, m_peer{ nullptr }
     {
-        m_command_manager = new command::CommandManager{};
+        m_http = new Http{ config };
+        m_http->listen("0.0.0.0", 443);
     }
 
     Server::~Server()
     {
+        delete m_http;
+        delete m_peer;
         delete m_client;
-        delete m_player;
-        delete m_command_manager;
     }
 
-    bool Server::initialize()
+    bool Server::start()
     {
         if (!create_host(17000, 1))
             return false;
@@ -31,241 +27,84 @@ namespace server {
         return true;
     }
 
-    void Server::on_connect(ENetPeer *peer)
+    void Server::on_connect(ENetPeer* peer)
     {
-        spdlog::info("Client connected to proxy server: {}", peer->connectID);
+        spdlog::info("New client connected to proxy server!");
 
-        m_disconnected = false;
-        m_player = new player::Player{ peer };
+        // No need to check if the client is disconnected, because we
+        // only accept one peer at a time.
 
-        if (!m_client) {
-            m_client = new client::Client{ this };
-initialize:
-            if (!m_client->initialize()) {
-failed_initialize:
-                spdlog::error("Failed to initialize proxy client.");
+        m_peer = new player::Peer{ peer };
 
-                delete m_player;
-                m_player = nullptr;
+#if 0
+        m_client = new client::Client{ m_config, this };
+
+        httplib::Headers headers;
+        headers.emplace("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5110.0 Safari/537.36");
+
+        httplib::Params params;
+        params.emplace("platform", "0");
+        params.emplace("protocol", std::to_string(m_config->m_server.protocol));
+        params.emplace("version", m_config->m_server.game_version);
+
+        httplib::Client cli{ m_config->m_server.host };
+        httplib::Result response{ cli.Post("/growtopia/server_data.php", headers, params) };
+        if (response.error() == httplib::Error::Success && response->status == 200) {
+            utils::TextParse text_parse{ response->body };
+            std::string host{ text_parse.get("server", 1) };
+            enet_uint16 port{ text_parse.get<enet_uint16>("port", 1) };
+
+            if (!m_client->start(host, port)) {
+                spdlog::error("Failed to connect to client!");
 
                 delete m_client;
                 m_client = nullptr;
             }
         }
         else {
-            if (m_client->is_on_send_to_server()) {
-                if (!m_client->create_host(1))
-                    goto failed_initialize;
-
-                if (!m_client->connect(m_client->get_host(), m_client->get_port()))
-                    goto failed_initialize;
-
-                m_client->start_service();
-            }
-            else {
-                goto initialize;
-            }
+            if (response.error() == httplib::Error::Success)
+                spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
+            else
+                spdlog::error("Failed to get server data. HTTP error: {}", httplib::to_string(response.error()));
         }
+#endif
     }
 
-    void Server::on_receive(ENetPeer *peer, ENetPacket *packet)
+    void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
     {
         if (!m_client)
             return;
 
-        if (m_client->is_disconnected())
+        if (!m_client->get_peer())
             return;
 
-        if (!process_packet(peer, packet))
+        if (!m_client->get_peer()->is_connected())
             return;
 
-        if (m_client->get_player()->send_packet_packet(packet) != 0)
-            spdlog::error("Failed to send packet to growtopia server");
+        /*if (!process_packet(peer, packet))
+            return;
+
+        m_client->get_peer()->send_packet_packet(packet);*/
     }
 
-    void Server::on_disconnect(ENetPeer *peer)
+    void Server::on_disconnect(ENetPeer* peer)
     {
-        spdlog::info("Client disconnected from Growtopia Client: (peer->data! -> {})", peer->data);
+        spdlog::info("Client disconnected from proxy server!");
 
-        if (m_client) {
-            delete m_client;
-            m_client = nullptr;
-        }
+        // The client will disconnect now from growtopia server after
+        // deleting the client object.
+        delete m_client;
+        m_client = nullptr;
 
-        delete m_player;
-        m_player = nullptr;
+        // Yes, useless log.
+        spdlog::info("Disconnected from growtopia server!");
 
-        m_disconnected = true;
+        delete m_peer;
+        m_peer = nullptr;
     }
 
     bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
     {
-        player::eNetMessageType message_type{ player::message_type_to_string(packet) };
-        std::string message_data{ player::get_text(packet) };
-        switch (message_type) {
-            case player::NET_MESSAGE_GENERIC_TEXT:
-            case player::NET_MESSAGE_GAME_MESSAGE: {
-                if (message_data.find("requestedName") != std::string::npos) {
-                    utils::TextParse text_parse{ message_data };
-                    if (text_parse.get("requestedName", 1).empty())
-                        break;
-
-                    static randutils::pcg_rng gen{ utils::random::get_generator_local() };
-                    static std::string mac{ utils::random::generate_mac(gen) };
-                    static std::string rid{ utils::random::generate_hex(gen, 16, true) };
-                    static std::string wk{ utils::random::generate_hex(gen, 16, true) };
-                    static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
-
-                    auto protocol{ Config::get().config()["server"]["protocol"].get<uint8_t>() };
-                    if (text_parse.get<uint8_t>("protocol", 1) < protocol)
-                        text_parse.set("protocol", protocol);
-
-                    std::string version{ Config::get().config()["server"]["gameVersion"] };
-                    version.erase(std::remove(version.begin(), version.end(), '.'), version.end());
-                    if (text_parse.get<uint32_t>("game_version", 1) < std::stoul(version))
-                        text_parse.set("game_version", Config::get().config()["server"]["gameVersion"]);
-
-                    text_parse.set("mac", mac);
-                    text_parse.set("rid", rid);
-                    text_parse.set("wk", wk);
-                    text_parse.set("hash", utils::proton_hash(fmt::format("{}RT", device_id).c_str()));
-                    text_parse.set("hash2", utils::proton_hash(fmt::format("{}RT", mac).c_str()));
-
-                    m_client->get_player()->send_packet(message_type, text_parse.get_all_raw());
-                    return false;
-                }
-                else if (message_data.find("action|input") != std::string::npos) {
-                    utils::TextParse text_parse{ message_data };
-                    if (text_parse.get("text", 1).empty())
-                        break;
-
-                    if (m_command_manager->try_find_and_fire_command(this, text_parse.get("text", 1)))
-                        return false;
-                }
-                else if (message_data.find("action|wrench") != std::string::npos) {
-                    utils::TextParse text_parse{ message_data };
-                    if (text_parse.get("netid", 1).empty())
-                        break;
-
-                    auto net_id = text_parse.get<uint32_t>("netid", 1);
-
-                    player::LocalPlayer* local_player{ m_client->get_local_player() };
-                    if (net_id == local_player->get_net_id())
-                        break;
-
-                    if (net_id != local_player->get_world()->world_owner_id)
-                        break;
-
-                    std::string button_clicked{};
-                    if (local_player->has_flags(player::eFlag::FAST_WRENCH_PULL))
-                        button_clicked = "pull";
-                    else if (local_player->has_flags(player::eFlag::FAST_WRENCH_KICK))
-                        button_clicked = "kick";
-                    else if (local_player->has_flags(player::eFlag::FAST_WRENCH_BAN))
-                        button_clicked = "worldban";
-
-                    if (button_clicked.empty())
-                        break;
-
-                    m_client->get_player()->send_packet(
-                        player::NET_MESSAGE_GENERIC_TEXT,
-                        fmt::format(
-                            "action|dialog_return\n"
-                            "dialog_name|popup\n"
-                            "netID|{}\n"
-                            "buttonClicked|{}", net_id, button_clicked));
-                    return false;
-                }
-                else if (message_data.find("action|quit") != std::string::npos &&
-                    message_data.find("action|quit_to_exit") == std::string::npos) {
-                    enet_peer_disconnect_now(peer, 0);
-
-                    m_disconnected = true;
-                }
-                else {
-                    utils::TextParse text_parse{ message_data };
-                    if (text_parse.empty()) break;
-
-                    spdlog::info(
-                        "Outgoing MessagePacket:\n{} [{}]:\n{}\n",
-                        player::message_type_to_string(message_type),
-                        message_type,
-                        fmt::join(text_parse.get_all_array(), "\r\n"));
-                }
-                break;
-            }
-            case player::NET_MESSAGE_GAME_PACKET: {
-                player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
-                return process_tank_update_packet(peer, game_update_packet);
-            }
-            default:
-                utils::TextParse text_parse{ message_data };
-                if (text_parse.empty()) break;
-
-                spdlog::info(
-                    "Outgoing MessagePacket:\n{} [{}]:\n{}\n",
-                    player::message_type_to_string(message_type),
-                    message_type,
-                    fmt::join(text_parse.get_all_array(), "\r\n"));
-                break;
-        }
-
-        return true;
-    }
-
-    bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
-    {
-        switch (game_update_packet->type) {
-            case player::PACKET_STATE: {
-                player::LocalPlayer* local_player{ m_client->get_local_player() };
-                local_player->set_pos({
-                    static_cast<int>(game_update_packet->pos_x),
-                    static_cast<int>(game_update_packet->pos_y) });
-
-                if (game_update_packet->item_id != 0) {
-                    PlayerItems* inventory = get_client()->get_local_player()->get_items();
-                    for (auto& item: inventory->items) {
-                        if (item.first == game_update_packet->item_id) {
-                            item.second.first -= 1;
-                            if (item.second.first <= 0)
-                                inventory->items.erase(item.first);
-
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-            case player::PACKET_CALL_FUNCTION: {
-                uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
-                if (!extended_data) break;
-
-                VariantList variant_list{};
-                variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
-                spdlog::info("{}", variant_list.GetContentsAsDebugString());
-                break;
-            }
-            case player::PACKET_DISCONNECT:
-                enet_peer_disconnect_now(peer, 0);
-
-                m_disconnected = true;
-                break;
-            default: {
-                uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
-
-                std::vector<char> data_array;
-                for (uint32_t i = 0; i < game_update_packet->data_size; i++)
-                    data_array.push_back(static_cast<char>(extended_data[i]));
-
-                spdlog::info(
-                    "Outgoing TankUpdatePacket:\n [{}]{}{}",
-                    game_update_packet->type,
-                    player::packet_type_to_string(game_update_packet->type),
-                    extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(data_array)) : "");
-                break;
-            }
-        }
-
         return true;
     }
 }

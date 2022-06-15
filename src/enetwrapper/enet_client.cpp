@@ -1,38 +1,34 @@
 #include <string>
 
-#include "enetserver.h"
+#include "enet_client.h"
 
 namespace enetwrapper {
-    ENetServer::ENetServer() : m_host(nullptr)
+    ENetClient::ENetClient() : m_host(nullptr), m_peer(nullptr)
     {
         m_running.store(false);
     }
 
-    ENetServer::~ENetServer()
+    ENetClient::~ENetClient()
     {
-        destroy_host();
+        destroy();
     }
 
-    bool ENetServer::create_host(enet_uint16 port, std::size_t peer_count)
+    bool ENetClient::create_host(std::size_t peer_count, enet_uint8 using_new_packet)
     {
-        if (m_host) destroy_host();
+        if (m_host) destroy();
 
-        ENetAddress address;
-        address.host = ENET_HOST_ANY;
-        address.port = port;
-
-        m_host = enet_host_create(&address, peer_count, 2, 0, 0);
+        m_host = enet_host_create(nullptr, peer_count, 2, 0, 0);
         if (!m_host) return false;
 
-		if (enet_host_compress_with_range_coder(m_host) != 0)
+        if (enet_host_compress_with_range_coder(m_host) != 0)
 			return false;
 
         m_host->checksum = enet_crc32;
-        m_host->usingNewPacketForServer = 1;
+        m_host->usingNewPacket = using_new_packet;
         return true;
     }
 
-    void ENetServer::destroy_host()
+    void ENetClient::destroy()
     {
         if (m_running.load()) {
             m_running.store(false);
@@ -40,28 +36,34 @@ namespace enetwrapper {
         }
 
         if (m_host) {
-            for (ENetPeer* current_peer = m_host->peers;
-                current_peer < &m_host->peers[m_host->peerCount];
-                ++current_peer)
-            {
-                if (current_peer && current_peer->state == ENET_PEER_STATE_CONNECTED)
-                    enet_peer_disconnect_now(current_peer, 0);
-            }
-
+            if (m_peer) enet_peer_disconnect_now(m_peer, 0);
             enet_host_destroy(m_host);
         }
     }
 
-    void ENetServer::start_service()
+    bool ENetClient::connect(const std::string &host, enet_uint16 port)
+    {
+        if (!m_host) return false;
+
+        ENetAddress address;
+        enet_address_set_host(&address, host.c_str());
+        address.port = port;
+
+        m_peer = enet_host_connect(m_host, &address, 2, 0);
+        if (!m_peer) return false;
+        return true;
+    }
+
+    void ENetClient::start_service()
     {
         if (m_running.load()) return;
 
         m_running.store(true);
-        std::thread thread{ &ENetServer::service_thread, this };
+        std::thread thread{ &ENetClient::service_thread, this };
         m_service_thread = std::move(thread);
     }
 
-    void ENetServer::service_thread()
+    void ENetClient::service_thread()
     {
         ENetEvent event;
         while (m_running.load()) {

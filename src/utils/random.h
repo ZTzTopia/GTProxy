@@ -1,6 +1,7 @@
 #pragma once
 #include <execution>
 
+#include "hash.h"
 #include "../include/randutils.hpp"
 #include "../include/pcg/pcg_random.hpp"
 
@@ -28,7 +29,7 @@ namespace utils {
             return pcg_rng;
         }
 
-        template <class T>
+        template<typename T>
         inline std::string generate(T gen, std::size_t length,
             const std::string &chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
         {
@@ -42,7 +43,7 @@ namespace utils {
             return result;
         }
 
-        template <typename T>
+        template<typename T>
         inline std::string generate_alpha(T gen, std::size_t length, bool uppercase = false)
         {
             return generate(gen, length, uppercase
@@ -50,21 +51,40 @@ namespace utils {
                 : "abcdefghijklmnopqrstuvwxyz");
         }
 
-        template <typename T>
+        template<typename T>
+        inline std::string generate_unicode(T gen, std::size_t length)
+        {
+            std::string unicode;
+            unicode.reserve(length);
+
+            for (std::size_t i = 0; i < length; ++i) {
+                char c = static_cast<char>(gen.uniform(-0x80, 0x7F));
+                if (c == '\0' || c == '\n' || c == '\r' || c == '\t' || c == '\v' || c == '\f' || c == '\b' || c == '\a') {
+                    i--;
+                    continue;
+                }
+
+                unicode.push_back(c);
+            }
+
+            return unicode;
+        }
+
+        template<typename T>
         inline std::string generate_number(T gen, std::size_t length)
         {
             return generate(gen, length, "0123456789");
         }
 
-        template <typename T>
+        template<typename T>
         inline std::string generate_hex(T gen, std::size_t length, bool uppercase = true)
         {
-            return generate(gen, length * 2, uppercase
+            return generate(gen, length, uppercase
                 ? "0123456789ABCDEF"
                 : "0123456789abcdef");
         }
 
-        template <class T>
+        template<typename T>
         inline std::string generate_mac(T gen)
         {
             std::string result;

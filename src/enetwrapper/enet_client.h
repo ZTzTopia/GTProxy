@@ -9,7 +9,7 @@ namespace enetwrapper {
         ENetClient();
         ~ENetClient();
 
-        bool create_host(std::size_t peer_count);
+        bool create_host(std::size_t peer_count, enet_uint8 using_new_packet);
         void destroy();
 
         bool connect(const std::string& host, enet_uint16 port);

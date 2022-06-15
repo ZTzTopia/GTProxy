@@ -1,6 +1,6 @@
 #include <enet/enet.h>
 
-#include "enetwrapper.h"
+#include "enet_wrapper.h"
 
 namespace enetwrapper {
     bool ENetWrapper::one_time_init() {
