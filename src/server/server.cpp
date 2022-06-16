@@ -36,17 +36,22 @@ namespace server {
 
         m_peer = new player::Peer{ peer };
 
-        // Request server data using saved headers and params from the growtopia client.
-        utils::TextParse text_parse{ m_http->request_server_data() }; // TODO: Handle crash.
-        std::string host = text_parse.get("server", 1);
-        auto port = text_parse.get<enet_uint16>("port", 1);
+        if (m_client && m_client->is_redirecting()) {
+            m_client->redirect();
+        }
+        else {
+            // Request server data using saved headers and params from the growtopia client.
+            utils::TextParse text_parse{ m_http->request_server_data() }; // TODO: Handle crash.
+            std::string host = text_parse.get("server", 1);
+            auto port = text_parse.get<enet_uint16>("port", 1);
 
-        m_client = new client::Client{ m_config, this };
-        if (!m_client->start(host, port)) {
-            spdlog::error("Failed to connect to client!");
+            m_client = new client::Client{ m_config, this };
+            if (!m_client->start(host, port)) {
+                spdlog::error("Failed to connect to client!");
 
-            delete m_client;
-            m_client = nullptr;
+                delete m_client;
+                m_client = nullptr;
+            }
         }
     }
 
@@ -61,30 +66,63 @@ namespace server {
         if (!m_client->get_peer()->is_connected())
             return;
 
-        /*if (!process_packet(peer, packet))
+        if (!process_packet(peer, packet))
             return;
 
-        m_client->get_peer()->send_packet_packet(packet);*/
+        m_client->get_peer()->send_packet_packet(packet);
     }
 
     void Server::on_disconnect(ENetPeer* peer)
     {
         spdlog::info("Client disconnected from proxy server!");
 
-        // The client will disconnect now from growtopia server after
-        // deleting the client object.
-        delete m_client;
-        m_client = nullptr;
+        if (m_client && !m_client->is_redirecting()) {
+            if (m_client->get_peer()->is_connected()) {
+                // Yes, useless log.
+                spdlog::info("Disconnected from growtopia server!");
+            }
 
-        // Yes, useless log.
-        spdlog::info("Disconnected from growtopia server!");
+            // The client will disconnect now from growtopia server after
+            // deleting the client object.
+            delete m_client;
+            m_client = nullptr;
+        }
 
         delete m_peer;
         m_peer = nullptr;
+
+        if (m_client && m_client->is_redirecting()) {
+            spdlog::info("Redirecting to another server!");
+        }
     }
 
     bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
     {
+        player::eNetMessageType message_type{player::message_type_to_string(packet)};
+        std::string message_data{ player::get_text(packet) };
+        switch (message_type) {
+            case player::NET_MESSAGE_GAME_PACKET: {
+                player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
+                return process_tank_update_packet(peer, game_update_packet);
+            }
+            default:
+                break;
+        }
+
+        return true;
+    }
+
+    bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
+    {
+        switch (game_update_packet->type) {
+            case player::PACKET_DISCONNECT:
+                m_peer->disconnect_now();
+                on_disconnect(peer);
+                break;
+            default:
+                break;
+        }
+
         return true;
     }
 }

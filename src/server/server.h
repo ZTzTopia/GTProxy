@@ -21,7 +21,9 @@ namespace server {
         void on_disconnect(ENetPeer* peer) override;
 
         bool process_packet(ENetPeer* peer, ENetPacket* packet);
+        bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
 
+    public:
         player::Peer* get_peer() const { return m_peer; }
 
     private:

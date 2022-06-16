@@ -57,8 +57,10 @@ namespace server {
                     spdlog::info("\t{}: {}", header.first, header.second);
                 }
             }
+
             if (!req.params.empty()) {
-                spdlog::info("  {}", httplib::detail::params_to_query_str(req.params));
+                spdlog::info("Params:");
+                spdlog::info("\t{}", httplib::detail::params_to_query_str(req.params));
             }
         });
 

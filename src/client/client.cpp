@@ -1,8 +1,10 @@
 #include "client.h"
 #include "../server/server.h"
+#include "../utils/hash.h"
+#include "../utils/text_parse.h"
 
 namespace client {
-    Client::Client(Config* config, server::Server* server) : enetwrapper::ENetClient{}, m_config{ config }, m_peer{ nullptr }, m_server{ server } {}
+    Client::Client(Config* config, server::Server* server) : enetwrapper::ENetClient{}, m_config{ config }, m_peer{ nullptr }, m_server{ server }, m_redirecting{ false } {}
 
     Client::~Client()
     {
@@ -26,6 +28,7 @@ namespace client {
         spdlog::info("Connected to growtopia server!");
 
         m_peer = new player::Peer{ peer };
+        m_redirecting = false;
     }
 
     void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
@@ -36,10 +39,10 @@ namespace client {
         if (!m_server->get_peer()->is_connected())
             return;
 
-        /*if (!process_packet(peer, packet))
+        if (!process_packet(peer, packet))
             return;
 
-        m_server->get_peer()->send_packet_packet(packet);*/
+        m_server->get_peer()->send_packet_packet(packet);
     }
 
     void Client::on_disconnect(ENetPeer* peer)
@@ -57,6 +60,51 @@ namespace client {
 
     bool Client::process_packet(ENetPeer* peer, ENetPacket* packet)
     {
+        player::eNetMessageType message_type{player::message_type_to_string(packet)};
+        std::string message_data{ player::get_text(packet) };
+        switch (message_type) {
+            case player::NET_MESSAGE_GAME_PACKET: {
+                player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
+                return process_tank_update_packet(peer, game_update_packet);
+            }
+            default:
+                break;
+        }
+
+        return true;
+    }
+
+    bool Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
+    {
+        switch (game_update_packet->type) {
+            case player::PACKET_CALL_FUNCTION: {
+                uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+                if (!extended_data) break;
+
+                VariantList variant_list{};
+                variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
+
+                std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
+                switch (hash) {
+                    case "OnSendToServer"_fh: {
+                        std::vector<std::string> tokenize{ utils::TextParse::string_tokenize(variant_list.Get(4).GetString()) };
+                        m_redirecting = true;
+                        m_redirect_host = std::move(tokenize[0]);
+                        m_redirect_port = static_cast<enet_uint16>(variant_list.Get(1).GetINT32());
+
+                        m_server->get_peer()->send_variant({ "OnSendToServer", 17000, variant_list.Get(2).GetINT32(), variant_list.Get(3).GetINT32(), fmt::format("127.0.0.1|{}|{}", tokenize.size() == 2 ? "" : tokenize.at(1), tokenize.size() == 2 ? tokenize.at(1) : tokenize.at(2)), variant_list.Get(5).GetINT32() });
+                        return false;
+                    }
+                    default:
+                        break;
+                }
+
+                break;
+            }
+            default:
+                break;
+        }
+
         return true;
     }
 }
