@@ -52,6 +52,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../conan/conan.cmake)
 conan_cmake_configure(REQUIRES
         fmt/8.1.1
         spdlog/1.10.0
+        cpp-httplib/0.10.8
         nlohmann_json/3.10.5
         zlib/1.2.12
         libressl/3.5.3
@@ -77,6 +78,9 @@ target_link_libraries(${PROJECT_NAME} fmt::fmt)
 
 find_package(spdlog REQUIRED)
 target_link_libraries(${PROJECT_NAME} spdlog::spdlog)
+
+find_package(httplib REQUIRED)
+target_link_libraries(${PROJECT_NAME} httplib::httplib)
 
 find_package(nlohmann_json REQUIRED)
 target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
