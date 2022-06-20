@@ -6,16 +6,21 @@
 
 class Config {
 public:
-    Config() : m_server{}, m_command{} {}
+    Config() : m_server{}, m_command{}, m_ssl{} {}
     ~Config() = default;
 
-    bool create(const std::string& file)
+    void default_config()
     {
         m_server.host = "growtopia1.com";
         m_server.game_version = "3.93";
         m_server.protocol = 161;
         m_server.using_new_packet = true;
         m_command.prefix = "!";
+    }
+
+    bool create(const std::string& file)
+    {
+        default_config();
 
         nlohmann::json j{};
         j["server"]["host"] = m_server.host;
