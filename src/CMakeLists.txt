@@ -31,7 +31,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /EHsc)
 else ()
-    target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fexceptions)
 endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
