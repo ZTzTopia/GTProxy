@@ -6,14 +6,15 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 
 ## Features
 - [x] Print incoming and outgoing packets (text, variant list, etc).
+- [x] Support for [Growtopia](https://growtopiagame.com/) 3.92 and up.
 - [x] Built-in http server with metadata from [Growtopia](https://growtopiagame.com/) server data.
 - [x] Works well with sub-server redirection.
-- [x] Command.
+- [ ] Command.
 - [x] Config file.
-- [x] Pathfinding for auto collect, etc.
-- [x] Loading items' database (items.dat) will request one from [Growtopia](https://growtopiagame.com/).
-- [x] Local Player & Remote player.
-- [x] Auto puzzle captcha solver.
+- [ ] Pathfinding for auto collect, etc.
+- [ ] Loading items' database (items.dat) will request one from [Growtopia](https://growtopiagame.com/).
+- [ ] Local Player & Remote player.
+- [ ] Auto puzzle captcha solver.
 
 ## Supported platform
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.
@@ -34,7 +35,7 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build .
 ```
 
-## For Growtopia version 3.91
+## For Growtopia version 3.91-3.93
 - You need add `www.` before growtopia[1-2].com in `hosts` file.
 ```text
 127.0.0.1 www.growtopia1.com
