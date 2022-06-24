@@ -1,3 +1,5 @@
+#include <spdlog/fmt/bin_to_hex.h>
+
 #include "client.h"
 #include "../server/server.h"
 #include "../utils/hash.h"
@@ -60,8 +62,16 @@ namespace client {
 
     bool Client::process_packet(ENetPeer* peer, ENetPacket* packet)
     {
-        player::eNetMessageType message_type{player::message_type_to_string(packet)};
+        player::eNetMessageType message_type{ player::message_type_to_string(packet) };
         std::string message_data{ player::get_text(packet) };
+
+        if (message_type != player::NET_MESSAGE_GAME_PACKET) {
+            utils::TextParse text_parse{ message_data };
+            if (!text_parse.empty()) {
+                spdlog::info("Incoming MessagePacket:\n{} [{}]:\n{}\n", player::message_type_to_string(message_type), message_type, fmt::join(text_parse.get_all_array(), "\r\n"));
+            }
+        }
+
         switch (message_type) {
             case player::NET_MESSAGE_GAME_PACKET: {
                 player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
@@ -76,6 +86,12 @@ namespace client {
 
     bool Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
     {
+        if (game_update_packet->type != player::PACKET_STATE && game_update_packet->type != player::PACKET_CALL_FUNCTION) {
+            uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+            std::vector<uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
+            spdlog::info("Incoming TankUpdatePacket:\n [{}]{}{}", game_update_packet->type, player::packet_type_to_string(game_update_packet->type), extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector)) : "");
+        }
+
         switch (game_update_packet->type) {
             case player::PACKET_CALL_FUNCTION: {
                 uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
@@ -83,6 +99,8 @@ namespace client {
 
                 VariantList variant_list{};
                 variant_list.SerializeFromMem(extended_data, static_cast<int>(game_update_packet->data_size));
+
+                spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
 
                 std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
                 switch (hash) {
