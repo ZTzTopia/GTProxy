@@ -1,3 +1,4 @@
+#include <magic_enum.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
 
@@ -105,7 +106,7 @@ namespace server {
         if (message_type != player::NET_MESSAGE_GAME_PACKET) {
             utils::TextParse text_parse{ message_data };
             if (!text_parse.empty()) {
-                spdlog::info("Incoming MessagePacket:\n{} [{}]:\n{}\n", player::message_type_to_string(message_type), message_type, fmt::join(text_parse.get_all_array(), "\r\n"));
+                spdlog::info("Incoming MessagePacket:\n{} [{}]:\n{}\n", magic_enum::enum_name(message_type), message_type, fmt::join(text_parse.get_all_array(), "\r\n"));
             }
         }
 
@@ -126,7 +127,7 @@ namespace server {
         if (game_update_packet->type != player::PACKET_STATE) {
             uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
             std::vector<uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
-            spdlog::info("Outgoing TankUpdatePacket:\n [{}]{}{}", game_update_packet->type, player::packet_type_to_string(game_update_packet->type), extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector)) : "");
+            spdlog::info("Outgoing TankUpdatePacket:\n [{}]{}{}", game_update_packet->type, magic_enum::enum_name(static_cast<player::ePacketType>(game_update_packet->type)), extended_data ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector)) : "");
         }
 
         switch (game_update_packet->type) {

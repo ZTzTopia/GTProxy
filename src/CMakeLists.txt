@@ -50,12 +50,13 @@ target_link_libraries(${PROJECT_NAME} enet)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../conan/conan.cmake)
 
 conan_cmake_configure(REQUIRES
-        fmt/8.1.1
-        spdlog/1.10.0
         cpp-httplib/0.10.8
-        nlohmann_json/3.10.5
-        zlib/1.2.12
+        fmt/8.1.1
         libressl/3.5.3
+        magic_enum/0.8.0
+        nlohmann_json/3.10.5
+        spdlog/1.10.0
+        zlib/1.2.12
     GENERATORS cmake_find_package
     IMPORTS "bin, *.dll -> ./bin"
     OPTIONS
@@ -76,17 +77,20 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}/conan")
 find_package(fmt REQUIRED)
 target_link_libraries(${PROJECT_NAME} fmt::fmt)
 
-find_package(spdlog REQUIRED)
-target_link_libraries(${PROJECT_NAME} spdlog::spdlog)
-
 find_package(httplib REQUIRED)
 target_link_libraries(${PROJECT_NAME} httplib::httplib)
+
+find_package(LibreSSL REQUIRED)
+target_link_libraries(${PROJECT_NAME} LibreSSL::SSL LibreSSL::TLS LibreSSL::Crypto)
+
+find_package(magic_enum)
+target_link_libraries(${PROJECT_NAME} magic_enum::magic_enum)
 
 find_package(nlohmann_json REQUIRED)
 target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 
+find_package(spdlog REQUIRED)
+target_link_libraries(${PROJECT_NAME} spdlog::spdlog)
+
 find_package(ZLIB REQUIRED)
 target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
-
-find_package(LibreSSL REQUIRED)
-target_link_libraries(${PROJECT_NAME} LibreSSL::SSL LibreSSL::TLS LibreSSL::Crypto)
