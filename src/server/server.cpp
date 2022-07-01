@@ -126,6 +126,8 @@ namespace server {
                 static uint32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
 
                 utils::TextParse text_parse{ message_data };
+                text_parse.set("game_version", m_config->m_server.game_version);
+                text_parse.set("protocol", m_config->m_server.protocol);
                 text_parse.set("mac", mac);
                 text_parse.set("rid", rid);
                 text_parse.set("wk", wk);
