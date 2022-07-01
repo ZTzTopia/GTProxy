@@ -4,6 +4,7 @@
 
 #include "server.h"
 #include "../client/client.h"
+#include "../enetwrapper/enet_wrapper.h"
 #include "../utils/random.h"
 #include "../utils/text_parse.h"
 
@@ -11,7 +12,6 @@ namespace server {
     Server::Server(Config* config) : enetwrapper::ENetServer{}, m_config{ config }, m_client{ nullptr }, m_peer{ nullptr }
     {
         m_http = new Http{ config };
-        m_http->listen("0.0.0.0", 443);
     }
 
     Server::~Server()
@@ -23,10 +23,23 @@ namespace server {
 
     bool Server::start()
     {
-        if (!create_host(17000, 1))
+        if (!m_http->listen("0.0.0.0", 443)) {
             return false;
+        }
+
+        if (!enetwrapper::ENetWrapper::one_time_init()) {
+            spdlog::error("Failed to initialize ENet server.");
+            return false;
+        }
+
+        if (!create_host(17000, 1)) {
+            spdlog::error("Failed to create ENet server host.");
+            return false;
+        }
 
         start_service();
+
+        spdlog::info("ENet server listening on port {}.", 17000);
         return true;
     }
 

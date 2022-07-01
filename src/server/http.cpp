@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <thread>
 #include <spdlog/spdlog.h>
 
@@ -7,28 +8,31 @@
 namespace server {
     Http::Http(Config* config) : m_config{ config }
     {
-        std::ofstream cert_file{ "./cert.pem" };
+        std::string temp_dir{ "./temp" };
+        if (!std::filesystem::exists(temp_dir)) {
+            std::filesystem::create_directory(temp_dir);
+        }
+
+        std::ofstream cert_file{ "./temp/cert.pem" };
         cert_file << cert;
         cert_file.close();
 
-        std::ofstream key_file{ "./key.pem" };
+        std::ofstream key_file{ "./temp/key.pem" };
         key_file << key;
         key_file.close();
 
-        m_server = new httplib::SSLServer{ "./cert.pem", "./key.pem" };
-
-        std::remove("./cert.pem");
-        std::remove("./key.pem");
+        m_server = new httplib::SSLServer{ "./temp/cert.pem", "./temp/key.pem" };
     }
 
-    Http::~Http() {
-        stop();
-        delete m_server;
-    }
-
-    void Http::bind_to_port(const std::string& host, int port)
+    Http::~Http()
     {
-        m_server->bind_to_port(host.c_str(), port);
+        stop();
+    }
+
+    bool Http::bind_to_port(const std::string& host, int port)
+    {
+        spdlog::info("HTTP(s) server listening on port {}.", port); // So we don't need to store port in a member variable.
+        return m_server->bind_to_port(host.c_str(), port);
     }
 
     void Http::listen_after_bind()
@@ -36,10 +40,15 @@ namespace server {
         std::thread{ &Http::listen_internal, this }.detach();
     }
 
-    void Http::listen(const std::string& host, int port)
+    bool Http::listen(const std::string& host, int port)
     {
-        bind_to_port(host, port);
+        if (!bind_to_port(host, port)) {
+            spdlog::error("Failed to bind to port {}.", port);
+            return false;
+        }
+
         listen_after_bind();
+        return true;
     }
 
     void Http::stop()

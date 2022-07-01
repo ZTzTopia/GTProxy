@@ -61,9 +61,9 @@ namespace server {
         explicit Http(Config* config);
         ~Http();
 
-        void bind_to_port(const std::string& host, int port);
+        bool bind_to_port(const std::string& host, int port);
         void listen_after_bind();
-        void listen(const std::string& host, int port);
+        bool listen(const std::string& host, int port);
         void stop();
 
         std::string request_server_data();
