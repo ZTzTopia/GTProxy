@@ -120,7 +120,7 @@ namespace server {
         if (message_type != player::NET_MESSAGE_GAME_PACKET) {
             utils::TextParse text_parse{ message_data };
             if (!text_parse.empty()) {
-                spdlog::info("Incoming MessagePacket:\n{} [{}]:\n{}\n", magic_enum::enum_name(message_type), message_type, fmt::join(text_parse.get_all_array(), "\r\n"));
+                spdlog::info("Outgoing MessagePacket:\n{} [{}]:\n{}\n", magic_enum::enum_name(message_type), message_type, fmt::join(text_parse.get_all_array(), "\r\n"));
             }
         }
 
