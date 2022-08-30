@@ -42,10 +42,8 @@ jobs:
       - name: Move program and binary
         run: |
           mkdir ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\src\Debug\Main.exe ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\src\${{inputs.buildType}}\Main.exe ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\conan\bin\*.dll ${{github.workspace}}\build\program
-          #copy ${{github.workspace}}\build\conan\bin\spdlogd.dll ${{github.workspace}}\build\program
-          #copy ${{github.workspace}}\build\conan\bin\zlib1.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
