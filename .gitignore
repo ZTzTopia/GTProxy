@@ -7,3 +7,5 @@
 
 /.vs
 /out
+
+.venv

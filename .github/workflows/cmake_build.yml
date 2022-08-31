@@ -1,13 +1,26 @@
 name: Build
 
 on:
-  push:
+  workflow_dispatch:
     branches: [ dev ]
+    inputs:
+      buildType:
+        description: 'Build Type'
+        required: true
+        default: 'Debug' 
+        type: choice
+        options:
+        - Debug
+        - Release
+        - RelWithDebInfo
+        - MinSizeRel
   pull_request:
     branches: [ main, dev ]
+  # push:
+  #   branches: [ dev ]
 
 env:
-  BUILD_TYPE: Debug
+  BUILD_TYPE: ${{ inputs.buildType }}
 
 jobs:
   build:
@@ -29,7 +42,7 @@ jobs:
       - name: Move program and binary
         run: |
           mkdir ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\src\Debug\Main.exe ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\src\${{inputs.buildType}}\Main.exe ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\conan\bin\*.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
