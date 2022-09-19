@@ -114,6 +114,20 @@ namespace client {
                         m_server->get_peer()->send_variant({ "OnSendToServer", 17000, variant_list.Get(2).GetINT32(), variant_list.Get(3).GetINT32(), fmt::format("127.0.0.1|{}|{}", tokenize.size() == 2 ? "" : tokenize.at(1), tokenize.size() == 2 ? tokenize.at(1) : tokenize.at(2)), variant_list.Get(5).GetINT32() });
                         return false;
                     }
+                    case "OnSpawn"_fh: {
+                        utils::TextParse text_parse{ variant_list.Get(1).GetString() };
+                        //local set
+                         if (text_parse.get("type", 1) == "local") { 
+                             //set mods zoom
+                             text_parse.set("mstate", "1");
+                             variant_list.Get(1).Set(text_parse.get_all_raw());
+                             uint32_t size;
+                             uint8_t* data = variant_list.SerializeToMem(&size, nullptr);
+                             game_update_packet->data_size = size;
+                             m_server->get_peer()->send_raw_packet(player::NET_MESSAGE_GAME_PACKET, game_update_packet, sizeof(player::GameUpdatePacket), data);
+                             return false;
+                         }
+                    }
                     default:
                         break;
                 }
