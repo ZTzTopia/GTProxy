@@ -118,14 +118,12 @@ namespace client {
                         utils::TextParse text_parse{ variant_list.Get(1).GetString() };
                         //local set
                          if (text_parse.get("type", 1) == "local") { 
-                             //set mods zoom
-                             text_parse.set("mstate", "1");
-                             variant_list.Get(1).Set(text_parse.get_all_raw());
-                             uint32_t size;
-                             uint8_t* data = variant_list.SerializeToMem(&size, nullptr);
-                             game_update_packet->data_size = size;
-                             m_server->get_peer()->send_raw_packet(player::NET_MESSAGE_GAME_PACKET, game_update_packet, sizeof(player::GameUpdatePacket), data);
-                             return false;
+                            //set mods zoom, country flag to JP 
+                            std::stringstream ss;
+                            ss << "spawn|avatar\nnetID|" << text_parse.get<uint32_t>("netID", 1) << "\nuserID|" << text_parse.get<uint32_t>("userID", 1)  << "\ncolrect|0|0|20|30\nposXY|" << text_parse.get("posXY", 1) << "|" << text_parse.get("posXY", 2) << "\nname|``" << text_parse.get("name", 1) + "``\ncountry|jp\ninvis|0\nmstate|1\nsmstate|0\nonlineID|1\ntype|local";
+                            std::string packet = ss.str();
+                            std::cout << packet << std::endl;
+                            m_server->get_peer()->send_variant({"OnSpawn", packet});
                          }
                     }
                     default:
