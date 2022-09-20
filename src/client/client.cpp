@@ -122,7 +122,6 @@ namespace client {
                             std::stringstream ss;
                             ss << "spawn|avatar\nnetID|" << text_parse.get<uint32_t>("netID", 1) << "\nuserID|" << text_parse.get<uint32_t>("userID", 1)  << "\ncolrect|0|0|20|30\nposXY|" << text_parse.get("posXY", 1) << "|" << text_parse.get("posXY", 2) << "\nname|``" << text_parse.get("name", 1) + "``\ncountry|jp\ninvis|0\nmstate|1\nsmstate|0\nonlineID|1\ntype|local";
                             std::string packet = ss.str();
-                            std::cout << packet << std::endl;
                             m_server->get_peer()->send_variant({"OnSpawn", packet});
                          }
                     }
