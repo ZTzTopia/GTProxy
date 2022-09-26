@@ -13,6 +13,11 @@ namespace player {
         std::memcpy(m_peer->data, &uid[0], uid.length());
     }
 
+    Peer::~Peer()
+    {
+        delete reinterpret_cast<uint8_t*>(m_peer->data);
+    }
+
     int Peer::send_packet(eNetMessageType type, const std::string& data)
     {
         if (!m_peer) return -1;

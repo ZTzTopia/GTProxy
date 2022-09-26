@@ -32,7 +32,7 @@ namespace server {
             return false;
         }
 
-        if (!create_host(17000, 1)) {
+        if (!create_host(16999, 1)) {
             spdlog::error("Failed to create ENet server host.");
             return false;
         }
@@ -139,6 +139,13 @@ namespace server {
                 static uint32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
 
                 utils::TextParse text_parse{ message_data };
+
+                if (m_config->m_misc.force_update_game_version) {
+                    if (std::stoi(text_parse.get("game_version", 1)) > std::stoi(m_config->m_server.game_version)) {
+                        m_config->m_server.game_version = text_parse.get("game_version", 1);
+                    }
+                }
+
                 text_parse.set("game_version", m_config->m_server.game_version);
                 text_parse.set("protocol", m_config->m_server.protocol);
                 text_parse.set("mac", mac);

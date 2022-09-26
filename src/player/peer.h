@@ -9,7 +9,7 @@ namespace player {
     class Peer {
     public:
         explicit Peer(ENetPeer* peer);
-        ~Peer() = default;
+        ~Peer();
 
         [[nodiscard]] bool is_connected() const { return m_peer->state == ENET_PEER_STATE_CONNECTED; }
         void disconnect() const { enet_peer_disconnect(m_peer, 0); }

@@ -6,7 +6,7 @@
 
 class Config {
 public:
-    Config() : m_server{}, m_command{}, m_ssl{} {}
+    Config() : m_server{}, m_command{}, m_ssl{}, m_misc{} {}
     ~Config() = default;
 
     void default_config()
@@ -16,6 +16,7 @@ public:
         m_server.protocol = 175;
         m_server.using_new_packet = true;
         m_command.prefix = "!";
+        m_misc.force_update_game_version = false;
     }
 
     bool create(const std::string& file)
@@ -29,6 +30,7 @@ public:
         j["server"]["usingNewPacket"] = m_server.using_new_packet;
         j["command"]["prefix"] = m_command.prefix;
         j["ssl"]["enabled"] = m_ssl.enabled;
+        j["misc"]["forceUpdateGameVersion"] = m_misc.force_update_game_version;
 
         std::ofstream ofs{ file };
         if (!ofs.is_open()) {
@@ -59,6 +61,7 @@ public:
             m_server.using_new_packet = j["server"]["usingNewPacket"];
             m_command.prefix = j["command"]["prefix"];
             m_ssl.enabled = j["ssl"]["enabled"];
+            m_misc.force_update_game_version = j["misc"]["forceUpdateGameVersion"];
         }
         catch (const nlohmann::json::exception& ex) {
             spdlog::error("{}", ex.what());
@@ -83,4 +86,8 @@ public:
     struct {
         bool enabled;
     } m_ssl;
+
+    struct {
+        bool force_update_game_version;
+    } m_misc;
 };

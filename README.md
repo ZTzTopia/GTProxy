@@ -35,7 +35,7 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build .
 ```
 
-## For Growtopia version 3.91-3.93
+## For Growtopia version 3.91-4.01
 - You need add `www.` before growtopia[1-2].com in `hosts` file.
 ```text
 127.0.0.1 www.growtopia1.com
