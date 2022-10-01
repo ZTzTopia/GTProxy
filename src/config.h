@@ -12,7 +12,7 @@ public:
     void default_config()
     {
         m_server.host = "growtopia1.com";
-        m_server.game_version = "4.01";
+        m_server.game_version = "4.03";
         m_server.protocol = 175;
         m_server.using_new_packet = true;
         m_command.prefix = "!";
