@@ -9,9 +9,9 @@
 namespace server {
     Http::Http(Config* config) : m_config{ config }
     {
-        std::string temp_dir{ "./cache" };
-        if (!std::filesystem::exists(temp_dir)) {
-            std::filesystem::create_directory(temp_dir);
+        std::string cache_dir{ "./cache" };
+        if (!std::filesystem::exists(cache_dir)) {
+            std::filesystem::create_directory(cache_dir);
         }
 
         if (!std::filesystem::exists("./cache/cert.pem")) {
@@ -26,7 +26,7 @@ namespace server {
             key_file.close();
         }
 
-        m_server = new httplib::SSLServer{ "./cache/cert.pem", "./temp/cache.pem" };
+        m_server = new httplib::SSLServer{ "./cache/cert.pem", "./cache/key.pem" };
     }
 
     Http::~Http()
