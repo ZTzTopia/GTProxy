@@ -32,14 +32,14 @@ namespace server {
             return false;
         }
 
-        if (!create_host(16999, 1)) {
+        if (!create_host(m_config->m_host.port, 1)) {
             spdlog::error("Failed to create ENet server host.");
             return false;
         }
 
         start_service();
 
-        spdlog::info("ENet server listening on port {}.", 17000);
+        spdlog::info("ENet server listening on port {}.", m_config->m_host.port);
         return true;
     }
 

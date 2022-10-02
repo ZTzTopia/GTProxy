@@ -6,11 +6,12 @@
 
 class Config {
 public:
-    Config() : m_server{}, m_command{}, m_ssl{}, m_misc{} {}
+    Config() : m_host{}, m_server{}, m_command{}, m_ssl{}, m_misc{} {}
     ~Config() = default;
 
     void default_config()
     {
+        m_host.port = 16999;
         m_server.host = "growtopia1.com";
         m_server.game_version = "4.03";
         m_server.protocol = 175;
@@ -24,6 +25,7 @@ public:
         default_config();
 
         nlohmann::json j{};
+        j["host"]["port"] = m_host.port;
         j["server"]["host"] = m_server.host;
         j["server"]["gameVersion"] = m_server.game_version;
         j["server"]["protocol"] = m_server.protocol;
@@ -55,6 +57,7 @@ public:
         ifs.close();
 
         try {
+            m_host.port = j["server"]["port"];
             m_server.host = j["server"]["host"];
             m_server.game_version = j["server"]["gameVersion"];
             m_server.protocol = j["server"]["protocol"].get<int>();
@@ -72,6 +75,10 @@ public:
     }
 
 public:
+    struct {
+        uint16_t port;
+    } m_host;
+
     struct {
         std::string host;
         std::string game_version;
