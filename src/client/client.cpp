@@ -53,7 +53,7 @@ namespace client {
         spdlog::info("Disconnected from growtopia server!");
 
         // Don't use disconnect now because it will not send disconnect event.
-        if (m_server->get_peer()->is_connected()) {
+        if (m_server->get_peer() && m_server->get_peer()->is_connected()) {
             m_server->get_peer()->disconnect();
         }
 
@@ -111,18 +111,18 @@ namespace client {
                         m_redirect_host = std::move(tokenize[0]);
                         m_redirect_port = static_cast<enet_uint16>(variant_list.Get(1).GetINT32());
 
-                        m_server->get_peer()->send_variant({ "OnSendToServer", 17000, variant_list.Get(2).GetINT32(), variant_list.Get(3).GetINT32(), fmt::format("127.0.0.1|{}|{}", tokenize.size() == 2 ? "" : tokenize.at(1), tokenize.size() == 2 ? tokenize.at(1) : tokenize.at(2)), variant_list.Get(5).GetINT32() });
+                        m_server->get_peer()->send_variant({ "OnSendToServer", m_config->m_host.port, variant_list.Get(2).GetINT32(), variant_list.Get(3).GetINT32(), fmt::format("127.0.0.1|{}|{}", tokenize.size() == 2 ? "" : tokenize.at(1), tokenize.size() == 2 ? tokenize.at(1) : tokenize.at(2)), variant_list.Get(5).GetINT32() });
                         return false;
                     }
                     case "OnSpawn"_fh: {
                         utils::TextParse text_parse{ variant_list.Get(1).GetString() };
                         // Local set
-                         if (text_parse.get("type", 1) == "local") { 
+                        if (text_parse.get("type", 1) == "local") {
                             // Set mods zoom, country flag to JP
                             text_parse.set("country", "jp");
-                            text_parse.set("smstate", 1);
+                            text_parse.set("mstate", 1);
                             m_server->get_peer()->send_variant({ "OnSpawn", text_parse.get_all_raw() });
-                         }
+                        }
                     }
                     default:
                         break;
