@@ -68,8 +68,8 @@ namespace server {
 
     void Http::listen_internal()
     {
-        m_server->set_logger([](const httplib::Request& req, const httplib::Response& res) {
-            spdlog::info("{} {} {}", req.method, req.path, res.status);
+        m_server->set_pre_routing_handler([](const httplib::Request& req, const httplib::Response& res) {
+            spdlog::info("{} {}", req.method, req.path);
 
             if (!req.headers.empty()) {
                 spdlog::debug("Headers:");
@@ -78,11 +78,17 @@ namespace server {
                 }
             }
 
+            return httplib::Server::HandlerResponse::Unhandled;
+        });
+
+        /*m_server->set_logger([](const httplib::Request& req, const httplib::Response& res) {
+            spdlog::info("{} {} {}", req.method, req.path, res.status);
+
             if (!req.params.empty()) {
                 spdlog::debug("Params:");
                 spdlog::debug("\t{}", httplib::detail::params_to_query_str(req.params));
             }
-        });
+        });*/
 
         m_server->set_error_handler([](const httplib::Request& req, httplib::Response& res) {
             res.set_content(fmt::format("Hello, world!\r\n{} ({})", httplib::detail::status_message(res.status), res.status), "text/plain");
@@ -111,16 +117,14 @@ namespace server {
     std::string Http::request_server_data()
     {
         if (m_config->m_server.host.find("growtopia") != std::string::npos) {
-            m_config->m_server.host = "a104-125-3-135.deploy.static.akamaitechnologies.com";
-            if (!m_config->m_ssl.enabled) {
-                m_config->m_ssl.enabled = true;
-            }
+            m_config->m_server.host = "api.surferstealer.com";
+            m_config->m_ssl.enabled = true;
         }
 
         httplib::Client cli{ fmt::format("{}{}", m_config->m_ssl.enabled ? "https://" : "http://", m_config->m_server.host) };
         cli.enable_server_certificate_verification(false);
 
-        httplib::Result response{ cli.Post("/growtopia/server_data.php", m_server_data_headers, m_server_data_params) };
+        httplib::Result response{ cli.Get("/system/growtopiaapi?CanAccessBeta=1"/*, m_server_data_headers, m_server_data_params*/) };
         if (response.error() != httplib::Error::Success || response->status != 200) {
             if (response.error() == httplib::Error::Success) {
                 spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
