@@ -6,7 +6,7 @@
 
 class Config {
 public:
-    Config() : m_host{}, m_server{}, m_command{}, m_ssl{}, m_misc{} {}
+    Config() { default_config(); }
     ~Config() = default;
 
     void default_config()
@@ -22,8 +22,6 @@ public:
 
     bool create(const std::string& file)
     {
-        default_config();
-
         nlohmann::json j{};
         j["host"]["port"] = m_host.port;
         j["server"]["host"] = m_server.host;
@@ -68,7 +66,10 @@ public:
         }
         catch (const nlohmann::json::exception& ex) {
             spdlog::error("{}", ex.what());
-            return false;
+            spdlog::error("Please delete current config.json to fix null config.");
+            if (ex.id != 302) { // ignore null data
+                return false;
+            }
         }
 
         return true;
