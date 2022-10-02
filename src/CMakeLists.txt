@@ -48,12 +48,12 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} enet)
 
 # Install all needed packages.
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan/conan.cmake")
+if (NOT EXISTS "${CMAKE_BINARY_DIR}/conan/conan.cmake")
     message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
     file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/develop/conan.cmake"
             "${CMAKE_BINARY_DIR}/conan/conan.cmake"
             TLS_VERIFY ON)
-endif()
+endif ()
 
 include(${CMAKE_BINARY_DIR}/conan/conan.cmake)
 

@@ -35,7 +35,7 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build .
 ```
 
-## For Growtopia version 3.91-4.01
+## For Growtopia version 3.91-4.03
 - You need add `www.` before growtopia[1-2].com in `hosts` file.
 ```text
 127.0.0.1 www.growtopia1.com
@@ -51,3 +51,9 @@ $ cmake --build .
 
 ## Credits
 - Thanks to my two friends who helped a lot with this project.
+- [Conan, the C/C++ Package Manager](https://conan.io/): The open source, decentralized and multi-platform package manager to create and share all your native binaries- [LibreSSL](https://www.libressl.org/) is a version of the TLS/crypto stack forked from OpenSSL in 2014, with goals of modernizing the codebase, improving security, and applying best practice development processes
+- [magic_enum](https://github.com/Neargye/magic_enum): Static reflection for enums (to string, from string, iteration)
+- [nlohmann_json](https://github.com/nlohmann/json) JSON for Modern C++
+- [pcg-cpp](https://github.com/imneme/pcg-cpp): Random number generator
+- [randutils.hpp](https://gist.github.com/imneme/540829265469e673d045): Random utilities
+- [spdlog](https://github.com/gabime/spdlog): Fast logging library
