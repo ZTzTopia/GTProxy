@@ -121,7 +121,15 @@ namespace client {
                             // Set mods zoom, country flag to JP
                             text_parse.set("country", "jp");
                             text_parse.set("mstate", 1);
-                            m_server->get_peer()->send_variant({ "OnSpawn", text_parse.get_all_raw() });
+
+                            variant_list.Get(1).Set(text_parse.get_all_raw());
+
+                            uint32_t data_size;
+                            uint8_t *data = variant_list.SerializeToMem(&data_size, nullptr);
+                            game_update_packet->data_size = data_size;
+
+                            m_server->get_peer()->send_raw_packet(player::NET_MESSAGE_GAME_PACKET, game_update_packet, sizeof(player::GameUpdatePacket), data);
+                            return false;
                         }
                     }
                     default:
