@@ -93,7 +93,7 @@ namespace server {
         spdlog::info("Client disconnected from proxy server!");
 
         if (m_client && !m_client->is_redirecting()) {
-            if (m_client->get_peer()->is_connected()) {
+            if (m_client->get_peer() && m_client->get_peer()->is_connected()) {
                 // Yes, useless log.
                 spdlog::info("Disconnected from growtopia server!");
             }
