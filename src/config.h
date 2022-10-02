@@ -66,10 +66,11 @@ public:
         }
         catch (const nlohmann::json::exception& ex) {
             spdlog::error("{}", ex.what());
-            spdlog::error("Please delete current config.json to fix null config.");
             if (ex.id != 302) { // ignore null data
                 return false;
             }
+
+            spdlog::error("Please delete current config.json to fix null config.");
         }
 
         return true;

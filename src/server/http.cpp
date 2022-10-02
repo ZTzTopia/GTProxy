@@ -99,7 +99,7 @@ namespace server {
 
             utils::TextParse text_parse{ request_server_data() }; // TODO: Handle crash.
             text_parse.set("server", "127.0.0.1");
-            text_parse.set("port", "16999");
+            text_parse.set("port", m_config->m_host.port);
 
             res.set_content(text_parse.get_all_raw(), "text/html");
             return true;
