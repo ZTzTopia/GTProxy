@@ -23,7 +23,7 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 ```
 - src (The source file)
     - client (client to communicate with growtopia server)
-    - enetwrapper (ENet wrapper)
+    - enetwrapper
     - include
         - pcg (random generator like mt19937)
     - player

@@ -16,8 +16,8 @@ on:
         - MinSizeRel
   pull_request:
     branches: [ main, dev ]
-  # push:
-  #   branches: [ dev ]
+  push:
+    branches: [ main, dev ]
 
 env:
   BUILD_TYPE: ${{ inputs.buildType }}

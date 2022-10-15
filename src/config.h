@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -7,6 +8,7 @@
 class Config {
 public:
     Config() { default_config(); }
+
     ~Config() = default;
 
     void default_config()
@@ -78,7 +80,7 @@ public:
 
 public:
     struct {
-        uint16_t port;
+        std::uint16_t port;
     } m_host;
 
     struct {

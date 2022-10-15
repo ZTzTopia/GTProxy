@@ -29,7 +29,7 @@ int main()
 
     spdlog::info("Starting Growtopia proxy v{}...", GTPROXY_VERSION);
 
-    auto config{ new Config{} };
+    auto config{ new Config{}};
     if (!config->load("config.json")) {
         return 1;
     }
