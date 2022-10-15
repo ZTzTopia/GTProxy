@@ -15,7 +15,7 @@ public:
     {
         m_host.port = 16999;
         m_server.host = "growtopia1.com";
-        m_server.game_version = "4.03";
+        m_server.game_version = "4.04";
         m_server.protocol = 175;
         m_server.using_new_packet = true;
         m_command.prefix = "!";
@@ -57,7 +57,7 @@ public:
         ifs.close();
 
         try {
-            m_host.port = j["server"]["port"];
+            m_host.port = j["host"]["port"].get<std::uint16_t>();
             m_server.host = j["server"]["host"];
             m_server.game_version = j["server"]["gameVersion"];
             m_server.protocol = j["server"]["protocol"].get<int>();
