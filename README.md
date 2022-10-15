@@ -19,6 +19,21 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 ## Supported platform
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.
 
+## Structure
+```
+- src (The source file)
+    - client (client to communicate with growtopia server)
+    - enetwrapper (ENet wrapper)
+    - include
+        - pcg (random generator like mt19937)
+    - player
+    - server (server to communicate with growtopia client)
+    - utils
+- vendor
+    - enet
+    - proton
+```
+
 ## Requirements
 - [CMake](https://cmake.org/).
 - [Conan, the C/C++ Package Manager](https://conan.io). [CMake](https://cmake.org/) will install needed package with [Conan, the C/C++ Package Manager](https://conan.io/).
