@@ -111,15 +111,20 @@ target_link_libraries(${PROJECT_NAME}
         spdlog::spdlog
         ZLIB::ZLIB)
 
-# Create symlink file to current binary dir.
-file(GLOB GTPROXY_CONAN_BINARY
+# Copy dependencies binary to current binary dir.
+file(GLOB GTPROXY_DEPENDENCIES_BINARY
         "${CMAKE_BINARY_DIR}/conan/bin/*.dll")
 
-foreach(ConanBinary IN LISTS GTPROXY_CONAN_BINARY)
-    string(REPLACE "${CMAKE_BINARY_DIR}/conan/bin" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_CONAN_BINARY "${ConanBinary}")
+foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
+    string(REPLACE "${CMAKE_BINARY_DIR}/conan/bin" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
+    message(STATUS "Preparing ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
     add_custom_command(
-            TARGET ${PROJECT_NAME} PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E create_symlink "${ConanBinary}" "${REPLACED_CONAN_BINARY}"
-            COMMENT "Creating symlink conan binary: ${ConanBinary} to ${REPLACED_CONAN_BINARY}")
-endforeach()
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ConanBinary}" "${REPLACED_GTPROXY_DEPENDENCIES_BINARY}"
+            COMMENT "Copying ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
+endforeach ()
 
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:enet>" "${CMAKE_CURRENT_BINARY_DIR}"
+        COMMENT "Copying enet binary to ${CMAKE_CURRENT_BINARY_DIR}")
