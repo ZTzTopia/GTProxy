@@ -6,7 +6,7 @@ on:
     inputs:
       buildType:
         description: 'Build Type'
-        required: true
+        required: false
         default: 'Debug' 
         type: choice
         options:
@@ -16,8 +16,14 @@ on:
         - MinSizeRel
   pull_request:
     branches: [ main, dev ]
+    inputs:
+      buildType:
+        default: 'Debug'
   push:
     branches: [ main, dev ]
+    inputs:
+      buildType:
+        default: 'Debug'
 
 env:
   BUILD_TYPE: ${{ inputs.buildType }}
