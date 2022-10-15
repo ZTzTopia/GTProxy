@@ -110,3 +110,16 @@ target_link_libraries(${PROJECT_NAME}
         nlohmann_json::nlohmann_json
         spdlog::spdlog
         ZLIB::ZLIB)
+
+# Create symlink file to current binary dir.
+file(GLOB GTPROXY_CONAN_BINARY
+        "${CMAKE_BINARY_DIR}/conan/bin/*.dll")
+
+foreach(ConanBinary IN LISTS GTPROXY_CONAN_BINARY)
+    string(REPLACE "${CMAKE_BINARY_DIR}/conan/bin" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_CONAN_BINARY "${ConanBinary}")
+    add_custom_command(
+            TARGET ${PROJECT_NAME} PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "${ConanBinary}" "${REPLACED_CONAN_BINARY}"
+            COMMENT "Creating symlink conan binary: ${ConanBinary} to ${REPLACED_CONAN_BINARY}")
+endforeach()
+
