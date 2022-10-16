@@ -97,9 +97,18 @@ void Http::listen_internal()
             "text/plain");
     });
 
-    m_server->set_exception_handler([](const httplib::Request& req, httplib::Response& res, std::exception& ex) {
+    m_server->set_exception_handler([](const httplib::Request& req, httplib::Response& res, std::exception_ptr ep) {
         res.status = 500;
-        res.set_content(fmt::format("Hello, world!\r\n{}", ex.what()), "text/plain");
+
+        try {
+            std::rethrow_exception(ep);
+        }
+        catch (std::exception &e) {
+            res.set_content(fmt::format("Hello, world!\r\n{}", e.what()), "text/plain");
+        }
+        catch (...) {
+            res.set_content("Hello, world!\r\nUnknown Exception", "text/plain");
+        }
     });
 
     m_server->Post("/growtopia/server_data.php", [&](const httplib::Request& req, httplib::Response& res) {
