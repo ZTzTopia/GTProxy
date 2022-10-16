@@ -11,7 +11,7 @@ public:
 
     ~ENetServer();
 
-    bool create_host(enet_uint16 port, std::size_t peer_count);
+    bool create_host(enet_uint16 port, std::size_t peer_count, enet_uint8 using_new_packet);
 
     void destroy_host();
 

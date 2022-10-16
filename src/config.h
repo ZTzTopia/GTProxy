@@ -16,8 +16,7 @@ public:
         m_host.port = 16999;
         m_server.host = "growtopia1.com";
         m_server.game_version = "4.04";
-        m_server.protocol = 175;
-        m_server.using_new_packet = true;
+        m_server.protocol = 0;
         m_command.prefix = "!";
         m_misc.force_update_game_version = false;
     }
@@ -29,7 +28,6 @@ public:
         j["server"]["host"] = m_server.host;
         j["server"]["gameVersion"] = m_server.game_version;
         j["server"]["protocol"] = m_server.protocol;
-        j["server"]["usingNewPacket"] = m_server.using_new_packet;
         j["command"]["prefix"] = m_command.prefix;
         j["misc"]["forceUpdateGameVersion"] = m_misc.force_update_game_version;
 
@@ -59,8 +57,7 @@ public:
             m_host.port = j["host"]["port"].get<std::uint16_t>();
             m_server.host = j["server"]["host"];
             m_server.game_version = j["server"]["gameVersion"];
-            m_server.protocol = j["server"]["protocol"].get<int>();
-            m_server.using_new_packet = j["server"]["usingNewPacket"];
+            m_server.protocol = j["server"]["protocol"];
             m_command.prefix = j["command"]["prefix"];
             m_misc.force_update_game_version = j["misc"]["forceUpdateGameVersion"];
         }

@@ -115,6 +115,10 @@ void Http::listen_internal()
         set_server_data_headers(req.headers);
         set_server_data_params(req.params);
 
+        if (m_config->m_server.protocol == 0) {
+            m_config->m_server.protocol = std::stoi(req.get_param_value("version"));
+        }
+
         utils::TextParse text_parse{ request_server_data() }; // TODO: Handle crash.
         text_parse.set("server", "127.0.0.1");
         text_parse.set("port", m_config->m_host.port);
@@ -126,19 +130,8 @@ void Http::listen_internal()
     m_server->listen_after_bind();
 }
 
-std::string Http::request_server_data()
+bool implement_fucking_private_server_logic(const httplib::Result& response)
 {
-    if (m_config->m_server.host.find("growtopia") != std::string::npos) {
-        m_config->m_server.host = "api.surferstealer.com";
-        m_config->m_ssl.enabled = true;
-    }
-
-    httplib::Client cli{
-        fmt::format("{}{}", m_config->m_ssl.enabled ? "https://" : "http://", m_config->m_server.host) };
-    cli.enable_server_certificate_verification(false);
-
-    httplib::Result response{
-        cli.Get("/system/growtopiaapi?CanAccessBeta=1"/*, m_server_data_headers, m_server_data_params*/) };
     if (response.error() != httplib::Error::Success || response->status != 200) {
         if (response.error() == httplib::Error::Success) {
             spdlog::error("Failed to get server data. HTTP status code: {}", response->status);
@@ -147,9 +140,65 @@ std::string Http::request_server_data()
             spdlog::error("Failed to get server data. HTTP error: {}", httplib::to_string(response.error()));
         }
 
-        return "";
+        return false;
     }
 
-    return response->body;
+    return true;
+}
+
+std::string Http::request_server_data()
+{
+    if (m_config->m_server.host.find("growtopia") != std::string::npos) {
+        m_config->m_server.host = "api.surferstealer.com";
+    }
+
+    httplib::Client cli{ fmt::format("{}{}", "https://", m_config->m_server.host) };
+    cli.enable_server_certificate_verification(false);
+
+    std::string path{ "/growtopia/server_data.php" };
+    if (m_config->m_server.host.find("api.surferstealer.com") != std::string::npos) {
+        path = "/system/growtopiaapi?CanAccessBeta=1";
+    }
+
+    httplib::Result response{ cli.Post(path, m_server_data_headers, m_server_data_params) };
+    if (implement_fucking_private_server_logic(response)) {
+        if (!response->body.empty()) {
+            utils::TextParse text_parse{ response->body };
+            spdlog::debug("Server data: \r\n{}", fmt::join(text_parse.get_all_array(), "\r\n"));
+            return response->body;
+        }
+
+        spdlog::warn("Empty server data. wtf?");
+    }
+
+    response = cli.Get(path);
+    if (implement_fucking_private_server_logic(response)) {
+        utils::TextParse text_parse{ response->body };
+        spdlog::debug("Server data: \r\n{}", fmt::join(text_parse.get_all_array(), "\r\n"));
+        if (!response->body.empty()) {
+            return response->body;
+        }
+
+        spdlog::warn("Empty server data. wtf?");
+    }
+
+#if 0
+    httplib::Client cli_2{
+        fmt::format("{}{}", "http://", m_config->m_server.host) };
+
+    httplib::Result response_{ cli_2.Get(path) };
+    if (implement_fucking_private_server_logic(response_)) {
+        return response_->body;
+    }
+
+    if (!is_growtopia_server) {
+        httplib::Result response_2_{ cli_2.Post(path, m_server_data_headers, m_server_data_params) };
+        if (implement_fucking_private_server_logic(response_2_)) {
+            return response_2_->body;
+        }
+    }
+#endif
+
+    return "";
 }
 }

@@ -14,7 +14,7 @@ ENetServer::~ENetServer()
     destroy_host();
 }
 
-bool ENetServer::create_host(enet_uint16 port, std::size_t peer_count)
+bool ENetServer::create_host(enet_uint16 port, std::size_t peer_count, enet_uint8 using_new_packet)
 {
     if (m_host) destroy_host();
 
@@ -29,7 +29,7 @@ bool ENetServer::create_host(enet_uint16 port, std::size_t peer_count)
         return false;
 
     m_host->checksum = enet_crc32;
-    m_host->usingNewPacketForServer = 1;
+    m_host->usingNewPacketForServer = using_new_packet;
     return true;
 }
 

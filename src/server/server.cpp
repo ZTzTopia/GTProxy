@@ -33,7 +33,10 @@ bool Server::start()
         return false;
     }
 
-    if (!create_host(m_config->m_host.port, 1)) {
+    utils::TextParse text_parse{ m_http->request_server_data() }; // TODO: Handle crash.
+    m_config->m_server.using_new_packet = text_parse.get<int>("type2", 1) == 1;
+
+    if (!create_host(m_config->m_host.port, 1, m_config->m_server.using_new_packet)) {
         spdlog::error("Failed to create ENet server host.");
         return false;
     }
