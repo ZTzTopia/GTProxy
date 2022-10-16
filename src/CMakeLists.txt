@@ -56,7 +56,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan/conan.cmake)
 
-conan_cmake_configure(REQUIRES cpp-httplib/0.10.8 fmt/8.1.1 libressl/3.5.3 magic_enum/0.8.1 nlohmann_json/3.11.2 spdlog/1.10.0 zlib/1.2.13
+conan_cmake_configure(REQUIRES cpp-httplib/0.11.2 fmt/8.1.1 libressl/3.5.3 magic_enum/0.8.1 nlohmann_json/3.11.2 spdlog/1.10.0 zlib/1.2.13
         GENERATORS cmake_find_package
         IMPORTS "bin, * -> ./bin"
         OPTIONS OPTIONS fmt:shared=True libressl:shared=True spdlog:shared=True zlib:shared=True)
