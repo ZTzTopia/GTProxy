@@ -37,7 +37,7 @@ Http::~Http()
 
 bool Http::bind_to_port(const std::string& host, int port)
 {
-    bool ret{ m_server->bind_to_port(host.c_str(), port) };
+    bool ret{ m_server->bind_to_port(host, port) };
     if (ret) {
         // So we don't need to store port in a member variable.
         spdlog::info("HTTP(s) server listening on port {}.", port);

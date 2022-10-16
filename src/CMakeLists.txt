@@ -59,6 +59,7 @@ include(${CMAKE_BINARY_DIR}/conan/conan.cmake)
 conan_cmake_configure(REQUIRES cpp-httplib/0.11.2 fmt/8.1.1 libressl/3.5.3 magic_enum/0.8.1 nlohmann_json/3.11.2 spdlog/1.10.0 zlib/1.2.13
         GENERATORS cmake_find_package
         IMPORTS "bin, * -> ./bin"
+        IMPORTS "lib, * -> ./lib"
         OPTIONS OPTIONS fmt:shared=True libressl:shared=True spdlog:shared=True zlib:shared=True)
 
 conan_cmake_autodetect(settings)
@@ -88,19 +89,21 @@ target_link_libraries(${PROJECT_NAME}
         ZLIB::ZLIB)
 
 # Copy dependencies binary to current binary dir.
-file(GLOB GTPROXY_DEPENDENCIES_BINARY
-        "${CMAKE_BINARY_DIR}/conan/bin/*.dll")
+if (WIN32)
+    file(GLOB GTPROXY_DEPENDENCIES_BINARY
+            "${CMAKE_BINARY_DIR}/conan/bin/*.dll")
 
-foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
-    string(REPLACE "${CMAKE_BINARY_DIR}/conan/bin" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
-    message(STATUS "Preparing ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
+    foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
+        string(REPLACE "${CMAKE_BINARY_DIR}/conan/bin" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
+        message(STATUS "Preparing ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
+        add_custom_command(
+                TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ConanBinary}" "${REPLACED_GTPROXY_DEPENDENCIES_BINARY}"
+                COMMENT "Copying ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
+    endforeach ()
+
     add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ConanBinary}" "${REPLACED_GTPROXY_DEPENDENCIES_BINARY}"
-            COMMENT "Copying ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
-endforeach ()
-
-add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:enet>" "${CMAKE_CURRENT_BINARY_DIR}"
-        COMMENT "Copying enet binary to ${CMAKE_CURRENT_BINARY_DIR}")
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:enet>" "${CMAKE_CURRENT_BINARY_DIR}"
+            COMMENT "Copying enet binary to ${CMAKE_CURRENT_BINARY_DIR}")
+endif ()
