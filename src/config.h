@@ -31,7 +31,6 @@ public:
         j["server"]["protocol"] = m_server.protocol;
         j["server"]["usingNewPacket"] = m_server.using_new_packet;
         j["command"]["prefix"] = m_command.prefix;
-        j["ssl"]["enabled"] = m_ssl.enabled;
         j["misc"]["forceUpdateGameVersion"] = m_misc.force_update_game_version;
 
         std::ofstream ofs{ file };
@@ -63,7 +62,6 @@ public:
             m_server.protocol = j["server"]["protocol"].get<int>();
             m_server.using_new_packet = j["server"]["usingNewPacket"];
             m_command.prefix = j["command"]["prefix"];
-            m_ssl.enabled = j["ssl"]["enabled"];
             m_misc.force_update_game_version = j["misc"]["forceUpdateGameVersion"];
         }
         catch (const nlohmann::json::exception& ex) {
@@ -93,10 +91,6 @@ public:
     struct {
         std::string prefix;
     } m_command;
-
-    struct {
-        bool enabled;
-    } m_ssl;
 
     struct {
         bool force_update_game_version;
