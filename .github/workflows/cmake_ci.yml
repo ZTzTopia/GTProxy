@@ -1,25 +1,13 @@
-name: Build
+name: CI
 
 on:
-  workflow_dispatch:
-    branches: [ main ]
-    inputs:
-      buildType:
-        description: 'Build Type'
-        required: false
-        default: 'MinSizeRel'
-        type: choice
-        options:
-        - Debug
-        - Release
-        - RelWithDebInfo
-        - MinSizeRel
+  pull_request:
+  push:
+    branches: [ main, dev ]
 
 jobs:
-  build:
+  dev:
     runs-on: windows-2022
-    env:
-      BUILD_TYPE: ${{ inputs.buildType }}
 
     steps:
       - name: Clone repository
@@ -29,10 +17,10 @@ jobs:
         run: pip install conan
 
       - name: Configure CMake
-        run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGTPROXY_BUILD_VERSION=${{github.run_number}}
+        run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=Debug -DGTPROXY_BUILD_VERSION=${{github.run_number}}
 
       - name: Build
-        run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}\build --config Debug
 
       - name: Move program and binary
         run: |
