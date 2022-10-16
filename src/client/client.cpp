@@ -18,11 +18,6 @@ Client::~Client()
 
 bool Client::start(const std::string& host, enet_uint16 port)
 {
-    // For stupid who don't know how to new packet config and want to connect to private server.
-    if (m_config->m_server.host.find("growtopia") != std::string::npos) {
-        m_config->m_server.using_new_packet = false;
-    }
-
     if (!create_host(1, m_config->m_server.using_new_packet))
         return false;
 
