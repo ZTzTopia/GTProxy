@@ -25,7 +25,7 @@ jobs:
       - name: Move program and binary
         run: |
           mkdir ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\src\${{inputs.buildType}}\Main.exe ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\src\${{inputs.buildType}}\*.exe ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\conan\bin\*.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
