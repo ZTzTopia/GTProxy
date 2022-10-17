@@ -1623,11 +1623,11 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
     if (host -> usingNewPacket)
     {
       enet_uint16 port = host -> peers -> address . port;
-      enet_uint16 rand1 = rand() % (port + 1);
+      enet_uint16 rand1 = enet_host_random (host) % (port + 1);
 
       newHeader -> integrity[0] = ENET_HOST_TO_NET_16 (rand1);
       newHeader -> integrity[1] = ENET_HOST_TO_NET_16 (rand1 ^ port);
-      newHeader -> integrity[2] = ENET_HOST_TO_NET_16 (rand() & 0x67DA | 0x9005);
+      newHeader -> integrity[2] = ENET_HOST_TO_NET_16 (enet_host_random (host) & 0x67DA | 0x9005);
     }
  
     host -> continueSending = 1;
