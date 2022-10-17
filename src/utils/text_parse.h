@@ -20,7 +20,8 @@ public:
     {
         m_data = string_tokenize(string, "\n");
         for (auto& data : m_data) {
-            std::replace(data.begin(), data.end(), '\r', '\0');
+            data.erase(std::remove(data.begin(), data.end(), '\r'), data.end());
+            // std::replace(data.begin(), data.end(), '\r', '\0');
         }
     }
 
@@ -132,7 +133,7 @@ public:
                 continue;
 
             if (!m_data.at(i + 1).empty())
-                string += '\n';
+                string += "\r\n";
         }
 
         return string;

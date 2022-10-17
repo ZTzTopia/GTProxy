@@ -20,6 +20,11 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 - [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.
 - [GNU/Linux](https://www.gnu.org/gnu/linux-and-gnu.en.html). Tested with Ubuntu and Arch Linux. (but who use gnu/linux to play growtopia?)
 
+## Known issue
+- Client disconnected after updating items.dat.
+- [Growtopia](https://growtopiagame.com/) crash because larger items.dat? (usually private servers that don't use zlib compression)
+- Spoofing login info which causes the server to think that your [Growtopia](https://growtopiagame.com/) version is old.
+
 ## Structure
 ```
 - src

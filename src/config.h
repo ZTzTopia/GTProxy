@@ -14,7 +14,7 @@ public:
     void default_config()
     {
         m_host.port = 16999;
-        m_server.host = "growtopia1.com";
+        m_server.host = "50.17.206.161";
         m_server.game_version = "4.04";
         m_server.protocol = 0;
         m_command.prefix = "!";

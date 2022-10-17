@@ -133,38 +133,38 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
     }
 
     switch (message_type) {
-    case player::NET_MESSAGE_GENERIC_TEXT: {
-        if (message_data.find("requestedName") == std::string::npos) {
-            break;
-        }
-
-        static randutils::pcg_rng gen{ utils::random::get_generator_local() };
-        static std::string mac{ utils::random::generate_mac(gen) };
-        static uint32_t mac_hash{ utils::proton_hash(fmt::format("{}RT", mac).c_str()) };
-        static std::string rid{ utils::random::generate_hex(gen, 16, true) };
-        static std::string wk{ utils::random::generate_hex(gen, 16, true) };
-        static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
-        static uint32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
-
-        utils::TextParse text_parse{ message_data };
-
-        if (m_config->m_misc.force_update_game_version) {
-            if (std::stoi(text_parse.get("game_version", 1)) > std::stoi(m_config->m_server.game_version)) {
-                m_config->m_server.game_version = text_parse.get("game_version", 1);
-            }
-        }
-
-        text_parse.set("game_version", m_config->m_server.game_version);
-        text_parse.set("protocol", m_config->m_server.protocol);
-        text_parse.set("mac", mac);
-        text_parse.set("rid", rid);
-        text_parse.set("wk", wk);
-        text_parse.set("hash", device_id_hash);
-        text_parse.set("hash2", mac_hash);
-
-        m_client->get_peer()->send_packet(message_type, text_parse.get_all_raw());
-        return false;
-    }
+//    case player::NET_MESSAGE_GENERIC_TEXT: {
+//        if (message_data.find("requestedName") == std::string::npos) {
+//            break;
+//        }
+//
+//        static randutils::pcg_rng gen{ utils::random::get_generator_local() };
+//        static std::string mac{ utils::random::generate_mac(gen) };
+//        static uint32_t mac_hash{ utils::proton_hash(fmt::format("{}RT", mac).c_str()) };
+//        static std::string rid{ utils::random::generate_hex(gen, 16, true) };
+//        static std::string wk{ utils::random::generate_hex(gen, 16, true) };
+//        static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
+//        static uint32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
+//
+//        utils::TextParse text_parse{ message_data };
+//
+//        if (m_config->m_misc.force_update_game_version) {
+//            if (std::stoi(text_parse.get("game_version", 1)) > std::stoi(m_config->m_server.game_version)) {
+//                m_config->m_server.game_version = text_parse.get("game_version", 1);
+//            }
+//        }
+//
+//        text_parse.set("game_version", m_config->m_server.game_version);
+//        text_parse.set("protocol", m_config->m_server.protocol);
+//        text_parse.set("mac", mac);
+//        text_parse.set("rid", rid);
+//        text_parse.set("wk", wk);
+//        text_parse.set("hash", device_id_hash);
+//        text_parse.set("hash2", mac_hash);
+//
+//        m_client->get_peer()->send_packet(message_type, text_parse.get_all_raw());
+//        return false;
+//    }
     case player::NET_MESSAGE_GAME_PACKET: {
         player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
         return process_tank_update_packet(peer, game_update_packet);

@@ -87,12 +87,17 @@ inline std::string generate_hex(T gen, std::size_t length, bool uppercase = true
 }
 
 template <typename T>
-inline std::string generate_mac(T gen)
+inline std::string generate_mac(T gen, bool zerotwo = true)
 {
     std::string result;
     result.reserve(17);
 
-    for (std::size_t i = 0; i < 6; i++) {
+    if (zerotwo) {
+        result.append("02");
+        result.push_back(':');
+    }
+
+    for (std::size_t i = 0; i < (zerotwo ? 5 : 6); i++) {
         result.append(generate_hex(gen, 1, false));
         result.push_back(':');
     }
