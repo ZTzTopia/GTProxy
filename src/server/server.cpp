@@ -33,10 +33,7 @@ bool Server::start()
         return false;
     }
 
-    utils::TextParse text_parse{ m_http->request_server_data() }; // TODO: Handle crash.
-    m_config->m_server.using_new_packet = text_parse.get<int>("type2", 1) == 1;
-
-    if (!create_host(m_config->m_host.port, 1, m_config->m_server.using_new_packet)) {
+    if (!create_host(m_config->m_host.port, 1, 1)) {
         spdlog::error("Failed to create ENet server host.");
         return false;
     }
@@ -64,6 +61,12 @@ void Server::on_connect(ENetPeer* peer)
         utils::TextParse text_parse{ m_http->request_server_data() }; // TODO: Handle crash.
         std::string host = text_parse.get("server", 1);
         auto port = text_parse.get<enet_uint16>("port", 1);
+
+        // Check if server using new packet.
+        m_config->m_server.using_new_packet = text_parse.get<int>("type2", 1) == 1;
+        if (text_parse.get<int>("type2", 1) == 1) {
+            spdlog::debug("Server is using new packet.");
+        }
 
         m_client = new client::Client{ m_config, this };
         if (!m_client->start(host, port)) {
