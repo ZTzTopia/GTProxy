@@ -37,9 +37,9 @@ jobs:
       - name: Move program and binary
         run: |
           mkdir ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\src\${{inputs.buildType}}\*.exe ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\src\${{env.BUILD_TYPE}}\*.exe ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\conan\bin\*.dll ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\vendor\enet\*.dll ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\vendor\enet\${{env.BUILD_TYPE}}\*.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
