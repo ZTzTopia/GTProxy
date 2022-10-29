@@ -17,8 +17,8 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 - [ ] Auto puzzle captcha solver.
 
 ## Supported platform
-- [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 10 and 11.
-- [GNU/Linux](https://www.gnu.org/gnu/linux-and-gnu.en.html). Tested with Ubuntu and Arch Linux. (but who use gnu/linux to play growtopia?)
+- [Windows](https://www.microsoft.com/en-us/windows). Tested with Windows 7, 8, 10 and 11.
+- [GNU/Linux](https://www.gnu.org/gnu/linux-and-gnu.en.html). Tested with Ubuntu and Arch Linux. (but who use GNU/Linux to play growtopia?)
 
 ## Known issue
 - Client disconnected after updating items.dat.
