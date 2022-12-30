@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0..3.24)
+cmake_minimum_required(VERSION 3.14..3.24)
 project(GTProxy VERSION 1.3.1)
 
 option(ENET_BUILD_SHARED "Build shared library" ON)

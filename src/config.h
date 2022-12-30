@@ -14,11 +14,12 @@ public:
     void default_config()
     {
         m_host.port = 16999;
-        m_server.host = "50.17.206.161";
-        m_server.game_version = "4.04";
-        m_server.protocol = 0;
+        m_server.host = "3.229.8.100";
+        m_server.game_version = "4.11";
+        m_server.protocol = 181;
         m_command.prefix = "!";
         m_misc.force_update_game_version = false;
+        m_misc.force_update_protocol = false;
     }
 
     bool create(const std::string& file)
@@ -91,5 +92,6 @@ public:
 
     struct {
         bool force_update_game_version;
+        bool force_update_protocol;
     } m_misc;
 };
