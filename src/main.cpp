@@ -9,8 +9,6 @@
 
 int main()
 {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)) + std::clock());
-
     try {
         std::vector<spdlog::sink_ptr> sinks;
         sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
