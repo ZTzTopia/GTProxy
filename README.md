@@ -9,7 +9,7 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 - Print incoming and outgoing packets (text, variant list, etc).
 - Support for [Growtopia](https://growtopiagame.com/) 3.92 and up.
 - Built-in http server with metadata from [Growtopia](https://growtopiagame.com/) client.
-- ~~Works well with sub-server redirection. ([#22](https://github.com/ZTzTopia/GTProxy/issues/22))~~
+- ~~Works well with sub-server redirection.~~ ([#22](https://github.com/ZTzTopia/GTProxy/issues/22))
 - Config file.
 
 ## Supported Platforms
