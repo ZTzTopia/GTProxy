@@ -14,7 +14,7 @@ public:
     void default_config()
     {
         m_host.port = 16999;
-        m_server.host = "3.229.8.100";
+        m_server.host = "2.17.198.162";
         m_server.game_version = "4.11";
         m_server.protocol = 181;
         m_command.prefix = "!";
