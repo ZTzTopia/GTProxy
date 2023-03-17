@@ -16,6 +16,9 @@ This is a proxy for [Growtopia](https://growtopiagame.com/), which makes it poss
 - ~~Works well with sub-server redirection.~~ ([#22](https://github.com/ZTzTopia/GTProxy/issues/22))
 - Config file.
 
+## Download
+The latest application executable can be found on the [releases page](https://github.com/ZTzTopia/GTProxy/releases).
+
 ## Build
 The following dependencies are required to build from source.
 - [CMake](https://cmake.org/).
