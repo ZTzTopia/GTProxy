@@ -137,7 +137,20 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
         if (message_data.find("requestedName") == std::string::npos) {
             break;
         }
-
+        else if (message_data.find("action|input") != std::string::npos) {
+            utils::TextParse text_parse{ message_data };
+            if (text_parse.get("text", 1).empty()) {
+                break;            
+            }
+            std::string str = message_data.substr(message_data.find("text|") + 5, message_data.length() - message_data.find("text|") - 1);
+            if (str.substr(0, 6) == "/warp ") {
+                std::string world=str.substr(6, message_data.length() - 6 - 1);
+                std::stringstream packet;
+                packet << "action|join_request\nname|" << world << "\ninvitedWorld|0";
+                m_client->get_peer()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, packet);
+                return false;  
+            }
+        }
         static randutils::pcg_rng gen{ utils::random::get_generator_local() };
         static std::string mac{ utils::random::generate_mac(gen) };
         static uint32_t mac_hash{ utils::proton_hash(fmt::format("{}RT", mac).c_str()) };
