@@ -2,18 +2,18 @@ name: Build
 
 on:
   workflow_dispatch:
-    branches: [ main ]
+    branches: [main]
     inputs:
       buildType:
-        description: 'Build Type'
+        description: "Build Type"
         required: false
-        default: 'MinSizeRel'
+        default: "MinSizeRel"
         type: choice
         options:
-        - Debug
-        - Release
-        - RelWithDebInfo
-        - MinSizeRel
+          - Debug
+          - Release
+          - RelWithDebInfo
+          - MinSizeRel
 
 jobs:
   build:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
 
       - name: Install conan
         run: pip install "conan<2.0"
