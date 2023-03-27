@@ -147,7 +147,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 std::string world=str.substr(6, message_data.length() - 6 - 1);
                 std::stringstream packet;
                 packet << "action|join_request\nname|" << world << "\ninvitedWorld|0";
-                m_client->get_peer()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, packet);
+                m_client->get_peer()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, packet.str());
                 return false;  
             }
         }
