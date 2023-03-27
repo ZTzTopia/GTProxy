@@ -134,10 +134,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
 
     switch (message_type) {
     case player::NET_MESSAGE_GENERIC_TEXT: {
-        if (message_data.find("requestedName") == std::string::npos) {
-            break;
-        }
-        else if (message_data.find("action|input") != std::string::npos) {
+        if (message_data.find("action|input") != std::string::npos) {
             utils::TextParse text_parse{ message_data };
             if (text_parse.get("text", 1).empty()) {
                 break;            
@@ -150,6 +147,10 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 m_client->get_peer()->send_packet(player::NET_MESSAGE_GAME_MESSAGE, packet.str());
                 return false;  
             }
+            break;
+        }
+        if (message_data.find("requestedName") == std::string::npos) {
+            break;
         }
         static randutils::pcg_rng gen{ utils::random::get_generator_local() };
         static std::string mac{ utils::random::generate_mac(gen) };
@@ -160,21 +161,6 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
         static uint32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
 
         utils::TextParse text_parse{ message_data };
-
-        if (m_config->m_misc.force_update_game_version) {
-            if (std::stoi(text_parse.get("game_version", 1)) > std::stoi(m_config->m_server.game_version)) {
-                m_config->m_server.game_version = text_parse.get("game_version", 1);
-            }
-        }
-
-        if (m_config->m_misc.force_update_protocol) {
-            if (std::stoi(text_parse.get("protocol", 1)) > m_config->m_server.protocol) {
-                m_config->m_server.protocol = text_parse.get<int>("protocol", 1);
-            }
-        }
-
-        text_parse.set("game_version", m_config->m_server.game_version);
-        text_parse.set("protocol", m_config->m_server.protocol);
         text_parse.set("mac", mac);
         text_parse.set("rid", rid);
         text_parse.set("wk", wk);
