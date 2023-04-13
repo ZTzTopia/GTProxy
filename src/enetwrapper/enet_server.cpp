@@ -2,7 +2,7 @@
 
 #include "enet_server.h"
 
-namespace enetwrapper {
+namespace enet_wrapper {
 ENetServer::ENetServer()
     : m_host(nullptr)
 {
@@ -16,17 +16,22 @@ ENetServer::~ENetServer()
 
 bool ENetServer::create_host(enet_uint16 port, std::size_t peer_count, enet_uint8 using_new_packet)
 {
-    if (m_host) destroy_host();
+    if (m_host) {
+        destroy_host();
+    }
 
-    ENetAddress address;
+    ENetAddress address{};
     address.host = ENET_HOST_ANY;
     address.port = port;
 
     m_host = enet_host_create(&address, peer_count, 2, 0, 0);
-    if (!m_host) return false;
-
-    if (enet_host_compress_with_range_coder(m_host) != 0)
+    if (!m_host) {
         return false;
+    }
+
+    if (enet_host_compress_with_range_coder(m_host) != 0) {
+        return false;
+    }
 
     m_host->checksum = enet_crc32;
     m_host->usingNewPacketForServer = using_new_packet;
@@ -41,19 +46,16 @@ void ENetServer::destroy_host()
     }
 
     if (m_host) {
-        for (ENetPeer* current_peer = m_host->peers;
-             current_peer < &m_host->peers[m_host->peerCount];
-             ++current_peer) {
-            if (current_peer) enet_peer_disconnect_now(current_peer, 0);
-        }
-
         enet_host_destroy(m_host);
+        m_host = nullptr;
     }
 }
 
 void ENetServer::start_service()
 {
-    if (m_running.load()) return;
+    if (m_running.load()) {
+        return;
+    }
 
     m_running.store(true);
     std::thread thread{ &ENetServer::service_thread, this };
@@ -62,19 +64,21 @@ void ENetServer::start_service()
 
 void ENetServer::service_thread()
 {
-    ENetEvent event;
+    ENetEvent event{};
     while (m_running.load()) {
-        if (!m_host) continue;
-
-        while (enet_host_service(m_host, &event, 8) > 0) {
+        while (m_host && enet_host_service(m_host, &event, 8) > 0) {
             switch (event.type) {
-            case ENET_EVENT_TYPE_CONNECT:on_connect(event.peer);
-                break;
-            case ENET_EVENT_TYPE_RECEIVE:on_receive(event.peer, event.packet);
-                break;
-            case ENET_EVENT_TYPE_DISCONNECT:on_disconnect(event.peer);
-                break;
-            default:break;
+                case ENET_EVENT_TYPE_CONNECT:
+                    on_connect(event.peer);
+                    break;
+                case ENET_EVENT_TYPE_RECEIVE:
+                    on_receive(event.peer, event.packet);
+                    break;
+                case ENET_EVENT_TYPE_DISCONNECT:
+                    on_disconnect(event.peer);
+                    break;
+                default:
+                    break;
             }
         }
     }

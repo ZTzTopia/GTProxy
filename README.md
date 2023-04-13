@@ -10,8 +10,8 @@ Growtopia Proxy is a free and open-source proxy for [Growtopia](https://growtopi
 
 ## Features
 - Open source and free to use.
-- Support for [Growtopia](https://growtopiagame.com/) 3.92 and newer versions.
-- Includes a built-in http server with metadata from the [Growtopia](https://growtopiagame.com/) client.
+- Support for Growtopia 3.92 and newer versions.
+- Includes a built-in http server with metadata from the Growtopia client.
 - ~~Works well with sub-server redirection.~~ ([#22](https://github.com/ZTzTopia/GTProxy/issues/22))
 - Supports packet debugging and modification.
 - Includes a configuration file for customization.
@@ -27,7 +27,7 @@ The following dependencies are required to build from source:
 To build from source:
 1. Clone the source code of this project: `git clone --recurse-submodules https://github.com/ZTzTopia/GTProxy.git`
 2. Install Python 3.5+ (Windows only: select 'Add Python to PATH' in installer)
-3. CMake will install needed package with [Conan, the C/C++ Package Manager](https://conan.io). `pip install "conan<2.0"`
+3. CMake will install needed package with Conan. `pip install "conan<2.0"`
 ```shell
 $ mkdir build
 $ cd build

@@ -1,10 +1,8 @@
 #pragma once
-
 #include <execution>
+#include <pcg_random.hpp>
 
-#include "hash.h"
-#include "../include/randutils.hpp"
-#include "../include/pcg/pcg_random.hpp"
+#include "randutils.hpp"
 
 namespace randutils {
 using pcg_rng = random_generator<pcg32>;
@@ -32,9 +30,9 @@ inline randutils::pcg_rng get_generator_local()
 
 template <typename T>
 inline std::string generate(T gen, std::size_t length,
-    const std::string& chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-{
-    std::string result;
+    const std::string& chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+) {
+    std::string result{};
     result.reserve(length);
 
     std::generate_n(std::back_inserter(result), length, [&]() {
@@ -48,20 +46,19 @@ template <typename T>
 inline std::string generate_alpha(T gen, std::size_t length, bool uppercase = false)
 {
     return generate(gen, length, uppercase
-                                 ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                 : "abcdefghijklmnopqrstuvwxyz");
+        ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        : "abcdefghijklmnopqrstuvwxyz");
 }
 
 template <typename T>
 inline std::string generate_unicode(T gen, std::size_t length)
 {
-    std::string unicode;
+    std::string unicode{};
     unicode.reserve(length);
 
-    for (std::size_t i = 0; i < length; ++i) {
+    for (std::size_t i{ 0 }; i < length; i++) {
         char c = static_cast<char>(gen.uniform(-0x80, 0x7F));
-        if (c == '\0' || c == '\n' || c == '\r' || c == '\t' || c == '\v' || c == '\f' || c == '\b'
-            || c == '\a') {
+        if (c == '\0' || c == '\n' || c == '\r' || c == '\t' || c == '\v' || c == '\f' || c == '\b' || c == '\a') {
             i--;
             continue;
         }
@@ -82,22 +79,22 @@ template <typename T>
 inline std::string generate_hex(T gen, std::size_t length, bool uppercase = true)
 {
     return generate(gen, length, uppercase
-                                 ? "0123456789ABCDEF"
-                                 : "0123456789abcdef");
+        ? "0123456789ABCDEF"
+        : "0123456789abcdef");
 }
 
 template <typename T>
-inline std::string generate_mac(T gen, bool zerotwo = true)
+inline std::string generate_mac(T gen, bool zero_two = true)
 {
-    std::string result;
+    std::string result{};
     result.reserve(17);
 
-    if (zerotwo) {
+    if (zero_two) {
         result.append("02");
         result.push_back(':');
     }
 
-    for (std::size_t i = 0; i < (zerotwo ? 5 : 6); i++) {
+    for (std::size_t i{ 0 }; i < (zero_two ? 5 : 6); i++) {
         result.append(generate_hex(gen, 1, false));
         result.push_back(':');
     }

@@ -1,24 +1,16 @@
 #pragma once
-
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
 namespace utils {
 namespace math {
 template <typename T>
 struct Vec2 {
-    T x, y;
-
-    Vec2()
-        : x(0), y(0) {}
-
-    explicit Vec2(T f)
-        : x(f), y(f) {}
-
-    Vec2(T x, T y)
-        : x(x), y(y) {}
-
-    Vec2(const Vec2& v)
-        : x(v.x), y(v.y) {}
+    Vec2() : x(0), y(0) {}
+    explicit Vec2(T f) : x(f), y(f) {}
+    Vec2(T x, T y) : x(x), y(y) {}
+    Vec2(const Vec2& v) : x(v.x), y(v.y) {}
 
     bool operator==(const Vec2& v) const
     {
@@ -36,23 +28,16 @@ struct Vec2 {
     {
         return std::make_pair(x, y);
     }
+
+    T x, y;
 };
 
 template <typename T>
 struct Vec3 {
-    T x, y, z;
-
-    Vec3()
-        : x(0), y(0), z(0) {}
-
-    explicit Vec3(T f)
-        : x(f), y(f), z(f) {}
-
-    Vec3(T x, T y, T z)
-        : x(x), y(y), z(z) {}
-
-    Vec3(const Vec3& v)
-        : x(v.x), y(v.y), z(v.z) {}
+    Vec3() : x(0), y(0), z(0) {}
+    explicit Vec3(T f) : x(f), y(f), z(f) {}
+    Vec3(T x, T y, T z) : x(x), y(y), z(z) {}
+    Vec3(const Vec3& v) : x(v.x), y(v.y), z(v.z) {}
 
     bool operator==(const Vec3& v) const
     {
@@ -71,6 +56,8 @@ struct Vec3 {
     {
         return std::make_tuple(x, y, z);
     }
+
+    T x, y, z;
 };
 
 template <typename T>

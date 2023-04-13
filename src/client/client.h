@@ -6,41 +6,41 @@
 
 namespace server {
 class Server;
+class Http;
 }
 
 namespace client {
-class Client : public enetwrapper::ENetClient {
+class Client : public enet_wrapper::ENetClient {
 public:
-    Client(Config* config, server::Server* server);
-
+    Client(Config* config, server::Http* http, server::Server* server);
     ~Client();
 
-    bool start(const std::string& host, enet_uint16 port);
-
-    bool redirect() { return start(m_redirect_host, m_redirect_port); }
+    void start();
 
     void on_connect(ENetPeer* peer) override;
-
     void on_receive(ENetPeer* peer, ENetPacket* packet) override;
-
     void on_disconnect(ENetPeer* peer) override;
 
     bool process_packet(ENetPeer* peer, ENetPacket* packet);
-
     bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
 
 public:
-    [[nodiscard]] player::Peer* get_peer() const { return m_peer; }
-
-    [[nodiscard]] bool is_redirecting() const { return m_redirecting; }
+    void set_gt_client_peer(player::Peer* peer) { m_peer.m_gt_client = peer; }
 
 private:
     Config* m_config;
-    player::Peer* m_peer;
+    server::Http* m_http;
     server::Server* m_server;
 
-    bool m_redirecting;
-    std::string m_redirect_host;
-    enet_uint16 m_redirect_port;
+    struct {
+        player::Peer* m_gt_server;
+        player::Peer* m_gt_client;
+    } m_peer;
+
+    struct {
+        enet_uint8 m_using_new_packet;
+        std::string m_host;
+        enet_uint16 m_port;
+    } m_redirect_server;
 };
 }

@@ -5,16 +5,16 @@ on:
     branches:
       - develop
     paths-ignore:
-      - ".gitignore"
-      - "**/.gitignore"
-      - "*.md"
-      - "**/*.md"
+      - '.idea/**'
+      - '.gitignore'
+      - '**.md'
+      - 'LICENSE'
   pull_request:
     paths-ignore:
-      - ".gitignore"
-      - "**/.gitignore"
-      - "*.md"
-      - "**/*.md"
+      - '.idea/**'
+      - '.gitignore'
+      - '**.md'
+      - 'LICENSE'
 
 jobs:
   dev:

@@ -2,7 +2,7 @@
 
 #include "enet_wrapper.h"
 
-namespace enetwrapper {
+namespace enet_wrapper {
 bool ENetWrapper::one_time_init()
 {
 #ifdef _WIN32
