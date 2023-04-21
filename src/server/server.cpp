@@ -1,9 +1,12 @@
 #include <magic_enum.hpp>
+#include <openssl/evp.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/bin_to_hex.h>
 
 #include "server.h"
 #include "../client/client.h"
 #include "../utils/hash.h"
+#include "../utils/random.h"
 #include "../utils/text_parse.h"
 
 namespace server {
@@ -117,6 +120,90 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                     return false;
                 }
             }
+            else if (message_data.find("requestedName") == std::string::npos) {
+                auto md5{ 
+                    [](std::string_view input) -> std::string {
+                        std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
+                        std::uint32_t digest_len{};
+
+                        EVP_MD_CTX* ctx{ EVP_MD_CTX_new() };
+                        EVP_DigestInit_ex(ctx, EVP_md5(), nullptr);
+                        EVP_DigestUpdate(ctx, input.data(), input.length());
+                        EVP_DigestFinal_ex(ctx, digest.data(), &digest_len);
+                        EVP_MD_CTX_free(ctx);
+
+                        std::string md5_string{};
+                        md5_string.reserve(32);
+
+                        for (unsigned char b : digest) {
+                            md5_string += fmt::format("{:02x}", b);
+                        }
+
+                        return md5_string;
+                    } 
+                };
+
+                auto generate_klv{ 
+                    [&](
+                        std::string_view game_version, 
+                        std::uint32_t device_id_hash, 
+                        std::string_view rid, 
+                        std::uint16_t protocol
+                    ) -> std::string {
+                        constexpr std::array salts = {
+                            "0b02ea1d8610bab98fbc1d574e5156f3",
+                            "b414b94c3279a2099bd817ba3a025cfc",
+                            "bf102589b28a8cc3017cba9aec1306f5",
+                            "dded9b27d5ce7f8c8ceb1c9ba25f378d"
+                        };
+
+                        return md5(fmt::format(
+                            "{}{}{}{}{}{}{}{}",
+                            salts[0],
+                            game_version,
+                            salts[1],
+                            device_id_hash,
+                            salts[2],
+                            rid,
+                            salts[3],
+                            protocol
+                        ));
+                    } 
+                };
+
+                static randutils::pcg_rng gen{ utils::random::get_generator_local() };
+                static std::string mac{ utils::random::generate_mac(gen) };
+                static std::uint32_t mac_hash{ utils::proton_hash(fmt::format("{}RT", mac).c_str()) };
+                static std::string rid{ utils::random::generate_hex(gen, 32, true) };
+                static std::string gid{ utils::random::generate_hex(gen, 32, true) };
+                static std::string wk{ utils::random::generate_hex(gen, 32, true) };
+                static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
+                static std::uint32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
+
+                utils::TextParse text_parse{ message_data };
+                // text_parse.set("game_version", m_config->m_server.game_version);
+                // text_parse.set("protocol", m_config->m_server.protocol);
+                // text_parse.set("platformID", m_config->m_server.platformID);
+                text_parse.set("mac", mac);
+                text_parse.set("rid", rid);
+                text_parse.set("gid", gid);
+                text_parse.set("wk", wk);
+                text_parse.set("hash", device_id_hash);
+                text_parse.set("hash2", mac_hash);
+
+                text_parse.set(
+                    "klv", 
+                    generate_klv(
+                        text_parse.get("game_version", 1),
+                        text_parse.get<std::uint32_t>("hash", 1),
+                        text_parse.get("rid", 1),
+                        text_parse.get<std::uint16_t>("protocol", 1)
+                    )
+                );
+
+                m_peer.m_gt_server->send_packet(message_type, text_parse.get_all_raw());
+                return false;
+            }
 
             break;
         }
@@ -133,6 +220,20 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
 
 bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
 {
+    if (game_update_packet->type != player::PACKET_CALL_FUNCTION) {
+        std::uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
+        std::vector<std::uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
+
+        spdlog::info(
+            "Outgoing TankUpdatePacket:\n [{}]{}{}",
+            game_update_packet->type,
+            magic_enum::enum_name(static_cast<player::ePacketType>(game_update_packet->type)),
+            extended_data
+            ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
+            : ""
+        );
+    }
+
     switch (game_update_packet->type) {
         case player::PACKET_DISCONNECT:
             m_peer.m_gt_client->disconnect_now();
