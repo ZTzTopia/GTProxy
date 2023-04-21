@@ -12,7 +12,7 @@ Config::Config()
 {
     // Initializes the configuration settings to default values.
     m_host.m_port = 16999;
-    m_server.m_host = "18.215.115.101";
+    m_server.m_host = "44.194.98.84";
     m_server.m_game_version = "4.22";
     m_server.m_protocol = 188;
     m_server.m_platform_id = "4";

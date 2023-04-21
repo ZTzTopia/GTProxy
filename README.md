@@ -12,7 +12,7 @@ Growtopia Proxy is a free and open-source proxy for [Growtopia](https://growtopi
 - Open source and free to use.
 - Support for Growtopia 3.92 and newer versions.
 - Includes a built-in http server with metadata from the Growtopia client.
-- ~~Works well with sub-server redirection.~~ ([#22](https://github.com/ZTzTopia/GTProxy/issues/22))
+- Works well with sub-server redirection.
 - Supports packet debugging and modification.
 - Includes a configuration file for customization.
 
