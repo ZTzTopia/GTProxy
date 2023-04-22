@@ -120,7 +120,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                     return false;
                 }
             }
-            else if (message_data.find("requestedName") == std::string::npos) {
+            else if (message_data.find("requestedName") != std::string::npos) {
                 auto md5{ 
                     [](std::string_view input) -> std::string {
                         std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
