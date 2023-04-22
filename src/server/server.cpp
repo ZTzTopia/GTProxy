@@ -206,7 +206,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
             break;
         }
         case player::NET_MESSAGE_GAME_MESSAGE: {
-            if (message_data.find("action|quit") != std::string::npos) {
+            if (message_data.find("action|quit") != std::string::npos && message_data.length() <= 15) {
                 m_peer.m_gt_client->disconnect();
             }
 
