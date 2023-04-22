@@ -59,10 +59,16 @@ public:
         return {};
     }
 
-    template <typename T, typename std::enable_if_t<std::is_integral_v<T>, bool> = true>
+    template <typename T, typename std::enable_if_t<std::is_signed_v<T>, bool> = true>
     T get(const std::string& key, int index, const std::string_view& token = "|")
     {
         return std::stoi(get(key, index, token));
+    }
+
+    template <typename T, typename std::enable_if_t<std::is_unsigned_v<T>, bool> = true>
+    T get(const std::string& key, int index, const std::string_view& token = "|")
+    {
+        return std::stoul(get(key, index, token));
     }
 
     template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
