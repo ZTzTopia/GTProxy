@@ -145,9 +145,9 @@ public:
         std::string string{};
         for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
             string += *it;
-            if (std::next(it) != m_data.cend() && !std::next(it)->empty()) {
+            // if (std::next(it) != m_data.cend() && !std::next(it)->empty()) {
                 string += "\r\n";
-            }
+            // }
         }
 
         return string;

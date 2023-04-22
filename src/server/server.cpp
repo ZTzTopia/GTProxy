@@ -135,8 +135,8 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                         std::string md5_string{};
                         md5_string.reserve(32);
 
-                        for (unsigned char b : digest) {
-                            md5_string += fmt::format("{:02x}", b);
+                        for (int i{ 0 }; i < 16; i++) {
+                            md5_string += fmt::format("{:02X}", digest[i]);
                         }
 
                         return md5_string;
@@ -173,12 +173,11 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
 
                 static randutils::pcg_rng gen{ utils::random::get_generator_local() };
                 static std::string mac{ utils::random::generate_mac(gen) };
-                static std::uint32_t mac_hash{ utils::proton_hash(fmt::format("{}RT", mac).c_str()) };
+                static std::int32_t mac_hash{ utils::proton_hash(fmt::format("{}RT", mac).c_str()) };
                 static std::string rid{ utils::random::generate_hex(gen, 32, true) };
-                static std::string gid{ utils::random::generate_hex(gen, 32, true) };
                 static std::string wk{ utils::random::generate_hex(gen, 32, true) };
                 static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
-                static std::uint32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
+                static std::int32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
 
                 utils::TextParse text_parse{ message_data };
                 // text_parse.set("game_version", m_config->m_server.game_version);
@@ -186,11 +185,9 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 // text_parse.set("platformID", m_config->m_server.platformID);
                 text_parse.set("mac", mac);
                 text_parse.set("rid", rid);
-                text_parse.set("gid", gid);
                 text_parse.set("wk", wk);
                 text_parse.set("hash", device_id_hash);
                 text_parse.set("hash2", mac_hash);
-
                 text_parse.set(
                     "klv", 
                     generate_klv(
@@ -201,8 +198,16 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                     )
                 );
 
+                spdlog::debug("{}", text_parse.get_all_raw());
                 m_peer.m_gt_server->send_packet(message_type, text_parse.get_all_raw());
                 return false;
+            }
+
+            break;
+        }
+        case player::NET_MESSAGE_GAME_MESSAGE: {
+            if (message_data.find("action|quit") != std::string::npos) {
+                m_peer.m_gt_client->disconnect();
             }
 
             break;

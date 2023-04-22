@@ -95,7 +95,7 @@ inline std::string generate_mac(T gen, bool zero_two = true)
     }
 
     for (std::size_t i{ 0 }; i < (zero_two ? 5 : 6); i++) {
-        result.append(generate_hex(gen, 1, false));
+        result.append(generate_hex(gen, 2, false));
         result.push_back(':');
     }
 

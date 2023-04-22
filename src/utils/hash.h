@@ -23,9 +23,9 @@ constexpr std::size_t fnv1a_hash(const std::string_view& data)
     return hash;
 }
 
-constexpr std::uint32_t proton_hash(const char* data, std::size_t length = 0)
+constexpr std::int32_t proton_hash(const char* data, std::size_t length = 0)
 {
-    std::uint32_t hash{ 0x55555555 };
+    std::int32_t hash{ 0x55555555 };
     if (data) {
         if (length > 0) {
             while (length--) {
