@@ -146,7 +146,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 auto generate_klv{ 
                     [&](
                         std::string_view game_version, 
-                        std::uint32_t device_id_hash, 
+                        std::int32_t device_id_hash, 
                         std::string_view rid, 
                         std::uint16_t protocol
                     ) -> std::string {
@@ -195,7 +195,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                     "klv", 
                     generate_klv(
                         text_parse.get("game_version", 1),
-                        text_parse.get<std::uint32_t>("hash", 1),
+                        text_parse.get<std::int32_t>("hash", 1),
                         text_parse.get("rid", 1),
                         text_parse.get<std::uint16_t>("protocol", 1)
                     )
