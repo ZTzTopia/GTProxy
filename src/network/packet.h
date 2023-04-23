@@ -109,10 +109,37 @@ struct GameUpdatePacket {
             std::uint32_t bResetVisualState : 1;
             std::uint32_t bExtended : 1;
             std::uint32_t bRotateLeft : 1;
+            std::uint32_t bOnSolid : 1;
+            std::uint32_t bOnFireDamage : 1;
+            std::uint32_t bOnJump : 1;
+            std::uint32_t bOnKilled : 1;
+            std::uint32_t bOnPunched : 1;
+            std::uint32_t bOnPlaced : 1;
+            std::uint32_t bOnTileAction : 1;
+            std::uint32_t bOnGotPunched : 1;
+            std::uint32_t bOnRespawned : 1;
+            std::uint32_t bOnCollectObject : 1;
+            std::uint32_t bOnTrampoline : 1;
+            std::uint32_t bOnDamage : 1;
+            std::uint32_t bOnSlide : 1;
+            std::uint32_t pad_1 : 3;
+            std::uint32_t bOnWallHang : 1;
+            std::uint32_t pad_2 : 3;
+            std::uint32_t bOnAcidDamage : 1;
+            std::uint32_t pad_3 : 6;
         };
     } flags;
 
-    std::uint8_t pad_3[36];
+    std::uint8_t pad_3[4];
+
+    std::uint32_t value; // usually item id
+    float player_x, player_y;
+    float x_velocity, y_velocity;
+
+    std::uint8_t  pad_4[4];
+
+    uint32_t tile_x, tile_y; // target tile coordinate.
+
     uint32_t data_size;
 };
 static_assert((sizeof(GameUpdatePacket) == 56) && "Invalid GameUpdatePacket size.");
