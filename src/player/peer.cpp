@@ -30,13 +30,9 @@ int Peer::send_packet(eNetMessageType type, const std::string& data)
     std::memcpy(packet_data.data() + sizeof(type), data.c_str(), data.length());
 
     ENetPacket* packet{ enet_packet_create(packet_data.data(), packet_data.size(), ENET_PACKET_FLAG_RELIABLE) };
+    
 
-    int ret{ enet_peer_send(m_peer, 0, packet) };
-    if (ret != 0) {
-        enet_packet_destroy(packet);
-    }
-
-    return ret;
+    return send_packet_packet(packet);
 }
 
 int Peer::send_packet_packet(ENetPacket* packet)
@@ -44,8 +40,9 @@ int Peer::send_packet_packet(ENetPacket* packet)
     if (!m_peer) {
         return -1;
     }
-
+    send_lock.lock();
     int ret = enet_peer_send(m_peer, 0, packet);
+    send_lock.unlock();
     if (ret != 0) {
         enet_packet_destroy(packet);
     }
@@ -81,9 +78,8 @@ int Peer::send_raw_packet(
         std::memcpy(packet->data + sizeof(eNetMessageType), game_update_packet, length);
     }
 
-    int ret{ enet_peer_send(m_peer, 0, packet) != 0 };
-    if (ret) enet_packet_destroy(packet);
-    return ret;
+    
+    return send_packet_packet(packet);
 }
 
 int Peer::send_variant(VariantList&& variant_list, std::uint32_t net_id, enet_uint32 flags)
