@@ -2,7 +2,7 @@
 #include <string>
 #include <enet/enet.h>
 #include <util/Variant.h>
-
+#include <mutex>
 #include "../network/packet.h"
 
 namespace player {
@@ -30,5 +30,6 @@ public:
 
 private:
     ENetPeer* m_peer;
+    std::mutex send_lock;
 };
 }
