@@ -181,9 +181,9 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
 
                 utils::TextParse text_parse{ message_data };
 
-                //text_parse.add_key("klv|");
+                text_parse.add_key_once("klv|");
+                text_parse.set("game_version", m_config->get_server().m_game_version);
 
-                //text_parse.set("game_version", "4.23");
                 // text_parse.set("protocol", m_config->m_server.protocol);
                 // text_parse.set("platformID", m_config->m_server.platformID);
                 text_parse.set("mac", mac);
@@ -226,7 +226,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
     return true;
 }
 
-bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
+bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet) const
 {
     if (game_update_packet->type != player::PACKET_CALL_FUNCTION) {
         std::uint8_t* extended_data{ player::get_extended_data(game_update_packet) };

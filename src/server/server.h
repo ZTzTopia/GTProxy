@@ -22,7 +22,7 @@ public:
     void on_disconnect(ENetPeer* peer) override;
 
     bool process_packet(ENetPeer* peer, ENetPacket* packet);
-    bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet);
+    bool process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet) const;
 
 public:
     void set_gt_server_peer(player::Peer* peer) { m_peer.m_gt_server = peer; }

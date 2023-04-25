@@ -153,6 +153,31 @@ public:
         return string;
     }
 
+    // won't add if key already exist.
+    // return true if the key doesn't exist yet, otherwise false.
+    bool add_key_once(const std::string& key)
+    {
+        auto it = std::find_if(m_data.begin(), m_data.end(), [&](const std::string& str) -> bool
+        {
+            return str.find(key) != std::string::npos;
+        });
+        if (it == m_data.end()) {
+            add_key(key);
+            return true;
+        }
+        return false;
+    }
+
+    void add_key(const char* c_str)
+    {
+        std::string str {c_str};
+        add_key(str);
+    }
+
+    void add_key(const std::string &key) {
+        m_data.push_back(key);
+    }
+
 public:
     bool empty() { return m_data.empty(); }
     std::size_t size() { return m_data.size(); }
