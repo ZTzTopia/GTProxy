@@ -106,13 +106,13 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                     break;
                 }
 
-                std::string str{ message_data.substr(
+                std::vector<std::string> token{ utils::TextParse::string_tokenize( message_data.substr(
                     message_data.find("text|") + 5,
                     message_data.length() - message_data.find("text|") - 1
-                ) };
+                ), " " )};
 
-                if (str.substr(0, 6) == m_config->get_command().m_prefix + "warp ") {
-                    std::string world{ str.substr(6, message_data.length() - 6 - 1) };
+                if (token[0] == m_config->get_command().m_prefix + "warp") {
+                    std::string world{token[1]};
                     m_peer.m_gt_server->send_packet(
                         player::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
                         fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
@@ -180,7 +180,10 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 static std::int32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
 
                 utils::TextParse text_parse{ message_data };
-                // text_parse.set("game_version", m_config->m_server.game_version);
+
+                text_parse.add_key_once("klv|");
+                text_parse.set("game_version", m_config->get_server().m_game_version);
+
                 // text_parse.set("protocol", m_config->m_server.protocol);
                 // text_parse.set("platformID", m_config->m_server.platformID);
                 text_parse.set("mac", mac);
@@ -223,7 +226,7 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
     return true;
 }
 
-bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet)
+bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet) const
 {
     if (game_update_packet->type != player::PACKET_CALL_FUNCTION) {
         std::uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
