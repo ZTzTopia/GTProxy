@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches:
-      - !master
-      - !main
+      - '!master'
+      - '!main'
     paths-ignore:
       - '.idea/**'
       - '.gitignore'
