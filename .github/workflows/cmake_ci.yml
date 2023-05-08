@@ -33,8 +33,22 @@ jobs:
       - name: Install conan
         run: pip install "conan>2.0"
 
+      - name: Cache CMake
+        id: cache-cmake
+        uses: actions/cache@v3
+        with:
+          path: ${{github.workspace}}\build
+          key: ${{ runner.os }}-cmake
+
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGTPROXY_BUILD_VERSION=${{github.run_number}}
+        
+      - name: Fetch action
+        id: pl
+        uses: Rishabh510/Path-lister-action@master
+        with:
+          path: ${{github.workspace}}\build\conan
+          type: ".dll"
 
       - name: Build
         run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
@@ -44,7 +58,6 @@ jobs:
           mkdir ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\src\${{env.BUILD_TYPE}}\*.exe ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\conan\build\${{env.BUILD_TYPE}}\*.dll ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\vendor\enet\${{env.BUILD_TYPE}}\*.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
