@@ -27,7 +27,6 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
           submodules: "recursive"
 
       - name: Install conan
@@ -44,7 +43,7 @@ jobs:
         id: cache-cmake
         uses: actions/cache@v3
         with:
-          path: ${{github.workspace}}\build
+          path: ${{github.workspace}}/build
           key: ${{ runner.os }}-cmake
 
       - name: Configure CMake
@@ -55,11 +54,12 @@ jobs:
 
       - name: Move program and binary
         run: |
-          mkdir ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\src\${{env.BUILD_TYPE}}\*.exe ${{github.workspace}}\build\program
+          mkdir ${{github.workspace}}\output
+          copy ${{github.workspace}}\build\src\${{env.BUILD_TYPE}}\*.exe ${{github.workspace}}\output
+          copy ${{github.workspace}}\build\conan\build\*.dll ${{github.workspace}}\output
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: gtproxy-${{github.sha}}
-          path: ${{github.workspace}}\build\program
+          path: ${{github.workspace}}\output
