@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\src\${{env.BUILD_TYPE}}\*.exe ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\conan\bin\*.dll ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\conan\build\${{env.BUILD_TYPE}}\*.dll ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\vendor\enet\${{env.BUILD_TYPE}}\*.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
