@@ -49,10 +49,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         GTPROXY_DEBUG)
 endif ()
 
-target_link_libraries(${PROJECT_NAME} enet)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}/conan")
-
 find_package(fmt REQUIRED)
 find_package(httplib REQUIRED)
 find_package(LibreSSL REQUIRED)
@@ -60,25 +56,24 @@ find_package(magic_enum REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(pcg-cpp REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(ZLIB REQUIRED)
 
 target_link_libraries(${PROJECT_NAME}
+    enet
     fmt::fmt
     httplib::httplib
     LibreSSL::SSL LibreSSL::TLS LibreSSL::Crypto
     magic_enum::magic_enum
     nlohmann_json::nlohmann_json
     pcg-cpp::pcg-cpp
-    spdlog::spdlog
-    ZLIB::ZLIB)
+    spdlog::spdlog)
 
 # Copy dependencies binary to current binary dir.
 if (WIN32)
     file(GLOB GTPROXY_DEPENDENCIES_BINARY
-        "${CMAKE_BINARY_DIR}/conan/bin/*.dll")
+        "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}/*.dll")
 
     foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
-        string(REPLACE "${CMAKE_BINARY_DIR}/conan/bin" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
+        string(REPLACE "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
         message(STATUS "Preparing ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
         add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
