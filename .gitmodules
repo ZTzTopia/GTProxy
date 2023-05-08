@@ -3,5 +3,5 @@
 	url = https://github.com/ZTzTopia/enet
 [submodule "vendor/cmake-conan"]
 	path = vendor/cmake-conan
-	url = https://github.com/conan-io/cmake-conan.git
+	url = https://github.com/conan-io/cmake-conan
 	branch = develop2
