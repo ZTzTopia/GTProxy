@@ -69,8 +69,13 @@ target_link_libraries(${PROJECT_NAME}
 
 # Copy dependencies binary to current binary dir.
 if (WIN32)
-    file(GLOB GTPROXY_DEPENDENCIES_BINARY
-        "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}/*.dll")
+    if (EXISTS "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}")
+        file(GLOB GTPROXY_DEPENDENCIES_BINARY
+            "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}/*.dll")
+    else ()
+        file(GLOB GTPROXY_DEPENDENCIES_BINARY
+            "${CMAKE_BINARY_DIR}/conan/build/*.dll")
+    endif ()
 
     foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
         string(REPLACE "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")

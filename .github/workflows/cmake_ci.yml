@@ -42,10 +42,6 @@ jobs:
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGTPROXY_BUILD_VERSION=${{github.run_number}}
-        
-      - name: SEEE DIRECTORYYAhdbkskdkaudadnsad
-        run: |
-          dir -s ${{github.workspace}}\build
 
       - name: Build
         run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
@@ -54,7 +50,7 @@ jobs:
         run: |
           mkdir ${{github.workspace}}\build\program
           copy ${{github.workspace}}\build\src\${{env.BUILD_TYPE}}\*.exe ${{github.workspace}}\build\program
-          copy ${{github.workspace}}\build\conan\build\${{env.BUILD_TYPE}}\*.dll ${{github.workspace}}\build\program
+          copy ${{github.workspace}}\build\conan\build\*.dll ${{github.workspace}}\build\program
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
