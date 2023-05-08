@@ -173,11 +173,11 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
 
                 static randutils::pcg_rng gen{ utils::random::get_generator_local() };
                 static std::string mac{ utils::random::generate_mac(gen) };
-                static std::int32_t mac_hash{ utils::proton_hash(fmt::format("{}RT", mac).c_str()) };
+                static std::int32_t mac_hash{ utils::hash::proton(fmt::format("{}RT", mac).c_str()) };
                 static std::string rid{ utils::random::generate_hex(gen, 32, true) };
                 static std::string wk{ utils::random::generate_hex(gen, 32, true) };
                 static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
-                static std::int32_t device_id_hash{ utils::proton_hash(fmt::format("{}RT", device_id).c_str()) };
+                static std::int32_t device_id_hash{ utils::hash::proton(fmt::format("{}RT", device_id).c_str()) };
 
                 utils::TextParse text_parse{ message_data };
 

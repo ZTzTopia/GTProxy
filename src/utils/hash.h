@@ -2,7 +2,8 @@
 #include <string_view>
 
 namespace utils {
-constexpr std::size_t fnv1a_hash(const std::string_view& data)
+namespace hash {
+constexpr std::size_t fnv1a(const std::string_view& data)
 {
     // Fowler/Noll/Vo 1a variant.
     std::size_t prime{ 16777619U };
@@ -23,7 +24,7 @@ constexpr std::size_t fnv1a_hash(const std::string_view& data)
     return hash;
 }
 
-constexpr std::int32_t proton_hash(const char* data, std::size_t length = 0)
+constexpr std::int32_t proton(const char* data, std::size_t length = 0)
 {
     std::int32_t hash{ 0x55555555 };
     if (data) {
@@ -43,13 +44,14 @@ constexpr std::int32_t proton_hash(const char* data, std::size_t length = 0)
     return hash;
 }
 }
+}
 
 constexpr std::size_t operator "" _fh(const char* str, std::size_t len)
 {
-    return utils::fnv1a_hash(std::string_view{ str, len });
+    return utils::hash::fnv1a(std::string_view{ str, len });
 }
 
 constexpr std::uint32_t operator "" _ph(const char* str, std::size_t len)
 {
-    return utils::proton_hash(str, static_cast<std::uint32_t>(len));
+    return utils::hash::proton(str, static_cast<std::uint32_t>(len));
 }
