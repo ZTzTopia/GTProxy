@@ -45,7 +45,7 @@ jobs:
         
       - name: SEEE DIRECTORYYAhdbkskdkaudadnsad
         run: |
-          dir /s ${{github.workspace}}\build
+          dir -s ${{github.workspace}}\build
 
       - name: Build
         run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
