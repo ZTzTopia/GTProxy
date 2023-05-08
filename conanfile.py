@@ -4,12 +4,7 @@ from conan.tools.files import copy
 
 class GTProxy(ConanFile):
     name = "GTProxy"
-    version = "1.4.1"
-    license = "MIT"
     author = "ZTz"
-    url = "https://github.com/ZTzTopia/GTProxy"
-    description = "⚖️ A proxy for growtopia. NO SHADOW BAN!"
-    topics = ("growtopia", "growtopiaproxy")
     settings = "os", "compiler", "build_type", "arch"
     requires = [
         "cpp-httplib/0.11.2",
