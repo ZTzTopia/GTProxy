@@ -144,7 +144,7 @@ bool Client::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket
 
             spdlog::info("Incoming VariantList:\n{}", variant_list.GetContentsAsDebugString());
 
-            std::size_t hash{ utils::fnv1a_hash(variant_list.Get(0).GetString()) };
+            std::size_t hash{ utils::hash::fnv1a(variant_list.Get(0).GetString()) };
             switch (hash) {
                 case "OnSendToServer"_fh: {
                     std::vector<std::string> tokenize{ utils::TextParse::string_tokenize(variant_list.Get(4).GetString()) };

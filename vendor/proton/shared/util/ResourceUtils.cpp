@@ -1,3 +1,4 @@
+#if 0
 #include <cassert>
 #include <zlib.h>
 
@@ -68,3 +69,4 @@ uint8_t *zLibInflateToMemory(uint8_t *pInput, unsigned int compressedSize, unsig
 	inflateEnd(&strm);
 	return pDestBuff;
 }
+#endif
