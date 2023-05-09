@@ -1,23 +1,22 @@
 ﻿from conan import ConanFile
-from conan.tools.cmake import cmake_layout
+from conan.tools.cmake import CMake, cmake_layout
 from conan.tools.files import copy
 
-class GTProxy(ConanFile):
-    name = "GTProxy"
-    author = "ZTz"
+class GTProxyRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    requires = [
-        "cpp-httplib/0.11.2",
-        "fmt/8.1.1",
-        "libressl/3.5.3",
-        "magic_enum/0.8.2",
-        "nlohmann_json/3.11.2",
-        "pcg-cpp/cci.20210406",
-        "spdlog/1.10.0",
-    ]
+    generators = "CMakeToolchain", "CMakeDeps"
     default_options = {
         "libressl*:shared": True
     }
+
+    def requirements(self):
+        self.requires("cpp-httplib/[~0.12]")
+        self.requires("fmt/9.1.0")
+        self.requires("libressl/[~3.5]")
+        self.requires("magic_enum/[~0.8]")
+        self.requires("nlohmann_json/[~3.11]")
+        self.requires("pcg-cpp/cci.20210406")
+        self.requires("spdlog/1.11.0")
 
     def layout(self):
         cmake_layout(self)

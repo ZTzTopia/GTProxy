@@ -7,5 +7,7 @@
 
 /.vs
 /out
+CMakeSettings.json
+CMakeUserPresets.json
 
 .venv
