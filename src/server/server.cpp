@@ -121,51 +121,49 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 }
             }
             else if (message_data.find("requestedName") != std::string::npos) {
-                auto md5{ 
-                    [](std::string_view input) -> std::string {
-                        std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
-                        std::uint32_t digest_len{};
+                auto sha256{
+                    [](const std::string& input) -> std::string {
+                        std::array<unsigned char, SHA256_DIGEST_LENGTH> digest{};
 
-                        EVP_MD_CTX* ctx{ EVP_MD_CTX_new() };
-                        EVP_DigestInit_ex(ctx, EVP_md5(), nullptr);
-                        EVP_DigestUpdate(ctx, input.data(), input.length());
-                        EVP_DigestFinal_ex(ctx, digest.data(), &digest_len);
-                        EVP_MD_CTX_free(ctx);
+                        SHA256_CTX ctx{};
+                        SHA256_Init(&ctx);
+                        SHA256_Update(&ctx, input.data(), input.length());
+                        SHA256_Final(digest.data(), &ctx);
 
-                        std::string md5_string{};
-                        md5_string.reserve(32);
+                        std::string sha256{};
+                        sha256.reserve(SHA256_DIGEST_LENGTH * 2);
 
-                        for (int i{ 0 }; i < 16; i++) {
-                            md5_string += fmt::format("{:02X}", digest[i]);
+                        for (int i{ 0 }; i < SHA256_DIGEST_LENGTH; i++) {
+                            sha256 += fmt::format("{:02x}", digest[i]);
                         }
 
-                        return md5_string;
+                        return sha256;
                     } 
                 };
 
                 auto generate_klv{ 
                     [&](
-                        std::string_view game_version, 
+                        const std::string& game_version,
                         std::int32_t device_id_hash, 
-                        std::string_view rid, 
+                        const std::string& rid,
                         std::uint16_t protocol
                     ) -> std::string {
                         constexpr std::array salts = {
-                            "13c93f386db9da3e00dda16d770b0c83",
-                            "6b1c01f9128a62a2c97b1a0da4612168",
-                            "3402d278d8519a522c94d122e98e2e49",
-                            "ba95613bc0fd94a9d89c5919670e7d5d"
+                            "198c4213effdbeb93ca64ea73c1f505f",
+                            "82a2e2940dd1b100f0d41d23b0bb6e4d",
+                            "c64f7f09cdd0c682e730d2f936f36ac2",
+                            "27d8da6190880ce95591215f2c9976a6"
                         }; // teo
 
-                        return md5(fmt::format(
+                        return sha256(fmt::format(
                             "{}{}{}{}{}{}{}{}",
-                            game_version,
+                            sha256(game_version),
                             salts[0],
-                            protocol,
+                            sha256(std::to_string(device_id_hash)),
                             salts[1],
-                            device_id_hash,
+                            sha256(std::to_string(protocol)),
                             salts[2],
-                            rid,
+                            sha256(rid),
                             salts[3]
                         ));
                     } 
@@ -182,9 +180,9 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 utils::TextParse text_parse{ message_data };
 
                 text_parse.add_key_once("klv|");
-                text_parse.set("game_version", m_config->get_server().m_game_version);
 
-                // text_parse.set("protocol", m_config->m_server.protocol);
+                text_parse.set("game_version", m_config->get_server().m_game_version);
+                text_parse.set("protocol", m_config->get_server().m_protocol);
                 // text_parse.set("platformID", m_config->m_server.platformID);
                 text_parse.set("mac", mac);
                 text_parse.set("rid", rid);
