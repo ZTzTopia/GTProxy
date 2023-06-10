@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <thread>
 #include <spdlog/spdlog.h>
+#include <magic_enum.hpp>
 
 #include "http.h"
 #include "ssl.h"
@@ -142,6 +143,15 @@ std::string Http::get_server_data()
         [](const httplib::Result& response)
         {
             httplib::Error error_response{ response.error() };
+
+            if (!response) {
+                spdlog::error(
+                    "Response is null with error: httplib::Error::{}",
+                    magic_enum::enum_name(error_response));
+
+                return false;
+            }
+
             int status_code{ response->status };
 
             if (error_response == httplib::Error::Success && status_code == 200) {
