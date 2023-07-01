@@ -13,10 +13,10 @@ public:
     explicit TextParse(const std::string& string)
         : m_data{ string_tokenize(string, "\n") }
     {
-        for (auto& data : m_data) {
-            data.erase(std::remove(data.begin(), data.end(), '\r'), data.end());
-            // std::replace(data.begin(), data.end(), '\r', '\0');
-        }
+       // for (auto& data : m_data) {
+       //     data.erase(std::remove(data.begin(), data.end(), '\r'), data.end());
+       //     std::replace(data.begin(), data.end(), '\r', '\0');
+       // }
     }
 
     static std::vector<std::string> string_tokenize(
@@ -146,7 +146,7 @@ public:
         for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
             string += *it;
             // if (std::next(it) != m_data.cend() && !std::next(it)->empty()) {
-                string += "\r\n";
+                string += "\n";
             // }
         }
 
