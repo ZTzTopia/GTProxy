@@ -1,34 +1,37 @@
 #include <filesystem>
 #include <thread>
+#include <magic_enum.hpp>
 #include <spdlog/spdlog.h>
+#include <magic_enum.hpp>
 
 #include "http.h"
 #include "ssl.h"
+#include "../domain_resolver/domain_resolver.h"
+#include "../utils/network.h"
 #include "../utils/text_parse.h"
 
 namespace server {
 Http::Http(Config* config)
-    : m_config{ config }
+    : config_{ config }
 {
     std::string cache_dir{ "./cache" };
     std::filesystem::create_directory(cache_dir);
 
-    const auto cert_path = cache_dir + "/cert.pem";
-    const auto key_path = cache_dir + "/key.pem";
-
+    const std::string cert_path{ cache_dir + "/cert.pem" };
     if (!std::filesystem::exists(cert_path)) {
         std::ofstream cert_file{ cert_path };
         cert_file << ssl::cert;
         cert_file.close();
     }
 
+    const std::string key_path{ cache_dir + "/key.pem" };
     if (!std::filesystem::exists(key_path)) {
         std::ofstream key_file{ key_path };
         key_file << ssl::key;
         key_file.close();
     }
 
-    m_server = std::make_unique<httplib::SSLServer>("./cache/cert.pem", "./cache/key.pem");
+    server_ = new httplib::SSLServer{ "./cache/cert.pem", "./cache/key.pem" };
 }
 
 Http::~Http()
@@ -38,8 +41,7 @@ Http::~Http()
 
 bool Http::bind_to_port(const std::string& host, int port)
 {
-    if (m_server->bind_to_port(host, port)) {
-        // So we don't need to store port in a member variable.
+    if (server_->bind_to_port(host, port)) {
         spdlog::info("HTTP(s) server listening on port {}.", port);
         return true;
     }
@@ -65,16 +67,16 @@ bool Http::listen(const std::string& host, int port)
 
 void Http::stop()
 {
-    m_server->stop();
+    server_->stop();
 }
 
 void Http::listen_internal()
 {
-    m_server->set_logger([](const httplib::Request& req, const httplib::Response& res) {
+    server_->set_logger([](const httplib::Request& req, const httplib::Response& res) {
         spdlog::info("{} {} {}", req.method, req.path, res.status);
     });
 
-    m_server->set_error_handler([](const httplib::Request& req, httplib::Response& res) {
+    server_->set_error_handler([](const httplib::Request& req, httplib::Response& res) {
         res.set_content(
             fmt::format(
                 "Hello, world!\r\n{} ({})",
@@ -85,7 +87,7 @@ void Http::listen_internal()
         );
     });
 
-    m_server->set_exception_handler([](
+    server_->set_exception_handler([](
         const httplib::Request& req,
         httplib::Response& res,
         const std::exception_ptr& ep
@@ -103,7 +105,7 @@ void Http::listen_internal()
         }
     });
 
-    m_server->Post("/growtopia/server_data.php", [&](
+    server_->Post("/growtopia/server_data.php", [&](
         const httplib::Request& req,
         httplib::Response& res
     ) {
@@ -119,29 +121,42 @@ void Http::listen_internal()
             spdlog::info("\t{}", httplib::detail::params_to_query_str(req.params));
         }
 
-        m_last_headers = req.headers;
-        m_last_params = req.params;
+        last_headers_ = req.headers;
+        last_params_ = req.params;
 
         utils::TextParse text_parse{ get_server_data() };
         text_parse.set("server", "127.0.0.1");
-        text_parse.set("port", m_config->get_host().m_port);
+        text_parse.set("port", config_->get_host().m_port);
         text_parse.set("type2", 1);
 
         res.set_content(text_parse.get_all_raw(), "text/html");
         return true;
     });
 
-    m_server->listen_after_bind();
+    server_->listen_after_bind();
 }
 
 std::string Http::get_server_data()
 {
-    spdlog::debug("Requesting server data from: https://{}", m_config->get_server().m_host);
+    spdlog::debug("Requesting server data from: https://{}", config_->get_server().m_host);
 
     auto validate_server_response{
         [](const httplib::Result& response)
         {
+            if (!response) {
+                return false;
+            }
+
             httplib::Error error_response{ response.error() };
+
+            if (!response) {
+                spdlog::error(
+                    "Response is null with error: httplib::Error::{}",
+                    magic_enum::enum_name(error_response));
+
+                return false;
+            }
+
             int status_code{ response->status };
 
             if (error_response == httplib::Error::Success && status_code == 200) {
@@ -157,33 +172,52 @@ std::string Http::get_server_data()
         }
     };
 
-    httplib::Client cli{ fmt::format("https://{}", m_config->get_server().m_host) };
+    std::string resolved_ip = config_->get_server().m_host;
+
+    if (utils::network::classify_host(config_->get_server().m_host) == utils::network::HostType::Hostname) {
+        auto res = domain_resolver::resolve_domain_name(config_->get_server().m_host);
+
+        if (res.status_ != domain_resolver::DomainResolverStatus::NoError) {
+            spdlog::error(
+                "Error occurred while resolving {} ip address. Dns server returned {}",
+                config_->get_server().m_host,
+                magic_enum::enum_name(res.status_)
+            );
+            return {};
+        }
+
+        resolved_ip = res.ip_;
+
+        spdlog::info(
+            "{} ip address is {}",
+            config_->get_server().m_host,
+            resolved_ip
+        );
+    }
+
+    httplib::Client cli{ fmt::format("https://{}", resolved_ip) };
     cli.enable_server_certificate_verification(false);
 
-    httplib::Result response{ cli.Post(
-        "/growtopia/server_data.php",
-        m_last_headers,
-        m_last_params
-    ) };
+    httplib::Headers header{
+        { "User-Agent", get_header_value(last_headers_, "User-Agent") },
+        { "Host", get_header_value(last_headers_, "Host") }
+    };
+
+    httplib::Result response{ cli.Post("/growtopia/server_data.php", header, last_params_) };
     if (validate_server_response(response)) {
         if (!response->body.empty()) {
-            // utils::TextParse text_parse{ response->body };
-            // spdlog::debug("Server data: \r\n{}", fmt::join(text_parse.get_all_array(), "\r\n"));
             return response->body;
         }
     }
 
-    // If Post request fails, try Get request.
     response = cli.Get("/growtopia/server_data.php");
     if (validate_server_response(response)) {
         if (!response->body.empty()) {
-            // utils::TextParse text_parse{ response->body };
-            // spdlog::debug("Server data: \r\n{}", fmt::join(text_parse.get_all_array(), "\r\n"));
             return response->body;
         }
     }
 
-    spdlog::warn("Failed to retrieve server data from {}", m_config->get_server().m_host);
+    spdlog::warn("Failed to retrieve server data from {}", config_->get_server().m_host);
     return {};
 }
 }

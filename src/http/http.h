@@ -22,9 +22,9 @@ public:
     std::string get_server_data();
 
 private:
-    Config* m_config;
-    std::unique_ptr<httplib::Server> m_server;
-    httplib::Headers m_last_headers;
-    httplib::Params m_last_params;
+    Config* config_;
+    httplib::Server* server_;
+    httplib::Headers last_headers_;
+    httplib::Params last_params_;
 };
 }

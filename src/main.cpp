@@ -4,7 +4,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "config.h"
-#include "enetwrapper/enet_wrapper.h"
+#include "enet_wrapper/enet_wrapper.h"
 #include "server/server.h"
 
 int main()

@@ -1,8 +1,7 @@
 #pragma once
 #include <string_view>
 
-namespace server {
-namespace ssl {
+namespace server::ssl {
 inline std::string_view cert{
     R"(-----BEGIN CERTIFICATE-----
 MIIDfjCCAmagAwIBAgIUBqlXQAFmeysUkXQTTetpNqTVUu4wDQYJKoZIhvcNAQEL
@@ -57,5 +56,4 @@ meNqVXO4wQ8j7OP0yX86DCG3hDcV6S4y5Fo0jAzCsawGcTbQ7hHmJo9wzfs1E6lH
 73whfRg+s50OK40A4ruOVniX
 -----END PRIVATE KEY-----)"
 };
-}
 }

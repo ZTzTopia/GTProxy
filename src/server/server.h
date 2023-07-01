@@ -2,7 +2,7 @@
 
 #include "../http/http.h"
 #include "../config.h"
-#include "../enetwrapper/enet_server.h"
+#include "../enet_wrapper/enet_server.h"
 #include "../player/peer.h"
 
 namespace client {

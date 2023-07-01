@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../config.h"
-#include "../enetwrapper/enet_client.h"
+#include "../enet_wrapper/enet_client.h"
 #include "../player/peer.h"
 
 namespace server {
