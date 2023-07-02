@@ -1,7 +1,7 @@
-[submodule "vendor/enet"]
-	path = vendor/enet
-	url = https://github.com/ZTzTopia/enet
 [submodule "vendor/cmake-conan"]
 	path = vendor/cmake-conan
 	url = https://github.com/conan-io/cmake-conan
 	branch = develop2
+[submodule "vendor/enet"]
+	path = vendor/enet
+	url = https://github.com/ZTzTopia/enet

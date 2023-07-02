@@ -1,7 +1,7 @@
 #include <magic_enum.hpp>
-#include <openssl/evp.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
+#include <klv.h>
 
 #include "server.h"
 #include "../client/client.h"
@@ -121,54 +121,6 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 }
             }
             else if (message_data.find("requestedName") != std::string::npos) {
-                auto sha256{
-                    [](const std::string& input) -> std::string {
-                        std::array<unsigned char, SHA256_DIGEST_LENGTH> digest{};
-
-                        SHA256_CTX ctx{};
-                        SHA256_Init(&ctx);
-                        SHA256_Update(&ctx, input.data(), input.length());
-                        SHA256_Final(digest.data(), &ctx);
-
-                        std::string sha256{};
-                        sha256.reserve(SHA256_DIGEST_LENGTH * 2);
-
-                        for (int i{ 0 }; i < SHA256_DIGEST_LENGTH; i++) {
-                            sha256 += fmt::format("{:02x}", digest[i]);
-                        }
-
-                        return sha256;
-                    } 
-                };
-
-                auto generate_klv{ 
-                    [&](
-                        const std::string& game_version,
-                        std::int32_t device_id_hash, 
-                        const std::string& rid,
-                        std::uint16_t protocol
-                    ) -> std::string {
-                        constexpr std::array salts = {
-                            "198c4213effdbeb93ca64ea73c1f505f",
-                            "82a2e2940dd1b100f0d41d23b0bb6e4d",
-                            "c64f7f09cdd0c682e730d2f936f36ac2",
-                            "27d8da6190880ce95591215f2c9976a6"
-                        }; // teo
-
-                        return sha256(fmt::format(
-                            "{}{}{}{}{}{}{}{}",
-                            sha256(game_version),
-                            salts[0],
-                            sha256(std::to_string(device_id_hash)),
-                            salts[1],
-                            sha256(std::to_string(protocol)),
-                            salts[2],
-                            sha256(rid),
-                            salts[3]
-                        ));
-                    } 
-                };
-
                 static randutils::pcg_rng gen{ utils::random::get_generator_local() };
                 static std::string mac{ utils::random::generate_mac(gen) };
                 static std::int32_t mac_hash{ utils::hash::proton(fmt::format("{}RT", mac).c_str()) };
@@ -190,12 +142,11 @@ bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
                 text_parse.set("hash", device_id_hash);
                 text_parse.set("hash2", mac_hash);
                 text_parse.set(
-                    "klv", 
-                    generate_klv(
+                    "klv",
+                    proton::generate_klv(
+                        text_parse.get<std::uint16_t>("protocol", 1),
                         text_parse.get("game_version", 1),
-                        text_parse.get<std::int32_t>("hash", 1),
-                        text_parse.get("rid", 1),
-                        text_parse.get<std::uint16_t>("protocol", 1)
+                        text_parse.get("rid", 1)
                     )
                 );
 
