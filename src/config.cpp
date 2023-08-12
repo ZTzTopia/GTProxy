@@ -12,9 +12,9 @@ Config::Config()
 {
     // Initializes the configuration settings to default values.
     m_host.m_port = 16999;
-    m_server.m_host = "34.195.30.128";
-    m_server.m_game_version = "4.3";
-    m_server.m_protocol = 192;
+    m_server.m_host = "www.growtopia1.com";
+    m_server.m_game_version = "4.34";
+    m_server.m_protocol = 191;
     m_server.m_platform_id = "4";
     m_command.m_prefix = "!";
     m_misc.m_force_update_game_version = false;

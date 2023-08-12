@@ -6,6 +6,8 @@
 #include "http.h"
 #include "ssl.h"
 #include "../utils/text_parse.h"
+#include "../utils/ip.h"
+#include "../ipresolver/resolver.h"
 
 namespace server {
 Http::Http(Config* config)
@@ -120,6 +122,11 @@ void Http::listen_internal()
             spdlog::info("\t{}", httplib::detail::params_to_query_str(req.params));
         }
 
+        if (!req.body.empty()) {
+            spdlog::info("Contents:");
+            spdlog::info("\t{}", req.body);
+        }
+
         m_last_headers = req.headers;
         m_last_params = req.params;
 
@@ -141,7 +148,7 @@ std::string Http::get_server_data()
 
     auto validate_server_response{
         [](const httplib::Result& response)
-        {
+        {   
             httplib::Error error_response{ response.error() };
 
             if (!response) {
@@ -167,12 +174,38 @@ std::string Http::get_server_data()
         }
     };
 
-    httplib::Client cli{ fmt::format("https://{}", m_config->get_server().m_host) };
+    std::string resolved_ip = m_config->get_server().m_host;
+
+    if (utils::IsIpOrHostname(m_config->get_server().m_host) == utils::HostType::Hostname) {
+        auto res = Resolver::ResolveHostname(m_config->get_server().m_host);
+
+        if (res.Status != Resolver::NoError) {
+            spdlog::error(
+                "Error occurred while resolving {} ip address. Dns server returned {}",
+                m_config->get_server().m_host,
+                magic_enum::enum_name(res.Status));
+            return {};
+        }
+
+        resolved_ip = res.Ip;
+
+        spdlog::info(
+            "{} ip address is {}",
+            m_config->get_server().m_host,
+            resolved_ip);
+    }
+
+    httplib::Client cli{ fmt::format("https://{}", resolved_ip) };
     cli.enable_server_certificate_verification(false);
+
+    httplib::Headers header {
+        {"User-Agent", get_header_value(m_last_headers, "User-Agent")},
+        {"Host", get_header_value(m_last_headers, "Host")}
+    };
 
     httplib::Result response{ cli.Post(
         "/growtopia/server_data.php",
-        m_last_headers,
+        header,
         m_last_params
     ) };
     if (validate_server_response(response)) {
