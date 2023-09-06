@@ -1,70 +1,32 @@
-#include <iostream>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-
-#include "config.h"
-#include "enet_wrapper/enet_wrapper.h"
-#include "server/server.h"
+#include "core/core.hpp"
+#include "core/logger.hpp"
 
 int main()
 {
     try {
-        std::vector<spdlog::sink_ptr> sinks{};
+        core::Logger logger{};
 
-        // Add a stdout sink and a rotating file sink to the vector of sink pointers.
-        // The rotating file sink rotates the log file every 5 MB and keeps up to 16 rotated files.
-        sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-        sinks.push_back(
-            std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-                "proxy.log",
-                1024 * 1024 * 5,
-                16
-            )
+        spdlog::info(
+            "Starting GTProxy ({}.{}.{})",
+            GTPROXY_VERSION_MAJOR,
+            GTPROXY_VERSION_MINOR,
+            GTPROXY_VERSION_PATCH
         );
 
-        auto combined_logger{
-            std::make_shared<spdlog::logger>(
-                "GTProxy",
-                sinks.begin(),
-                sinks.end()
-            )
-        };
-
-#ifdef GTPROXY_DEBUG
-        combined_logger->set_level(spdlog::level::trace);
-#else
-        combined_logger->set_level(spdlog::level::info);
-#endif
-
-        spdlog::register_logger(combined_logger);
-        spdlog::set_default_logger(combined_logger);
-        spdlog::flush_on(spdlog::level::debug);
+        core::Core core{};
+        core.run();
     }
     catch (const spdlog::spdlog_ex& ex) {
-        std::cout << "Log initialization failed: " << ex.what() << std::endl;
+        spdlog::error("Log initialization failed: {}", ex.what());
         return 1;
     }
-
-    spdlog::info("Starting GTProxy v{}...", GTPROXY_VERSION);
-
-    auto config{ new Config{} };
-    if (!config->load("config.json")) {
+    catch (const std::runtime_error& err) {
+        spdlog::error("Runtime error: {}", err.what());
         return 1;
     }
-
-    if (!enet_wrapper::ENetWrapper::one_time_init()) {
-        spdlog::error("Failed to initialize ENet server.");
+    catch (const std::exception& ex) {
+        spdlog::error("Exception: {}", ex.what());
         return 1;
-    }
-
-    auto server{ std::make_unique<server::Server>(config) };
-    if (!server->start()) {
-        return 1;
-    }
-
-    while (server.get()) { // Just to avoid compiler warning.
-        std::this_thread::sleep_for(std::chrono::milliseconds{ 100 });
     }
 
     return 0;

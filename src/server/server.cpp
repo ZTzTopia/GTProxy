@@ -1,204 +1,99 @@
+#include <eventpp/eventqueue.h>
 #include <magic_enum.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
-#include <klv.h>
 
-#include "server.h"
-#include "../client/client.h"
-#include "../utils/hash.h"
-#include "../utils/random.h"
-#include "../utils/text_parse.h"
+#include "server.hpp"
 
 namespace server {
-Server::Server(Config* config)
-    : enet_wrapper::ENetServer{}
-    , m_config{ config }
-    , m_peer{ nullptr }
+Server::Server(core::Core* core)
+    : ENetWrapper{ 16999, 1 }
+    , core_{ core }
+    , player_{ nullptr }
 {
-    m_http = new Http{ config };
-    m_client = new client::Client{ m_config, m_http, this };
-}
-
-Server::~Server()
-{
-    delete m_http;
-    delete m_peer.m_gt_client;
-    delete m_client;
-}
-
-bool Server::start()
-{
-    if (!m_http->listen("0.0.0.0", 443)) {
-        return false;
+    if (!host_) {
+        throw std::runtime_error{ "Failed to create an ENet server host!" };
     }
 
-    if (!create_host(m_config->get_host().m_port, 1, 1)) {
-        spdlog::error("Failed to create ENet server host.");
-        return false;
-    }
+    spdlog::info(
+        "The server is up and running with port {} and {} peers can join!",
+        16999,
+        host_->peerCount
+    );
 
-    start_service();
-    spdlog::info("ENet server listening on port {}.", m_config->get_host().m_port);
-    return true;
+    // TODO: Start built-in HTTPs server
+}
+
+void Server::process()
+{
+    // Perform server processing here
+    ENetWrapper::process();
 }
 
 void Server::on_connect(ENetPeer* peer)
 {
-    spdlog::info("New client connected to proxy server.");
+    spdlog::info(
+        "The server just got a new connection from the address {}:{}!",
+        peer->address.host,
+        peer->address.port
+    );
 
-    m_peer.m_gt_client = new player::Peer{ peer };
-    m_client->set_gt_client_peer(m_peer.m_gt_client);
-    m_client->start();
+    player_ = new player::Player{ peer };
+    connect_callback_(*player_);
 }
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
-    if (!m_peer.m_gt_server) {
+    ByteStream byte_stream{ reinterpret_cast<std::byte*>(packet->data), packet->dataLength };
+    if (byte_stream.get_size() < 4 || byte_stream.get_size() > 16384 /* 16kb */) {
+        enet_peer_disconnect(peer, 0);
         return;
     }
 
-    if (!m_peer.m_gt_server->is_connected()) {
+    if (!player_) {
+        enet_peer_disconnect(peer, 0);
         return;
     }
 
-    if (!process_packet(peer, packet)) {
+    packet::NetMessageType type{};
+    if (!byte_stream.read(type)) {
+        enet_peer_disconnect(peer, 0);
         return;
     }
 
-    m_peer.m_gt_server->send_packet_packet(packet);
+    if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
+        std::string message{};
+        byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
+
+        spdlog::debug("Got a message coming in from the address {}:{}!", peer->address.host, peer->address.port);
+        spdlog::debug("\tMessage: {}", message);
+
+        TextParse text_parse{ message };
+        receive_message_callback_.forEachIf(
+            [&](auto& callback) {
+                return !callback(*player_, text_parse);
+            }
+        );
+    }
+
+    enet_packet_destroy(packet);
 }
 
 void Server::on_disconnect(ENetPeer* peer)
 {
-    spdlog::info("Client disconnected from proxy server.");
+    spdlog::info(
+        "The server just lost a connection from the address {}:{}!",
+        peer->address.host,
+        peer->address.port
+    );
 
-    if (m_peer.m_gt_server && m_peer.m_gt_server->is_connected()) {
-        m_peer.m_gt_server->disconnect();
+    if (!player_) {
+        return;
     }
 
-    delete m_peer.m_gt_client;
-    m_peer.m_gt_client = nullptr;
-    m_client->set_gt_client_peer(nullptr);
-}
+    disconnect_callback_(*player_);
 
-bool Server::process_packet(ENetPeer* peer, ENetPacket* packet)
-{
-    player::eNetMessageType message_type{ player::message_type_to_string(packet) };
-    std::string message_data{ player::get_text(packet) };
-
-    if (message_type != player::NET_MESSAGE_GAME_PACKET) {
-        utils::TextParse text_parse{ message_data };
-        if (!text_parse.empty()) {
-            spdlog::info(
-                "Outgoing MessagePacket:\n{} [{}]:\n{}\n",
-                magic_enum::enum_name(message_type),
-                message_type,
-                fmt::join(text_parse.get_all_array(), "\r\n")
-            );
-        }
-    }
-
-    switch (message_type) {
-        case player::NET_MESSAGE_GENERIC_TEXT: {
-            if (message_data.find("action|input") != std::string::npos) {
-                utils::TextParse text_parse{ message_data };
-                if (text_parse.get("text", 1).empty()) {
-                    break;
-                }
-
-                std::vector<std::string> token{ utils::TextParse::string_tokenize( message_data.substr(
-                    message_data.find("text|") + 5,
-                    message_data.length() - message_data.find("text|") - 1
-                ), " " )};
-
-                if (token[0] == m_config->get_command().m_prefix + "warp") {
-                    std::string world{token[1]};
-                    m_peer.m_gt_server->send_packet(
-                        player::eNetMessageType::NET_MESSAGE_GAME_MESSAGE,
-                        fmt::format("action|join_request\nname|{}\ninvitedWorld|0", world)
-                    );
-                    return false;
-                }
-            }
-            else if (message_data.find("requestedName") != std::string::npos) {
-                static randutils::pcg_rng gen{ utils::random::get_generator_local() };
-                static std::string mac{ utils::random::generate_mac(gen) };
-                static std::int32_t mac_hash{ utils::hash::proton(fmt::format("{}RT", mac).c_str()) };
-                static std::string rid{ utils::random::generate_hex(gen, 32, true) };
-                static std::string wk{ utils::random::generate_hex(gen, 32, true) };
-                static std::string device_id{ utils::random::generate_hex(gen, 16, true) };
-                static std::int32_t device_id_hash{ utils::hash::proton(fmt::format("{}RT", device_id).c_str()) };
-
-                utils::TextParse text_parse{ message_data };
-
-                text_parse.add_key_once("klv|");
-
-                text_parse.set("game_version", m_config->get_server().m_game_version);
-                text_parse.set("protocol", m_config->get_server().m_protocol);
-                // text_parse.set("platformID", m_config->m_server.platformID);
-                text_parse.set("mac", mac);
-                text_parse.set("rid", rid);
-                text_parse.set("wk", wk);
-                text_parse.set("hash", device_id_hash);
-                text_parse.set("hash2", mac_hash);
-                text_parse.set(
-                    "klv",
-                    proton::generate_klv(
-                        text_parse.get<std::uint16_t>("protocol", 1),
-                        text_parse.get("game_version", 1),
-                        text_parse.get("rid", 1)
-                    )
-                );
-
-                spdlog::debug("{}", text_parse.get_all_raw());
-                m_peer.m_gt_server->send_packet(message_type, text_parse.get_all_raw());
-                return false;
-            }
-
-            break;
-        }
-        case player::NET_MESSAGE_GAME_MESSAGE: {
-            if (message_data.find("action|quit") != std::string::npos && message_data.length() <= 15) {
-                m_peer.m_gt_client->disconnect();
-            }
-
-            break;
-        }
-        case player::NET_MESSAGE_GAME_PACKET: {
-            player::GameUpdatePacket* game_update_packet{ player::get_struct(packet) };
-            return process_tank_update_packet(peer, game_update_packet);
-        }
-        default:
-            break;
-    }
-
-    return true;
-}
-
-bool Server::process_tank_update_packet(ENetPeer* peer, player::GameUpdatePacket* game_update_packet) const
-{
-    if (game_update_packet->type != player::PACKET_CALL_FUNCTION) {
-        std::uint8_t* extended_data{ player::get_extended_data(game_update_packet) };
-        std::vector<std::uint8_t> extended_data_vector{ extended_data, extended_data + game_update_packet->data_size };
-
-        spdlog::info(
-            "Outgoing TankUpdatePacket:\n [{}]{}{}",
-            game_update_packet->type,
-            magic_enum::enum_name(static_cast<player::ePacketType>(game_update_packet->type)),
-            extended_data
-            ? fmt::format("\n > extended_data: {}", spdlog::to_hex(extended_data_vector))
-            : ""
-        );
-    }
-
-    switch (game_update_packet->type) {
-        case player::PACKET_DISCONNECT:
-            m_peer.m_gt_client->disconnect_now();
-            break;
-        default:
-            break;
-    }
-
-    return true;
+    delete player_;
+    player_ = nullptr;
 }
 }
