@@ -3,31 +3,14 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <utility>
+
 namespace core {
 class Logger {
 public:
-    Logger()
-    {
-        std::vector<spdlog::sink_ptr> sinks{
-            create_console_sink(),
-            create_file_sink()
-        };
-
-        logger_ = std::make_shared<spdlog::logger>(
-            "GTProxy",
-            sinks.begin(),
-            sinks.end()
-        );
-        logger_->set_level(spdlog::level::trace);
-
-        spdlog::register_logger(logger_);
-        spdlog::set_default_logger(logger_);
-        spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [GTProxy] [%^%l%$] %v");
-    }
-
+    Logger() = default;
     ~Logger() { logger_->flush(); }
 
-private:
     [[nodiscard]] static std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> create_console_sink()
     {
         auto console_sink{ std::make_shared<spdlog::sinks::stdout_color_sink_mt>() };
@@ -47,6 +30,9 @@ private:
             16
         );
     }
+
+    [[nodiscard]] std::shared_ptr<spdlog::logger> get_logger() const { return logger_; }
+    void set_logger(std::shared_ptr<spdlog::logger> logger) { logger_ = std::move(logger); }
 
 private:
     std::shared_ptr<spdlog::logger> logger_;
