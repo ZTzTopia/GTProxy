@@ -11,7 +11,7 @@ class GTProxyRecipe(ConanFile):
 
     def requirements(self):
         self.requires("cpp-httplib/[~0.12]")
-        self.requires("fmt/10.0.0")
+        self.requires("fmt/10.1.1")
         self.requires("glm/[~0.9.9]")
         self.requires("libressl/[~3.5]")
         self.requires("magic_enum/[~0.8]")
