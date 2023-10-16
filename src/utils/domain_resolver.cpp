@@ -10,8 +10,8 @@ Result resolve_domain_name(const std::string& domain_name)
     static httplib::Client cli{ "https://dns.google" };
 
     httplib::Result res{ cli.Get(fmt::format("/resolve?name={}&type=A", domain_name)) };
-    if (!res->body.empty()) {
-        return {};
+    if (res->body.empty()) {
+        return { "", DomainResolverStatus::ServerFail };
     }
 
     auto j{ nlohmann::json::parse(res->body) };
@@ -22,7 +22,7 @@ Result resolve_domain_name(const std::string& domain_name)
     }
 
     return {
-        j["Answer"][0]["data"].get<std::string>(),
+        j["Answer"][j["Answer"].size() - 1]["data"].get<std::string>(),
         status
     };
 }

@@ -2,6 +2,7 @@
 #include <eventpp/callbacklist.h>
 
 #include "enet_wrapper.hpp"
+#include "http.hpp"
 #include "../core/core.hpp"
 #include "../player/player.hpp"
 
@@ -9,7 +10,7 @@ namespace server {
 class Server final : public ENetWrapper {
 public:
     explicit Server(core::Core* core);
-    ~Server() = default;
+    ~Server();
 
     void process() override;
 
@@ -19,6 +20,7 @@ public:
 
 private:
     core::Core* core_;
+    Http http_;
     player::Player* player_;
 
     eventpp::CallbackList<void(const player::Player&)> connect_callback_;

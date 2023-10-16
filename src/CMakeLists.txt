@@ -3,7 +3,6 @@ project(Proxy)
 file(GLOB GTPROXY_INCLUDE_FILES
     client/*.hpp
     core/*.hpp
-    domain_resolver/*.hpp
     packet/*.hpp
     player/*.hpp
     server/*.hpp
@@ -13,10 +12,10 @@ file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
     client/*.cpp
     core/*.cpp
-    domain_resolver/*.cpp
     packet/*.cpp
     player/*.cpp
-    server/*.cpp)
+    server/*.cpp
+    utils/*.cpp)
 
 add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}

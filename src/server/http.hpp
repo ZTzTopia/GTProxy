@@ -18,9 +18,6 @@ public:
 private:
     void listen_internal();
 
-public:
-    std::string get_server_data();
-
 private:
     core::Core* core_;
     httplib::SSLServer server_;

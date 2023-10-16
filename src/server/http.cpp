@@ -5,11 +5,8 @@
 #include <magic_enum.hpp>
 
 #include "http.hpp"
-#include "../domain_resolver/domain_resolver.hpp"
+#include "../utils/domain_resolver.hpp"
 #include "../utils/network.hpp"
-#include "../utils/text_parse.hpp"
-
-// TODO: REFACTOR!!
 
 namespace server {
 Http::Http(core::Core* core)
@@ -53,6 +50,91 @@ bool Http::listen(const std::string& host, int port)
 void Http::stop()
 {
     server_.stop();
+}
+
+// TODO: Move somewhere else
+std::string get_server_data(core::Core* core, const httplib::Headers& headers, const httplib::Params& params)
+{
+    core::Config& config{ core->get_config() };
+
+    spdlog::debug("Requesting server data from: https://{}", config.get("server.address"));
+
+    auto validate_server_response{
+        [](const httplib::Result& response)
+        {
+            if (!response) {
+                spdlog::error(
+                    "Response is null with error: httplib::Error::{}",
+                    magic_enum::enum_name(response.error())
+                );
+
+                return false;
+            }
+
+            httplib::Error error_response{ response.error() };
+            int status_code{ response->status };
+
+            if (error_response != httplib::Error::Success || status_code != 200) {
+                spdlog::error(
+                    "Failed to get server data. {}.",
+                    error_response == httplib::Error::Success
+                    ? fmt::format("HTTP status code: {}", status_code)
+                    : fmt::format("HTTP error: {}", httplib::to_string(error_response))
+                );
+                return false;
+            }
+
+            return true;
+        }
+    };
+
+    std::string resolved_ip = config.get("server.address");
+
+    if (network::classify_host(config.get("server.address")) == network::HostType::Hostname) {
+        auto res = domain_resolver::resolve_domain_name(config.get("server.address"));
+
+        if (res.status_ != domain_resolver::DomainResolverStatus::NoError) {
+            spdlog::error(
+                "Error occurred while resolving {} ip address. Dns server returned {}",
+                config.get("server.address"),
+                magic_enum::enum_name(res.status_)
+            );
+            return {};
+        }
+
+        resolved_ip = res.ip_;
+
+        spdlog::info(
+            "{} ip address is {}",
+            config.get("server.address"),
+            resolved_ip
+        );
+    }
+
+    httplib::Client cli{ fmt::format("https://{}", resolved_ip) };
+    cli.enable_server_certificate_verification(false);
+
+    httplib::Headers header{
+        { "User-Agent", get_header_value(headers, "User-Agent") },
+        { "Host", get_header_value(headers, "Host") }
+    };
+
+    httplib::Result response{ cli.Post("/growtopia/server_data.php", header, params) };
+    if (validate_server_response(response)) {
+        if (!response->body.empty()) {
+            return response->body;
+        }
+    }
+
+    response = cli.Get("/growtopia/server_data.php");
+    if (validate_server_response(response)) {
+        if (!response->body.empty()) {
+            return response->body;
+        }
+    }
+
+    spdlog::warn("Failed to retrieve server data from {}", config.get("server.address"));
+    return {};
 }
 
 void Http::listen_internal()
@@ -106,12 +188,9 @@ void Http::listen_internal()
             spdlog::info("\t{}", httplib::detail::params_to_query_str(req.params));
         }
 
-        last_headers_ = req.headers;
-        last_params_ = req.params;
-
-        TextParse text_parse{ get_server_data() };
+        TextParse text_parse{ get_server_data(core_, req.headers, req.params) };
         text_parse.set("server", { "127.0.0.1" });
-        text_parse.set("port", { std::to_string(core_->get_config().get_host().m_port) });
+        text_parse.set("port", { std::to_string(core_->get_config().get<unsigned int>("server.port")) });
         text_parse.set("type2", { "1" });
 
         res.set_content(text_parse.get_raw(), "text/html");
@@ -119,92 +198,5 @@ void Http::listen_internal()
     });
 
     server_.listen_after_bind();
-}
-
-std::string Http::get_server_data()
-{
-    core::Config& config{ core_->get_config() };
-
-    spdlog::debug("Requesting server data from: https://{}", config.get_server().m_host);
-
-    auto validate_server_response{
-        [](const httplib::Result& response)
-        {
-            if (!response) {
-                return false;
-            }
-
-            httplib::Error error_response{ response.error() };
-
-            if (!response) {
-                spdlog::error(
-                    "Response is null with error: httplib::Error::{}",
-                    magic_enum::enum_name(error_response));
-
-                return false;
-            }
-
-            int status_code{ response->status };
-
-            if (error_response == httplib::Error::Success && status_code == 200) {
-                return true;
-            }
-
-            spdlog::error(
-                "Failed to get server data. {}.",
-                error_response == httplib::Error::Success
-                    ? fmt::format("HTTP status code: {}", status_code)
-                    : fmt::format("HTTP error: {}", httplib::to_string(error_response)));
-            return false;
-        }
-    };
-
-    std::string resolved_ip = config.get_server().m_host;
-
-    if (network::classify_host(config.get_server().m_host) == network::HostType::Hostname) {
-        auto res = domain_resolver::resolve_domain_name(config.get_server().m_host);
-
-        if (res.status_ != domain_resolver::DomainResolverStatus::NoError) {
-            spdlog::error(
-                "Error occurred while resolving {} ip address. Dns server returned {}",
-                config.get_server().m_host,
-                magic_enum::enum_name(res.status_)
-            );
-            return {};
-        }
-
-        resolved_ip = res.ip_;
-
-        spdlog::info(
-            "{} ip address is {}",
-            config.get_server().m_host,
-            resolved_ip
-        );
-    }
-
-    httplib::Client cli{ fmt::format("https://{}", resolved_ip) };
-    cli.enable_server_certificate_verification(false);
-
-    httplib::Headers header{
-        { "User-Agent", get_header_value(last_headers_, "User-Agent") },
-        { "Host", get_header_value(last_headers_, "Host") }
-    };
-
-    httplib::Result response{ cli.Post("/growtopia/server_data.php", header, last_params_) };
-    if (validate_server_response(response)) {
-        if (!response->body.empty()) {
-            return response->body;
-        }
-    }
-
-    response = cli.Get("/growtopia/server_data.php");
-    if (validate_server_response(response)) {
-        if (!response->body.empty()) {
-            return response->body;
-        }
-    }
-
-    spdlog::warn("Failed to retrieve server data from {}", config.get_server().m_host);
-    return {};
 }
 }

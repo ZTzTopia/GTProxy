@@ -22,7 +22,7 @@ The latest application executable can be found on the [releases page](https://gi
 ## Build
 The following dependencies are required to build from source:
 - [CMake](https://cmake.org/).
-- [Conan, the C/C++ Package Manager](https://conan.io) (v2.0+).
+- [Conan, the C/C++ Package Manager](https://conan.io) (2.0+).
 
 To build from source:
 1. Clone the source code of this project: `git clone --recurse-submodules https://github.com/ZTzTopia/GTProxy.git`
@@ -43,6 +43,7 @@ $ cmake --build .
 - [pcg-cpp](https://github.com/imneme/pcg-cpp): Random number generator
 - [randutils.hpp](https://gist.github.com/imneme/540829265469e673d045): Random utilities
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
+- [eventpp](https://github.com/wqking/eventpp): Event Dispatcher and callback list for C++
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/ZTzTopia/GTProxy/blob/main/LICENSE) file for details.

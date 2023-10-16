@@ -7,8 +7,9 @@
 
 namespace server {
 Server::Server(core::Core* core)
-    : ENetWrapper{ 16999, 1 }
+    : ENetWrapper{ static_cast<enet_uint16>(core->get_config().get<unsigned int>("server.port")), 1 }
     , core_{ core }
+    , http_{ core }
     , player_{ nullptr }
 {
     if (!host_) {
@@ -17,11 +18,17 @@ Server::Server(core::Core* core)
 
     spdlog::info(
         "The server is up and running with port {} and {} peers can join!",
-        16999,
+        core_->get_config().get<unsigned int>("server.port"),
         host_->peerCount
     );
 
-    // TODO: Start built-in HTTPs server
+    http_.listen("0.0.0.0", 443);
+}
+
+Server::~Server()
+{
+    http_.stop();
+    delete player_;
 }
 
 void Server::process()
