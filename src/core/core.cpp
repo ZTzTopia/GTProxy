@@ -1,3 +1,4 @@
+#include <future>
 #include <chrono>
 #include <enet/enet.h>
 
@@ -21,6 +22,8 @@ Core::Core()
 
 Core::~Core()
 {
+    delete client_;
+    delete server_;
     enet_deinitialize();
 }
 
@@ -39,8 +42,13 @@ void Core::run()
         // Adjust the sleep duration based on the time spent processing
         sleep_duration += sleep_timer - us;
 
-        server_->process();
-        client_->process();
+        // Use std::async to run server and client processing asynchronously
+        auto server_future{ std::async(std::launch::async, [this]() { server_->process(); }) };
+        auto client_future{ std::async(std::launch::async, [this]() { client_->process(); }) };
+
+        // Wait for both tasks to complete
+        server_future.get();
+        client_future.get();
 
         if (sleep_duration > std::chrono::microseconds::zero()) {
             std::this_thread::sleep_for(sleep_duration);
