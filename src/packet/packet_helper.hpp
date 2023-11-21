@@ -43,19 +43,24 @@ struct PacketHelper {
     template <class Packet>
     static bool broadcastToSome(Packet& packet, const std::set<player::Player*>& players)
     {
+        bool result{ true };
         for (const auto player : players) {
-            send(packet, player);
+            result = send(packet, player);
         }
+
+        return result;
     }
 
     template <class Packet>
     static bool broadcastToWorld(Packet &packet)
     {
+        return false;
     }
 
     template <class Packet>
     static bool broadcast(Packet &packet)
     {
+        return false;
     }
 };
 }

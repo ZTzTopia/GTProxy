@@ -28,32 +28,27 @@ public:
     }
 
     [[nodiscard]] static VariantType get_type(const variant& var) {
-        if (var.index() == 0) {
+        switch (var.index()) {
+        case 0:
             return VariantType::FLOAT;
-        }
-        else if (var.index() == 1) {
+        case 1:
             return VariantType::STRING;
-        }
-        else if (var.index() == 2) {
+        case 2:
             return VariantType::VEC2;
-        }
-        else if (var.index() == 3) {
+        case 3:
             return VariantType::VEC3;
-        }
-        else if (var.index() == 4) {
+        case 4:
             return VariantType::UNSIGNED;
-        }
-        else if (var.index() == 5) {
+        case 5:
             return VariantType::SIGNED;
-        }
-        else {
+        default:
             return VariantType::UNKNOWN;
         }
     }
 
-    std::vector<std::byte> serialize()
+    std::vector<std::byte> serialize() const
     {
-        std::uint8_t size{ static_cast<std::uint8_t>(variants_.size()) };
+        const std::uint8_t size{ variants_.size() };
 
         ByteStream<std::uint32_t> byte_stream{};
         byte_stream.write(size);
@@ -92,9 +87,8 @@ public:
         return byte_stream.get_data();
     }
 
-public:
     [[nodiscard]] std::vector<variant> variants() const { return variants_; }
-    [[nodiscard]] variant get(std::size_t index) const 
+    [[nodiscard]] variant get(const std::size_t index) const
     { 
         if (index > variants_.size()) { 
             return {}; 

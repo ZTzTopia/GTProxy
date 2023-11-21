@@ -25,7 +25,7 @@ public:
         host_->usingNewPacketForServer = 1;
     }
 
-    ~ENetWrapper() { enet_host_destroy(host_); }
+    virtual ~ENetWrapper() { enet_host_destroy(host_); }
 
     virtual void process()
     {

@@ -17,7 +17,7 @@ public:
         try {
             return std::get<T>(config_.at(key));
         }
-        catch (const std::exception& e) {
+        catch (const std::exception&) {
             return T{}; // or some other default value
         }
     }

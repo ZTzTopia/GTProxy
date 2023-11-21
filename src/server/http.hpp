@@ -15,7 +15,7 @@ public:
     bool listen(const std::string& host, int port);
     void stop();
 
-private:
+protected:
     void listen_internal();
 
 private:

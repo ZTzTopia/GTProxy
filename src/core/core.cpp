@@ -8,8 +8,7 @@
 
 namespace core {
 Core::Core()
-    : config_{}
-    , run_{ true }
+    : run_{ true }
     , tick_{ 0 }
 {
     if (enet_initialize() != 0) {
@@ -29,7 +28,7 @@ Core::~Core()
 
 void Core::run()
 {
-    const std::chrono::microseconds sleep_timer{ static_cast<int>(5.0 * 1000.0) };
+    constexpr std::chrono::microseconds sleep_timer{ static_cast<int>(5.0 * 1000.0) };
     auto prev{ std::chrono::high_resolution_clock::now() };
     std::chrono::microseconds sleep_duration{ sleep_timer };
 
@@ -43,8 +42,8 @@ void Core::run()
         sleep_duration += sleep_timer - us;
 
         // Use std::async to run server and client processing asynchronously
-        auto server_future{ std::async(std::launch::async, [this]() { server_->process(); }) };
-        auto client_future{ std::async(std::launch::async, [this]() { client_->process(); }) };
+        auto server_future{ std::async(std::launch::async, [this] { server_->process(); }) };
+        auto client_future{ std::async(std::launch::async, [this] { client_->process(); }) };
 
         // Wait for both tasks to complete
         server_future.get();

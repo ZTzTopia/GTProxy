@@ -38,8 +38,8 @@ int main()
         spdlog::error("Log initialization failed: {}", ex.what());
         return 1;
     }
-    catch (const std::runtime_error& err) {
-        spdlog::error("Runtime error: {}", err.what());
+    catch (const std::runtime_error& e) {
+        spdlog::error("Runtime error: {}", e.what());
         return 1;
     }
     catch (const std::exception& ex) {

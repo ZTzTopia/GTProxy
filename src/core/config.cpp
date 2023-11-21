@@ -15,8 +15,7 @@ static const std::map<std::string, ConfigStorage> config_defaults{
 Config::Config()
 {
     // Load configuration from file, if available
-    std::ifstream ifs{ "config.json" };
-    if (ifs.good()) {
+    if (std::ifstream ifs{ "config.json" }; ifs.good()) {
         nlohmann::json j{};
         ifs >> j;
         for (const auto& [key, value] : j.items()) {
@@ -43,7 +42,7 @@ Config::Config()
     // Set default values for missing configuration keys
     bool save_defaults = false;
     for (const auto& [key, value] : config_defaults) {
-        if (config_.find(key) != config_.end()) {
+        if (!config_.contains(key)) {
             continue;
         }
 
@@ -55,7 +54,7 @@ Config::Config()
     if (save_defaults) {
         nlohmann::json j{};
         for (const auto& [key, value] : config_) {
-            std::visit([&](const auto& val) {
+            std::visit([&]<typename U>(U val) {
                 using T = std::decay_t<decltype(val)>;
                 if constexpr (std::is_same_v<T, int>) {
                     j[key] = val;

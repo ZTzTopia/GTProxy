@@ -21,6 +21,7 @@ add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}
     ${GTPROXY_SOURCE_FILES})
 
+# Try to find the required packages.
 find_package(fmt REQUIRED)
 find_package(glm REQUIRED)
 find_package(httplib REQUIRED)
@@ -30,6 +31,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(pcg-cpp REQUIRED)
 find_package(spdlog REQUIRED)
 
+# Target the required packages.
 target_link_libraries(${PROJECT_NAME}
     enet
     eventpp
@@ -56,39 +58,16 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     SPDLOG_FMT_EXTERNAL
     CPPHTTPLIB_OPENSSL_SUPPORT)
 
+# Set the version number.
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     GTPROXY_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
     GTPROXY_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
     GTPROXY_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH})
 
+# Enable spdlog debug.
 if (NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         GTPROXY_DEBUG)
-endif ()
-
-# Copy dependencies binary to current binary dir.
-if (WIN32)
-    if (EXISTS "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}")
-        file(GLOB GTPROXY_DEPENDENCIES_BINARY
-            "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}/*.dll")
-    else ()
-        file(GLOB GTPROXY_DEPENDENCIES_BINARY
-            "${CMAKE_BINARY_DIR}/conan/build/*.dll")
-    endif ()
-
-    foreach (ConanBinary IN LISTS GTPROXY_DEPENDENCIES_BINARY)
-        string(REPLACE "${CMAKE_BINARY_DIR}/conan/build/${CMAKE_BUILD_TYPE}" "${CMAKE_CURRENT_BINARY_DIR}" REPLACED_GTPROXY_DEPENDENCIES_BINARY "${ConanBinary}")
-        message(STATUS "Preparing ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
-        add_custom_command(
-            TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ConanBinary}" "${REPLACED_GTPROXY_DEPENDENCIES_BINARY}"
-            COMMENT "Copying ${ConanBinary} to ${REPLACED_GTPROXY_DEPENDENCIES_BINARY}")
-    endforeach ()
-
-    add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:enet>" "${CMAKE_CURRENT_BINARY_DIR}"
-        COMMENT "Copying enet binary to ${CMAKE_CURRENT_BINARY_DIR}")
 endif ()
 
 # Copy the resources folder to executable directory.

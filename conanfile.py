@@ -5,9 +5,6 @@ from conan.tools.files import copy
 class GTProxyRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeToolchain", "CMakeDeps"
-    default_options = {
-        "libressl*:shared": True
-    }
 
     def requirements(self):
         self.requires("cpp-httplib/[~0.12]")

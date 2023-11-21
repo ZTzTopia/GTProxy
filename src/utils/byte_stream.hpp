@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 #include <vector>
 #include <string>
 
@@ -13,16 +12,16 @@ public:
 
     }
 
-    ByteStream(std::byte* data, std::size_t length)
-        : data_{ std::vector<std::byte>(data, data + length) }
+    ByteStream(std::byte* data, const std::size_t length)
+        : data_{ std::vector(data, data + length) }
         , read_offset_{ 0 }
     {
 
     }
 
-    void write_data(const void* ptr, std::size_t size)
+    void write_data(const void* ptr, const std::size_t size)
     {
-        auto begin{ reinterpret_cast<const std::byte*>(ptr) };
+        const auto begin{ static_cast<const std::byte*>(ptr) };
         const std::byte* end{ begin + size };
         data_.insert(data_.end(), begin, end);
     }
@@ -33,12 +32,12 @@ public:
         write_data(&value, sizeof(T));
     }
 
-    void write(const char* c_str, bool write_length_info = true)
+    void write(const char* c_str, const bool write_length_info = true)
     {
         write(std::string{ c_str }, write_length_info);
     }
 
-    void write(const std::string& str, bool write_length_info = true)
+    void write(const std::string& str, const bool write_length_info = true)
     {
         if (write_length_info) {
             write(static_cast<LengthType>(str.size()));
@@ -47,7 +46,7 @@ public:
         write_data(str.c_str(), str.size());
     }
 
-    bool read_data(void* ptr, std::size_t size)
+    bool read_data(void* ptr, const std::size_t size)
     {
         if (data_.size() - read_offset_ < size) {
             return false;

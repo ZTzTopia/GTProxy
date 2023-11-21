@@ -1,9 +1,9 @@
-#include <eventpp/eventqueue.h>
 #include <magic_enum.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include "server.hpp"
+#include "../packet/packet_types.hpp"
 
 namespace server {
 Server::Server(core::Core* core)
@@ -27,8 +27,8 @@ Server::Server(core::Core* core)
 
 Server::~Server()
 {
-    http_.stop();
     delete player_;
+    http_.stop();
 }
 
 void Server::process()
@@ -57,6 +57,8 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
+    enet_packet_destroy(packet);
+
     if (!player_) {
         enet_peer_disconnect(peer, 0);
         return;
@@ -75,15 +77,12 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         spdlog::debug("Got a message coming in from the address {}:{}!", peer->address.host, peer->address.port);
         spdlog::debug("\tMessage: {}", message);
 
-        TextParse text_parse{ message };
-        receive_message_callback_.forEachIf(
-            [&](auto& callback) {
-                return !callback(*player_, text_parse);
-            }
-        );
+        const TextParse text_parse{ message };
+        receive_message_callback_.forEachIf([&](const auto& callback)
+        {
+            return !callback(*player_, text_parse);
+        });
     }
-
-    enet_packet_destroy(packet);
 }
 
 void Server::on_disconnect(ENetPeer* peer)

@@ -36,9 +36,9 @@ public:
         return tokens;
     }
 
-    [[nodiscard]] std::string get(const std::string& key, int index = 0) const
+    [[nodiscard]] std::string get(const std::string& key, const int index = 0) const
     {
-        auto it{ m_data.find(key) };
+        const auto it{ m_data.find(key) };
         if (it == m_data.end()) {
             return {};
         }
@@ -51,7 +51,7 @@ public:
     }
 
     template <typename T>
-    [[nodiscard]] T get(const std::string& key, int index = 0) const
+    [[nodiscard]] T get(const std::string& key, const int index = 0) const
     {
         if constexpr (std::is_integral_v<T>) {
             if constexpr (std::is_unsigned_v<T>) {
@@ -70,6 +70,8 @@ public:
         else if constexpr (std::is_same_v<T, float>) {
             return std::stof(get(key, index));
         }
+
+        return {};
     }
 
     void add(const std::string& key, const std::vector<std::string>& value)
@@ -79,21 +81,24 @@ public:
 
     void set(const std::string& key, const std::vector<std::string>& value)
     {
-        auto it{ m_data.find(key) };
-        if (it != m_data.end()) {
-            m_data[key] = value;
+        if (!m_data.contains(key)) {
+            return;
         }
+
+        m_data[key] = value;
     }
 
     void remove(const std::string& key)
     {
-        auto it{ m_data.find(key) };
-        if (it != m_data.end()) {
-            m_data.erase(it);
+        const auto it{ m_data.find(key) };
+        if (it == m_data.end()) {
+            return;
         }
+
+        m_data.erase(it);
     }
 
-    [[nodiscard]] std::string get_raw(const std::string& delimiter = "|")
+    [[nodiscard]] std::string get_raw(const std::string& delimiter = "|") const
     {
         std::string raw_data{};
         for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {

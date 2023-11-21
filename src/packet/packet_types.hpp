@@ -150,7 +150,7 @@ struct NetMessage {
     static constexpr int CHANNEL = Channel;
 
     [[nodiscard]] virtual bool read(TextParse&) const { return false; }
-    virtual void write(ByteStream<std::uint16_t>&) { }
+    virtual void write(ByteStream<>&) { }
 };
 
 std::false_type is_net_message_impl(...);

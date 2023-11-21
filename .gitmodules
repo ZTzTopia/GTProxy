@@ -1,8 +1,8 @@
-[submodule "vendor/cmake-conan"]
+[submodule "lib/cmake-conan"]
 	path = cmake/cmake-conan
 	url = https://github.com/conan-io/cmake-conan
 	branch = develop2
-[submodule "vendor/enet"]
+[submodule "lib/enet"]
 	path = lib/enet
 	url = https://github.com/ZTzTopia/enet
 [submodule "lib/eventpp"]
