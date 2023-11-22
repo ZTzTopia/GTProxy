@@ -51,16 +51,8 @@ void Http::stop()
     server_.stop();
 }
 
-// TODO: Move somewhere else
-bool validateServerResponse(const httplib::Result& response)
+bool validate_server_response(const httplib::Result& response)
 {
-    spdlog::debug(
-        "Failed to get server data. {}.",
-        error_response == httplib::Error::Success
-        ? fmt::format("HTTP status code: {}", status_code)
-        : fmt::format("HTTP error: {}", httplib::to_string(error_response))
-    );
-    return false;
     if (!response) {
         spdlog::error(
             "Response is null with error: httplib::Error::{}",
@@ -68,78 +60,85 @@ bool validateServerResponse(const httplib::Result& response)
         );
         return false;
     }
-    httplib::Error error_response{ response.error() };
-    int status_code{ response->status };
+
+    const httplib::Error error_response{ response.error() };
+    const int status_code{ response->status };
+
     if (error_response != httplib::Error::Success || status_code != 200) {
         spdlog::error(
             "Failed to get server data. {}.",
             error_response == httplib::Error::Success
-            ? fmt::format("HTTP status code: {}", status_code)
-            : fmt::format("HTTP error: {}", httplib::to_string(error_response))
+                ? fmt::format("HTTP status code: {}", status_code)
+                : fmt::format("HTTP error: {}", httplib::to_string(error_response))
         );
         return false;
     }
+
+    spdlog::debug("Got server data. HTTP status code: {}", status_code);
     return true;
 }
 
-std::string resolveIpAddress(const core::Config& config)
+std::string resolve_ip_address(std::string_view host)
 {
-    std::string resolved_ip = config.get("server.address");
-    if (network::classify_host(config.get("server.address")) == network::HostType::Hostname) {
-        auto res = domain_resolver::resolve_domain_name(config.get("server.address"));
-        if (res.status_ != domain_resolver::DomainResolverStatus::NoError) {
+    std::string resolved_ip{ host };
+    if (network::classify_host(resolved_ip) == network::HostType::Hostname) {
+        auto [status, ip]{ domain_resolver::resolve_domain_name(resolved_ip) };
+
+        if (status != domain_resolver::DomainResolverStatus::NoError) {
             spdlog::error(
                 "Error occurred while resolving {} ip address. Dns server returned {}",
-                config.get("server.address"),
-                magic_enum::enum_name(res.status_)
+                host,
+                magic_enum::enum_name(status)
             );
             return {};
         }
-        resolved_ip = res.ip_;
-        spdlog::info(
-            "{} ip address is {}",
-            config.get("server.address"),
-            resolved_ip
-        );
+
+        resolved_ip = ip;
+        spdlog::info("{} ip address is {}", host, resolved_ip);
     }
+
     return resolved_ip;
 }
 
-std::string sendRequestToServer(const std::string& resolved_ip, const httplib::Headers& headers, const httplib::Params& params)
+std::string send_request_to_server(std::string_view resolved_ip, const httplib::Headers& headers, const httplib::Params& params)
 {
     httplib::Client cli{ fmt::format("https://{}", resolved_ip) };
     cli.enable_server_certificate_verification(false);
-    httplib::Headers header{
+
+    const httplib::Headers header{
         { "User-Agent", get_header_value(headers, "User-Agent") },
         { "Host", get_header_value(headers, "Host") }
     };
+
     httplib::Result response{ cli.Post("/growtopia/server_data.php", header, params) };
-    if (validateServerResponse(response)) {
+    if (validate_server_response(response)) {
         if (!response->body.empty()) {
             return response->body;
         }
     }
+
+    // Not sure if this is needed. New Growtopia client doesn't send a GET request to server_data.php
     response = cli.Get("/growtopia/server_data.php");
-    if (validateServerResponse(response)) {
+    if (validate_server_response(response)) {
         if (!response->body.empty()) {
             return response->body;
         }
     }
-    spdlog::warn("Failed to retrieve server data from {}", config.get("server.address"));
+
+    spdlog::warn("Failed to retrieve server data from {}", resolved_ip);
     return {};
 }
 
-std::string get_server_data(core::Core* core, const httplib::Headers& headers, const httplib::Params& params)
+std::string get_server_data(std::string_view host, const httplib::Headers& headers, const httplib::Params& params)
 {
-    core::Config& config{ core->get_config() };
-    spdlog::debug("Requesting server data from: https://{}", config.get("server.address"));
+    spdlog::debug("Requesting server data from: https://{}", host);
 
-    std::string resolved_ip = resolveIpAddress(config);
+    const std::string resolved_ip{ resolve_ip_address(host) };
     if (resolved_ip.empty()) {
         return {};
     }
 
-    return sendRequestToServer(resolved_ip, headers, params);
+    return send_request_to_server(resolved_ip, headers, params);
 }
 
 void Http::listen_internal()
@@ -194,9 +193,14 @@ void Http::listen_internal()
         }
 
         TextParse text_parse{ get_server_data(core_, req.headers, req.params) };
+
+        spdlog::debug("Sending server data: {}", text_parse.get_raw());
+
         text_parse.set("server", { "127.0.0.1" });
-        text_parse.set("port", { std::to_string(core_->get_config().get<unsigned int>("server.port")) });
+        text_parse.set("port", { std::to_string(core_->get_config().get<int>("server.port")) });
         text_parse.set("type2", { "1" });
+
+        spdlog::debug("Sending server data: {}", text_parse.get_raw());
 
         res.set_content(text_parse.get_raw(), "text/html");
         return true;

@@ -7,7 +7,7 @@
 
 namespace server {
 Server::Server(core::Core* core)
-    : ENetWrapper{ static_cast<enet_uint16>(core->get_config().get<unsigned int>("server.port")), 1 }
+    : ENetWrapper{ static_cast<enet_uint16>(core->get_config().get<int>("server.port")), 1 }
     , core_{ core }
     , http_{ core }
     , player_{ nullptr }
@@ -18,7 +18,7 @@ Server::Server(core::Core* core)
 
     spdlog::info(
         "The server is up and running with port {} and {} peers can join!",
-        core_->get_config().get<unsigned int>("server.port"),
+        core_->get_config().get<int>("server.port"),
         host_->peerCount
     );
 

@@ -17,8 +17,8 @@ enum class DomainResolverStatus : uint8_t {
 };
 
 struct Result {
-    std::string ip_;
     DomainResolverStatus status_;
+    std::string ip_;
 };
 
 Result resolve_domain_name(const std::string& domain_name);
