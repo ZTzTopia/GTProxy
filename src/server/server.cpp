@@ -34,6 +34,15 @@ Server::~Server()
 void Server::process()
 {
     // Perform server processing here
+
+    ENetEvent ev{};
+    enet_host_check_events(host_, &ev);
+
+    if (ev.type == ENET_EVENT_TYPE_CONNECT && ev.peer->data == nullptr) {
+        ev.peer->data = reinterpret_cast<void*>(0xdeadc0de);
+        return;
+    }
+
     ENetWrapper::process();
 }
 

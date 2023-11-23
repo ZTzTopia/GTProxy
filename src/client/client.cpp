@@ -25,6 +25,15 @@ Client::~Client()
 void Client::process()
 {
     // Perform client processing here
+
+    ENetEvent ev{};
+    enet_host_check_events(host_, &ev);
+
+    if (ev.type == ENET_EVENT_TYPE_CONNECT && ev.peer->data == nullptr) {
+        ev.peer->data = reinterpret_cast<void*>(0xdeadc0de);
+        return;
+    }
+
     ENetWrapper::process();
 }
 
@@ -52,8 +61,7 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
-    packet::NetMessageType type{};
-    if (!byte_stream.read(type)) {
+    if (packet::NetMessageType type{}; !byte_stream.read(type)) {
         enet_peer_disconnect(peer, 0);
         return;
     }
