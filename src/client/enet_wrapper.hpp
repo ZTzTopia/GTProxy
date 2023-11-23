@@ -5,7 +5,7 @@
 namespace client {
 class ENetWrapper {
 public:
-    explicit ENetWrapper(std::size_t peer_count = ENET_PROTOCOL_MAXIMUM_PEER_ID)
+    explicit ENetWrapper(const std::size_t peer_count = ENET_PROTOCOL_MAXIMUM_PEER_ID)
         : host_{ nullptr }
     {
         host_ = enet_host_create(nullptr, peer_count, 2, 0, 0);
@@ -21,9 +21,9 @@ public:
         host_->usingNewPacket = 1;
     }
 
-    ~ENetWrapper() { enet_host_destroy(host_); }
+    virtual ~ENetWrapper() { enet_host_destroy(host_); }
 
-    ENetPeer* connect(const std::string& host, enet_uint16 port)
+    [[nodiscard]] ENetPeer* connect(const std::string& host, const enet_uint16 port) const
     {
         if (!host_) {
             return nullptr;

@@ -5,7 +5,7 @@
 namespace server {
 class ENetWrapper {
 public:
-    explicit ENetWrapper(enet_uint16 port, std::size_t peer_count = ENET_PROTOCOL_MAXIMUM_PEER_ID)
+    explicit ENetWrapper(const enet_uint16 port, const std::size_t peer_count = ENET_PROTOCOL_MAXIMUM_PEER_ID)
         : host_{ nullptr }
     {
         ENetAddress address{};
