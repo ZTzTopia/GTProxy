@@ -1,5 +1,4 @@
 #pragma once
-#include <cstring>
 #include <vector>
 
 #include "text_parse.hpp"
@@ -10,17 +9,16 @@ enum class HostType {
     Hostname
 };
 
-bool is_valid_ip_address(const std::string& address)
+constexpr bool is_valid_ip_address(const std::string& address)
 {
-    std::vector<std::string> parts{ TextParse::tokenize(address, ".") };
+    std::vector parts{ TextParse::tokenize(address, ".") };
     if (parts.size() != 4) {
         return false;
     }
 
     return std::ranges::all_of(parts, [](const std::string& part){
         try {
-            return std::stoi(part) >= 0 &&
-                std::stoi(part) <= 255;
+            return 0 <= std::stoi(part) <= 255;
         }
         catch (const std::exception&) {
             return false;
@@ -28,7 +26,7 @@ bool is_valid_ip_address(const std::string& address)
     });
 }
 
-HostType classify_host(const std::string& host)
+constexpr HostType classify_host(const std::string& host)
 {
     return is_valid_ip_address(host)
         ? HostType::IpAddress

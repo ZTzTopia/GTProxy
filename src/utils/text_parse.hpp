@@ -7,12 +7,11 @@
 class TextParse {
 public:
     TextParse() = default;
-    ~TextParse() = default;
 
     explicit TextParse(const std::string& str, const std::string& delimiter = "|")
     {
         for (const auto& line : tokenize(str, "\n")) {
-            std::vector<std::string> tokens{ tokenize(line, delimiter) };
+            std::vector tokens{ tokenize(line, delimiter) };
             std::string key{ tokens.front() };
 
             tokens.erase(tokens.begin());

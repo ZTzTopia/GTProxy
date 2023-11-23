@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 
 #include "http.hpp"
-#include "../utils/domain_resolver.hpp"
+#include "../client/domain_resolver.hpp"
 #include "../utils/network.hpp"
 
 namespace server {
