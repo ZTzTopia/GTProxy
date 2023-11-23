@@ -25,7 +25,7 @@ int main()
         spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [GTProxy] [%^%l%$] %v");
 
         spdlog::info(
-            "Starting GTProxy ({}.{}.{})",
+            "Starting GTProxy (v{}.{}.{})",
             GTPROXY_VERSION_MAJOR,
             GTPROXY_VERSION_MINOR,
             GTPROXY_VERSION_PATCH

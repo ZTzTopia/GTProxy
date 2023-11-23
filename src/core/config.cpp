@@ -16,8 +16,11 @@ Config::Config()
 {
     // Load configuration from file, if available
     if (std::ifstream ifs{ "config.json" }; ifs.good()) {
+        spdlog::info("Loading config file \"config.json\"...");
+
         nlohmann::json j{};
         ifs >> j;
+
         for (const auto& [key, value] : j.items()) {
             switch (value.type()) {
             case nlohmann::json::value_t::number_integer:
@@ -40,11 +43,13 @@ Config::Config()
     }
 
     // Set default values for missing configuration keys
-    bool save_defaults = false;
+    bool save_defaults{ false };
     for (const auto& [key, value] : config_defaults) {
-        if (!config_.contains(key)) {
+        if (config_.contains(key)) {
             continue;
         }
+
+        spdlog::warn("Configuration key \"{}\" is missing, setting default value", key);
 
         config_[key] = value;
         save_defaults = true;
