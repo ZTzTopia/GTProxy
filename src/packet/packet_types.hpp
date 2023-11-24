@@ -6,7 +6,7 @@
 #include "../utils/text_parse.hpp"
 
 namespace packet {
-enum NetMessageType : std::uint32_t {
+enum NetMessageType : uint32_t {
     NET_MESSAGE_UNKNOWN,
     NET_MESSAGE_SERVER_HELLO,
     NET_MESSAGE_GENERIC_TEXT,
@@ -19,14 +19,14 @@ enum NetMessageType : std::uint32_t {
     NET_MESSAGE_MAX
 };
 
-static const std::map<std::string, std::uint8_t> message_actions{
+static const std::map<std::string, uint8_t> message_actions{
     { "refresh_item_data", 1 },
     { "refresh_player_tribute_data", 2 },
     { "quit", 3 },
     { "enter_game", 4 }
 };
 
-enum PacketType : std::uint8_t {
+enum PacketType : uint8_t {
     PACKET_STATE,
     PACKET_CALL_FUNCTION,
     PACKET_UPDATE_STATUS,
@@ -77,7 +77,7 @@ enum PacketType : std::uint8_t {
     PACKET_MAX,
 };
 
-enum PacketFlag : std::uint32_t {
+enum PacketFlag : uint32_t {
     PACKET_FLAG_NONE = 0,
     PACKET_FLAG_UNK = 1 << 1,
     PACKET_FLAG_RESET_VISUAL_STATE = 1 << 2,
@@ -103,80 +103,43 @@ enum PacketFlag : std::uint32_t {
 #pragma pack(push, 1)
 struct GameUpdatePacket {
     PacketType type;
-    std::uint8_t pad[3];
-    std::uint32_t net_id;
-    std::uint8_t pad_2[4];
+    uint8_t pad[3];
+    uint32_t net_id;
+    uint8_t pad_2[4];
 
     union {
         PacketFlag value;
         struct {
-            std::uint32_t none : 1;
-            std::uint32_t unk : 1;
-            std::uint32_t reset_visual_state : 1;
-            std::uint32_t extended : 1;
-            std::uint32_t rotate_left : 1;
-            std::uint32_t on_solid : 1;
-            std::uint32_t on_fire_damage : 1;
-            std::uint32_t on_jump : 1;
-            std::uint32_t on_killed : 1;
-            std::uint32_t on_punched : 1;
-            std::uint32_t on_placed : 1;
-            std::uint32_t on_tile_action : 1;
-            std::uint32_t on_got_punched : 1;
-            std::uint32_t on_respawned : 1;
-            std::uint32_t on_collect_object : 1;
-            std::uint32_t on_trampoline : 1;
-            std::uint32_t on_damage : 1;
-            std::uint32_t on_slide : 1;
-            std::uint32_t pad_1 : 3;
-            std::uint32_t on_wall_hang : 1;
-            std::uint32_t pad_2 : 3;
-            std::uint32_t on_acid_damage : 1;
-            std::uint32_t pad_3 : 6;
+            uint32_t none : 1;
+            uint32_t unk : 1;
+            uint32_t reset_visual_state : 1;
+            uint32_t extended : 1;
+            uint32_t rotate_left : 1;
+            uint32_t on_solid : 1;
+            uint32_t on_fire_damage : 1;
+            uint32_t on_jump : 1;
+            uint32_t on_killed : 1;
+            uint32_t on_punched : 1;
+            uint32_t on_placed : 1;
+            uint32_t on_tile_action : 1;
+            uint32_t on_got_punched : 1;
+            uint32_t on_respawned : 1;
+            uint32_t on_collect_object : 1;
+            uint32_t on_trampoline : 1;
+            uint32_t on_damage : 1;
+            uint32_t on_slide : 1;
+            uint32_t pad_1 : 3;
+            uint32_t on_wall_hang : 1;
+            uint32_t pad_2 : 3;
+            uint32_t on_acid_damage : 1;
+            uint32_t pad_3 : 6;
         };
     } flags;
 
-    std::uint8_t pad_3[4];
-    std::uint32_t decompressed_data_size;
-    std::uint8_t pad_4[28];
-    std::uint32_t data_size;
+    uint8_t pad_3[4];
+    uint32_t decompressed_data_size;
+    uint8_t pad_4[28];
+    uint32_t data_size;
 };
 #pragma pack(pop)
-
-//
-template <NetMessageType MsgType, int Channel = 0>
-struct NetMessage {
-    static constexpr NetMessageType MESSAGE_TYPE = MsgType;
-    static constexpr int CHANNEL = Channel;
-
-    [[nodiscard]] virtual bool read(TextParse&) const { return false; }
-    virtual void write(ByteStream<>&) { }
-};
-
-std::false_type is_net_message_impl(...);
-
-template <NetMessageType MsgType, int Channel>
-std::true_type is_net_message_impl(NetMessage<MsgType, Channel> const volatile&);
-
-template <typename T>
-using is_net_message = decltype(is_net_message_impl(std::declval<T const volatile&>()));
-
-//
-template <PacketType PktType, int Channel = 0>
-struct NetPacket {
-    static constexpr NetMessageType MESSAGE_TYPE = NET_MESSAGE_GAME_PACKET;
-    static constexpr PacketType PACKET_TYPE = PktType;
-    static constexpr int CHANNEL = Channel;
-
-    [[nodiscard]] virtual bool read(const GameUpdatePacket& tp) const { return false; }
-    virtual void write(GameUpdatePacket&, std::vector<std::byte>&) { }
-};
-
-std::false_type is_net_packet_impl(...);
-
-template <PacketType PktType, int Channel>
-std::true_type is_net_packet_impl(NetPacket<PktType, Channel> const volatile&);
-
-template <typename T>
-using is_net_packet = decltype(is_net_packet_impl(std::declval<T const volatile&>()));
 }
