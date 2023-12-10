@@ -107,12 +107,14 @@ public:
             }
 
             if (std::next(it) != m_data.cend() && !std::next(it)->first.empty()) {
-                raw_data += "\n";
+                raw_data += '\n';
             }
         }
 
         return raw_data;
     }
+
+    [[nodiscard]] bool empty() const { return m_data.empty(); }
 
 private:
     std::unordered_map<std::string, std::vector<std::string>> m_data;

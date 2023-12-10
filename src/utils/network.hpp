@@ -1,5 +1,8 @@
 #pragma once
 #include <vector>
+#include <httplib.h>
+#include <magic_enum/magic_enum.hpp>
+#include <spdlog/spdlog.h>
 
 #include "text_parse.hpp"
 
@@ -9,7 +12,7 @@ enum class HostType {
     Hostname
 };
 
-constexpr bool is_valid_ip_address(const std::string& address)
+inline bool is_valid_ip_address(const std::string& address)
 {
     std::vector parts{ TextParse::tokenize(address, ".") };
     if (parts.size() != 4) {
@@ -18,7 +21,7 @@ constexpr bool is_valid_ip_address(const std::string& address)
 
     return std::ranges::all_of(parts, [](const std::string& part){
         try {
-            return 0 <= std::stoi(part) <= 255;
+            return std::stoi(part) >= 0 && std::stoi(part) <= 255;
         }
         catch (const std::exception&) {
             return false;
@@ -31,5 +34,31 @@ constexpr HostType classify_host(const std::string& host)
     return is_valid_ip_address(host)
         ? HostType::IpAddress
         : HostType::Hostname;
+}
+
+inline bool validate_server_response(const httplib::Result& response)
+{
+    if (!response) {
+        spdlog::error(
+            "Response is null with error: httplib::Error::{}",
+            magic_enum::enum_name(response.error())
+        );
+        return false;
+    }
+
+    const httplib::Error error_response{ response.error() };
+    const int status_code{ response->status };
+
+    if (error_response != httplib::Error::Success || status_code != 200) {
+        spdlog::error(
+            "Failed to get response from server: {}",
+            error_response == httplib::Error::Success
+                ? std::format("HTTP status code: {}", status_code)
+                : std::format("HTTP error: {}", httplib::to_string(error_response))
+        );
+        return false;
+    }
+
+    return true;
 }
 }
