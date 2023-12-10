@@ -4,7 +4,7 @@
 
 namespace client {
 class ENetWrapper {
-public:
+protected:
     explicit ENetWrapper(const std::size_t peer_count = ENET_PROTOCOL_MAXIMUM_PEER_ID)
         : host_{ nullptr }
     {

@@ -1,6 +1,6 @@
 #pragma once
 #include <set>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #include "packet_types.hpp"
 #include "../player/player.hpp"

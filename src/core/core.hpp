@@ -19,6 +19,8 @@ public:
     void stop() { run_ = false; }
 
     [[nodiscard]] Config& get_config() { return config_; }
+    [[nodiscard]] server::Server* get_server() const { return server_; }
+    [[nodiscard]] client::Client* get_client() const { return client_; }
 
 private:
     Config config_;

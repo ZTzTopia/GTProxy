@@ -1,47 +1,57 @@
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include "server.hpp"
+
+#include "../client/client.hpp"
 #include "../packet/packet_types.hpp"
 
 namespace server {
 Server::Server(core::Core* core)
-    : ENetWrapper{ static_cast<enet_uint16>(core->get_config().get<int>("server.port")), 1 }
+    : ENetWrapper{ static_cast<enet_uint16>(core->get_config().get<unsigned int>("server.port")), 1 }
     , core_{ core }
-    , http_{ core }
+    , web_server_{ core }
     , player_{ nullptr }
 {
     if (!host_) {
         throw std::runtime_error{ "Failed to create an ENet server host!" };
     }
 
+    core_->get_client()->get_connect_callback().append([&](const auto& player)
+    {
+        spdlog::info("The server just got a new connection!");
+    });
+
+    core_->get_client()->get_disconnect_callback().append([&](const auto& player)
+    {
+        spdlog::info("The server just lost a connection!");
+    });
+
+    core_->get_client()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
+    {
+        spdlog::info("The server just received a message from the client!");
+        return true;
+    });
+
     spdlog::info(
         "The server is up and running with port {} and {} peers can join!",
-        core_->get_config().get<int>("server.port"),
+        host_->address.port,
         host_->peerCount
     );
 
-    http_.listen("0.0.0.0", 443);
+    web_server_.listen("0.0.0.0", 443);
 }
 
 Server::~Server()
 {
     delete player_;
-    http_.stop();
+    web_server_.stop();
 }
 
 void Server::process()
 {
     // Perform server processing here
-
-    ENetEvent ev{};
-    enet_host_check_events(host_, &ev);
-
-    if (ev.type == ENET_EVENT_TYPE_CONNECT && ev.peer->data == nullptr) {
-        ev.peer->data = reinterpret_cast<void*>(0xdeadc0de);
-        return;
-    }
 
     ENetWrapper::process();
 }
