@@ -11,9 +11,9 @@ class GTProxyRecipe(ConanFile):
         self.requires("fmt/10.1.1")
         self.requires("glm/[~0.9.9]")
         self.requires("libressl/[~3.5]")
-        self.requires("magic_enum/[~0.8]")
+        self.requires("magic_enum/[~0.9]")
         self.requires("nlohmann_json/[~3.11]")
-        self.requires("pcg-cpp/cci.20210406")
+        self.requires("pcg-cpp/cci.20220409")
         self.requires("spdlog/[~1.12]")
 
     def layout(self):
