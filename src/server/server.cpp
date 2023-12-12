@@ -18,20 +18,23 @@ Server::Server(core::Core* core)
         throw std::runtime_error{ "Failed to create an ENet server host!" };
     }
 
-    core_->get_client()->get_connect_callback().append([&](const auto& player)
+    core_->get_init_callback().append([&]()
     {
-        spdlog::info("The server just got a new connection!");
-    });
+        core_->get_client()->get_connect_callback().append([&](const auto& player)
+        {
+            spdlog::info("The server just got a new connection!");
+        });
 
-    core_->get_client()->get_disconnect_callback().append([&](const auto& player)
-    {
-        spdlog::info("The server just lost a connection!");
-    });
+        core_->get_client()->get_disconnect_callback().append([&](const auto& player)
+        {
+            spdlog::info("The server just lost a connection!");
+        });
 
-    core_->get_client()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
-    {
-        spdlog::info("The server just received a message from the client!");
-        return true;
+        core_->get_client()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
+        {
+            spdlog::info("The server just received a message from the client!");
+            return true;
+        });
     });
 
     spdlog::info(

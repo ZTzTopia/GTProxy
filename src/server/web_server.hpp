@@ -18,9 +18,6 @@ public:
 protected:
     void listen_internal();
 
-public:
-    [[nodiscard]] std::string get_server_data_res() const { return server_data_res_; }
-
 private:
     core::Core* core_;
     httplib::SSLServer server_;

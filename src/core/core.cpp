@@ -17,6 +17,8 @@ Core::Core()
 
     server_ = new server::Server{ this };
     client_ = new client::Client{ this };
+
+    init_callback_();
 }
 
 Core::~Core()
@@ -28,7 +30,7 @@ Core::~Core()
 
 void Core::run()
 {
-    constexpr std::chrono::microseconds sleep_timer{ static_cast<int>(5.0 * 1000.0) };
+    constexpr std::chrono::microseconds sleep_timer{ static_cast<int>(5.0f * 1000.0f) };
     auto prev{ std::chrono::high_resolution_clock::now() };
     std::chrono::microseconds sleep_duration{ sleep_timer };
 
@@ -48,6 +50,9 @@ void Core::run()
         // Wait for both tasks to complete
         server_future.get();
         client_future.get();
+
+        // Call the tick callback
+        tick_callback_(); // TODO: Pass tick related arguments to the callback
 
         if (sleep_duration > std::chrono::microseconds::zero()) {
             std::this_thread::sleep_for(sleep_duration);

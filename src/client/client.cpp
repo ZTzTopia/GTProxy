@@ -16,20 +16,23 @@ Client::Client(core::Core* core)
         throw std::runtime_error{ "Failed to create an ENet client host!" };
     }
 
-    core_->get_server()->get_connect_callback().append([&](const auto& player)
+    core_->get_init_callback().append([&]()
     {
-        spdlog::info("The client just connected to the server!");
-    });
+        core_->get_server()->get_connect_callback().append([&](const auto& player)
+        {
+            spdlog::info("The client just connected to the server!");
+        });
 
-    core_->get_server()->get_disconnect_callback().append([&](const auto& player)
-    {
-        spdlog::info("The client just disconnected from the server!");
-    });
+        core_->get_server()->get_disconnect_callback().append([&](const auto& player)
+        {
+            spdlog::info("The client just disconnected from the server!");
+        });
 
-    core_->get_server()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
-    {
-        spdlog::info("The client just received a message from the server!");
-        return true;
+        core_->get_server()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
+        {
+            spdlog::info("The client just received a message from the server!");
+            return true;
+        });
     });
 
     spdlog::info("The client is ready to connect to the server!");
