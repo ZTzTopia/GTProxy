@@ -7,7 +7,7 @@ class GTProxyRecipe(ConanFile):
     generators = "CMakeToolchain", "CMakeDeps"
 
     def requirements(self):
-        self.requires("cpp-httplib/[~0.12]")
+        self.requires("cpp-httplib/[~0.14]")
         self.requires("fmt/10.1.1")
         self.requires("glm/[~0.9.9]")
         self.requires("libressl/[~3.5]")

@@ -84,7 +84,7 @@ void WebServer::listen_internal()
         res.set_content(
             fmt::format(
                 "Hello, world!\r\n{} ({})",
-                httplib::detail::status_message(res.status),
+                httplib::status_message(res.status),
                 res.status
             ),
             "text/plain"
