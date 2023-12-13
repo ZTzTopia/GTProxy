@@ -154,6 +154,13 @@ void WebServer::listen_internal()
             return true;
         }
 
+        // Set server address and port that client (Proxy) should connect to.
+        core_->set_address(
+            text_parse.get("server"),
+            std::stoi(text_parse.get("port"))
+        );
+
+        // Set server address and port that client (Growtopia) should connect to.
         text_parse.set("server", { "127.0.0.1" });
         text_parse.set("port", { std::to_string(core_->get_config().get<unsigned int>("server.port")) });
         text_parse.set("type2", { "1" });

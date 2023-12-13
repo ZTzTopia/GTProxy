@@ -6,6 +6,7 @@
 
 #include "../client/client.hpp"
 #include "../packet/packet_types.hpp"
+#include "../utils/network.hpp"
 
 namespace server {
 Server::Server(core::Core* core)
@@ -22,17 +23,16 @@ Server::Server(core::Core* core)
     {
         core_->get_client()->get_connect_callback().append([&](const auto& player)
         {
-            spdlog::info("The server just got a new connection!");
+
         });
 
         core_->get_client()->get_disconnect_callback().append([&](const auto& player)
         {
-            spdlog::info("The server just lost a connection!");
+
         });
 
         core_->get_client()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
         {
-            spdlog::info("The server just received a message from the client!");
             return true;
         });
     });
@@ -63,7 +63,7 @@ void Server::on_connect(ENetPeer* peer)
 {
     spdlog::info(
         "The server just got a new connection from the address {}:{}!",
-        peer->address.host,
+        network::format_ip_address(peer->address.host),
         peer->address.port
     );
 
@@ -96,7 +96,11 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
 
-        spdlog::debug("Got a message coming in from the address {}:{}!", peer->address.host, peer->address.port);
+        spdlog::debug(
+            "Got a message coming in from the address {}:{}!",
+            network::format_ip_address(peer->address.host),
+            peer->address.port
+        );
         spdlog::debug("\tMessage: {}", message);
 
         const TextParse text_parse{ message };
@@ -105,13 +109,21 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             return !callback(*player_, text_parse);
         });
     }
+    else {
+        spdlog::warn(
+            "Got an unknown packet type coming in from the address {}:{}!",
+            network::format_ip_address(peer->address.host),
+            peer->address.port
+        );
+        spdlog::warn("\tPacket Type: {}", magic_enum::enum_name(type));
+    }
 }
 
 void Server::on_disconnect(ENetPeer* peer)
 {
     spdlog::info(
         "The server just lost a connection from the address {}:{}!",
-        peer->address.host,
+        network::format_ip_address(peer->address.host),
         peer->address.port
     );
 

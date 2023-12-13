@@ -10,6 +10,7 @@ namespace core {
 Core::Core()
     : run_{ true }
     , tick_{ 0 }
+    , port_{ 0 }
 {
     if (enet_initialize() != 0) {
         throw std::runtime_error{ "Failed to initialize ENet" };
