@@ -1,5 +1,4 @@
 #pragma once
-#include <type_traits>
 #include <map>
 
 #include "../utils/byte_stream.hpp"

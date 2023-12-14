@@ -3,6 +3,8 @@
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include "client.hpp"
+#include "../packet/packet_helper.hpp"
+#include "../packet/message/core.hpp"
 #include "../server/server.hpp"
 #include "../utils/hash.hpp"
 #include "../utils/network.hpp"
@@ -84,7 +86,17 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
-    if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
+    if (type == packet::NET_MESSAGE_SERVER_HELLO) {
+        player::Player* player{ core_->get_server()->get_player() };
+        if (!player) {
+            enet_peer_disconnect(peer, 0);
+            return;
+        }
+
+        packet::core::ServerHello server_hello{};
+        packet::PacketHelper::send(server_hello, *player);
+    }
+    else if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
 
