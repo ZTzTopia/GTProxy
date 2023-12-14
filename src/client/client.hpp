@@ -20,6 +20,7 @@ public:
 
     [[nodiscard]] player::Player* get_player() const { return player_; }
 
+    [[nodiscard]] eventpp::CallbackList<void(const player::Player&)>& get_pre_connect_callback() { return pre_connect_callback_; }
     [[nodiscard]] eventpp::CallbackList<void(const player::Player&)>& get_connect_callback() { return connect_callback_; }
     [[nodiscard]] eventpp::CallbackList<void(const player::Player&)>& get_disconnect_callback() { return disconnect_callback_; }
     [[nodiscard]] eventpp::CallbackList<bool(const player::Player&, const TextParse&)>& get_receive_message_callback() { return receive_message_callback_; }
@@ -28,6 +29,7 @@ private:
     core::Core* core_;
     player::Player* player_;
 
+    eventpp::CallbackList<void(const player::Player&)> pre_connect_callback_;
     eventpp::CallbackList<void(const player::Player&)> connect_callback_;
     eventpp::CallbackList<void(const player::Player&)> disconnect_callback_;
     eventpp::CallbackList<bool(const player::Player&, const TextParse&)> receive_message_callback_;

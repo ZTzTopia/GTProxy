@@ -21,10 +21,9 @@ Client::Client(core::Core* core)
     {
         core_->get_server()->get_connect_callback().append([&](const auto& player)
         {
-            auto [address, port] = core_->get_address();
-
-            // We get the ENetPeer* from the on_connect callback instead of the return value
-            connect(address, port);
+            auto [address, port]{ core_->get_address() };
+            player_ = new player::Player{ connect(address, port) };
+            pre_connect_callback_(*player_);
         });
 
         core_->get_server()->get_disconnect_callback().append([&](const auto& player)
@@ -61,7 +60,6 @@ void Client::on_connect(ENetPeer* peer)
         peer->address.port
     );
 
-    player_ = new player::Player{ peer };
     connect_callback_(*player_);
 }
 
