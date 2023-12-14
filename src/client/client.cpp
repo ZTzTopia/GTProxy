@@ -101,11 +101,14 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
 
         spdlog::debug(
-            "Got a message coming in from the address {}:{}!",
+            "Got a message coming in from the address {}:{}:",
             network::format_ip_address(peer->address.host),
             peer->address.port
         );
-        spdlog::debug("\tMessage: {}", message);
+
+        for (const auto& msg : TextParse::tokenize(message, "\n")) {
+            spdlog::debug("\t{}", msg);
+        }
 
         const TextParse text_parse{ message };
         receive_message_callback_.forEachIf([&](const auto& callback)
@@ -115,11 +118,11 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
     }
     else {
         spdlog::warn(
-            "Got an unknown packet type coming in from the address {}:{}!",
+            "Got an unknown packet type coming in from the address {}:{}:",
             network::format_ip_address(peer->address.host),
             peer->address.port
         );
-        spdlog::warn("\tPacket Type: {}", magic_enum::enum_name(type));
+        spdlog::warn("\t{} ({})", magic_enum::enum_name(type), type);
     }
 }
 
