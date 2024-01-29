@@ -102,11 +102,16 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
     if (type == packet::NET_MESSAGE_SERVER_HELLO) {
         packet::core::ServerHello server_hello{};
         packet::PacketHelper::send(server_hello, *to_player);
+        return;
     }
-    else if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
+
+    if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
         message_callback_(*player_, *to_player, message);
+    }
+    else if (type == packet::NET_MESSAGE_GAME_PACKET) {
+        packet_callback_(*player_, *to_player, byte_stream.get_data());
     }
     else {
         spdlog::warn(
@@ -116,6 +121,8 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         );
         spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
     }
+
+    bool _ = to_player->send_packet(byte_stream.get_data(), 0);
 }
 
 void Client::on_disconnect(ENetPeer* peer)

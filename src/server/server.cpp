@@ -43,6 +43,9 @@ void Server::on_connect(ENetPeer* peer)
         peer->address.port
     );
 
+    // GOOD JOB GROWTOPIA TEAM! PLEASE MAKE YOUR CLIENTS HANG LONGER!!!
+    enet_peer_timeout(peer, 0, 12000, 0);
+
     player_ = new player::Player{ peer };
     connect_callback_(*player_);
 }
@@ -79,6 +82,9 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
         message_callback_(*player_, *to_player, message);
     }
+    else if (type == packet::NET_MESSAGE_GAME_PACKET) {
+        packet_callback_(*player_, *to_player, byte_stream.get_data());
+    }
     else {
         spdlog::warn(
             "Got an unknown packet type coming in from the address {}:{}:",
@@ -87,6 +93,8 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         );
         spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
     }
+
+    bool _ = to_player->send_packet(byte_stream.get_data(), 0);
 }
 
 void Server::on_disconnect(ENetPeer* peer)

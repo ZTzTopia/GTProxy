@@ -5,6 +5,7 @@
 #include "packet_types.hpp"
 #include "../player/player.hpp"
 #include "../utils/byte_stream.hpp"
+#include "../utils/text_parse.hpp"
 
 namespace packet {
 template <NetMessageType MsgType, int Channel = 0>

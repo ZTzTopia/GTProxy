@@ -21,6 +21,12 @@ using variant = std::variant<float, std::string, glm::vec2, glm::vec3, uint32_t,
 
 class Variant {
 public:
+    Variant()
+        : variants_{ std::vector<variant>() }
+    {
+
+    }
+
     template<typename... Args>
     explicit Variant(const Args&... args)
         : variants_{ { args... } }
@@ -48,17 +54,17 @@ public:
         }
     }
 
-    std::vector<std::byte> serialize() const
+    [[nodiscard]] std::vector<std::byte> serialize() const
     {
-        const uint8_t size{ variants_.size() };
+        const size_t size{ variants_.size() };
 
         ByteStream<uint32_t> byte_stream{};
-        byte_stream.write(size);
+        byte_stream.write<uint8_t>(size);
 
-        for (uint8_t i{ 0 }; i < size; i++) {
+        for (size_t i{ 0 }; i < size; i++) {
             VariantType type{ get_type(variants_[i]) };
 
-            byte_stream.write(i);
+            byte_stream.write<uint8_t>(i);
             byte_stream.write(static_cast<std::underlying_type_t<VariantType>>(type));
 
             if (type == VariantType::FLOAT) {
@@ -89,14 +95,73 @@ public:
         return byte_stream.get_data();
     }
 
-    [[nodiscard]] std::vector<variant> variants() const { return variants_; }
-    [[nodiscard]] variant get(const std::size_t index) const
+    [[nodiscard]] bool deserialize(const std::vector<std::byte>& data)
     {
-        if (index > variants_.size()) {
-            return {};
+        ByteStream<uint32_t> byte_stream{ const_cast<std::byte*>(data.data()), data.size() };
+
+        uint8_t size{ 0 };
+        byte_stream.read(size);
+
+        for (uint8_t i{ 0 }; i < size; i++) {
+            uint8_t index{ 0 };
+            byte_stream.read(index);
+
+            uint8_t type{ 0 };
+            byte_stream.read(type);
+
+            if (type == static_cast<uint8_t>(VariantType::FLOAT)) {
+                float value{ 0.0f };
+                byte_stream.read(value);
+                variants_.emplace_back(value);
+            }
+            else if (type == static_cast<uint8_t>(VariantType::STRING)) {
+                std::string value{};
+                byte_stream.read(value);
+                variants_.emplace_back(value);
+            }
+            else if (type == static_cast<uint8_t>(VariantType::VEC2)) {
+                glm::vec2 value{};
+                byte_stream.read(value.x);
+                byte_stream.read(value.y);
+                variants_.emplace_back(value);
+            }
+            else if (type == static_cast<uint8_t>(VariantType::VEC3)) {
+                glm::vec3 value{};
+                byte_stream.read(value.x);
+                byte_stream.read(value.y);
+                byte_stream.read(value.z);
+                variants_.emplace_back(value);
+            }
+            else if (type == static_cast<uint8_t>(VariantType::UNSIGNED)) {
+                uint32_t value{ 0 };
+                byte_stream.read(value);
+                variants_.emplace_back(value);
+            }
+            else if (type == static_cast<uint8_t>(VariantType::SIGNED)) {
+                int32_t value{ 0 };
+                byte_stream.read(value);
+                variants_.emplace_back(value);
+            }
         }
 
-        return variants_[index];
+        return true;
+    }
+
+    [[nodiscard]] std::vector<variant> variants() const { return variants_; }
+
+    template <typename T = std::string>
+    [[nodiscard]] T get(const std::size_t index) const
+    {
+        if (index > variants_.size()) {
+            return T{};
+        }
+
+        try {
+            return std::get<T>(variants_[index]);
+        }
+        catch (const std::exception&) {
+            return T{}; // or some other default value
+        }
     }
 
 private:

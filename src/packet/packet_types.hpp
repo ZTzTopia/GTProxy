@@ -2,7 +2,6 @@
 #include <map>
 
 #include "../utils/byte_stream.hpp"
-#include "../utils/text_parse.hpp"
 
 namespace packet {
 enum NetMessageType : uint32_t {

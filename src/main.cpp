@@ -46,22 +46,38 @@ int main()
             return 1;
         }
 
-        // Print only client messages
         ext->get_message_callback().append(
-            eventpp::conditionalFunctor(
-                [](const IParserExtension::MessageParser& callback)
-                {
+            [](const IParserExtension::MessageParser& message_parser)
+            {
+                spdlog::info(
+                    "Message incoming from {}: \n{}",
+                    message_parser.type == IParserExtension::ParseType::FromClient ? "client" : "server",
+                    message_parser.text.get_raw("|", "\t")
+                );
+            }
+        );
+
+        ext->get_packet_callback().append(
+            [](const IParserExtension::PacketParser& packet_parser)
+            {
+                spdlog::info(
+                    "Packet incoming from {}:",
+                    packet_parser.type == IParserExtension::ParseType::FromClient ? "client" : "server"
+                );
+
+                spdlog::info(
+                    "\tPacket type: {} ({})",
+                    magic_enum::enum_name(packet_parser.packet.type),
+                    magic_enum::enum_integer(packet_parser.packet.type)
+                );
+
+                if (packet_parser.packet.type == packet::PACKET_CALL_FUNCTION) {
                     spdlog::info(
-                        "Message incoming from {}: \n{}",
-                        callback.type == IParserExtension::ParseType::FromClient ? "client" : "server",
-                        callback.text.get_raw("|", "\t")
+                        "\tWanna call a function \"{}\"",
+                        packet_parser.variant.get(0)
                     );
-                },
-                [](const IParserExtension::MessageParser& callback)
-                {
-                    return callback.type == IParserExtension::ParseType::FromClient;
                 }
-            )
+            }
         );
 
         core.run();

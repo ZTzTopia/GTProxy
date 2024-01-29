@@ -26,6 +26,12 @@ public:
         data_.insert(data_.end(), begin, end);
     }
 
+    void write_vector(const std::vector<std::byte>& vec)
+    {
+        write(static_cast<LengthType>(vec.size()));
+        write_data(vec.data(), vec.size());
+    }
+
     template <typename T>
     void write(const T& value)
     {
@@ -57,6 +63,13 @@ public:
         return true;
     }
 
+    bool read_vector(std::vector<std::byte>& vec, std::size_t length = 0)
+    {
+        vec.resize(length);
+        read_data(&vec[0], length);
+        return true;
+    }
+
     template <typename T>
     bool read(T& value)
     {
@@ -81,6 +94,8 @@ public:
         return true;
     }
 
+    void skip(const std::size_t size) { read_offset_ += size; }
+    [[nodiscard]] std::size_t get_read_offset() const { return read_offset_; }
     [[nodiscard]] std::size_t get_size() const { return data_.size(); }
     [[nodiscard]] std::vector<std::byte> get_data() const { return data_; }
 
