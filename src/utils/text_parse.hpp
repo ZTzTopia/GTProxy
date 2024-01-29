@@ -97,17 +97,17 @@ public:
         m_data.erase(it);
     }
 
-    [[nodiscard]] std::string get_raw(const std::string& delimiter = "|", const std::string& prepend_text = "\t") const
+    [[nodiscard]] std::string get_raw(const std::string& delimiter = "|", const std::string& prepend_text = "") const
     {
         std::string raw_data{};
         for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
-            raw_data += prepend_text + it->first;
+            raw_data +=it->first;
             for (const auto& token : it->second) {
                 raw_data += delimiter + token;
             }
 
             if (std::next(it) != m_data.cend() && !std::next(it)->first.empty()) {
-                raw_data += '\n';
+                raw_data += '\n' + prepend_text;
             }
         }
 
