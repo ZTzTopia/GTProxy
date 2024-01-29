@@ -4,13 +4,12 @@
 #include "enet_wrapper.hpp"
 #include "../core/core.hpp"
 #include "../player/player.hpp"
-#include "../utils/text_parse.hpp"
 
 namespace server {
 class Server final : public ENetWrapper {
     using ConnectionCallback = eventpp::CallbackList<void(const player::Player&)>;
     using DisconnectionCallback = eventpp::CallbackList<void(const player::Player&)>;
-    using MessageCallback = eventpp::CallbackList<bool(const player::Player&, const player::Player&, const std::string&)>;
+    using MessageCallback = eventpp::CallbackList<void(const player::Player&, const player::Player&, const std::string&)>;
 
 public:
     explicit Server(core::Core* core);

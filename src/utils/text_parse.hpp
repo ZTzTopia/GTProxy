@@ -101,13 +101,13 @@ public:
     {
         std::string raw_data{};
         for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
-            raw_data +=it->first;
+            raw_data += prepend_text + it->first;
             for (const auto& token : it->second) {
                 raw_data += delimiter + token;
             }
 
             if (std::next(it) != m_data.cend() && !std::next(it)->first.empty()) {
-                raw_data += '\n' + prepend_text;
+                raw_data += '\n';
             }
         }
 

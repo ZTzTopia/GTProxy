@@ -11,14 +11,17 @@ struct IParserExtension : extension::IExtension {
         FromServer
     };
 
-    struct ParserCallback {
+    struct Parser {
         ParseType type;
         player::Player from;
         player::Player to;
+    };
+
+    struct MessageParser : Parser {
         TextParse text;
     };
 
-    using MessageCallback = eventpp::CallbackList<void(const ParserCallback&)>;
+    using MessageCallback = eventpp::CallbackList<void(const MessageParser&)>;
 
     [[nodiscard]] virtual MessageCallback& get_message_callback() = 0;
 };

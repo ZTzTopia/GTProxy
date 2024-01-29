@@ -3,7 +3,6 @@
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include "client.hpp"
-#include "../extension/web_server/web_server.hpp"
 #include "../packet/packet_helper.hpp"
 #include "../packet/message/core.hpp"
 #include "../server/server.hpp"
@@ -20,9 +19,9 @@ Client::Client(core::Core* core)
         throw std::runtime_error{ "Failed to create an ENet client host!" };
     }
 
-    core_->get_init_callback().append([&]()
+    core_->get_init_callback().append([&]
     {
-        core_->get_server()->get_connect_callback().append([&](const auto& player)
+        core_->get_server()->get_connect_callback().append([&](const  player::Player&)
         {
             const auto ext{ core_->get_extension(0x153bd697) };
             if (!ext) {
@@ -94,34 +93,20 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
-    player::Player* server_player{ core_->get_server()->get_player() };
-    if (!server_player) {
+    player::Player* to_player{ core_->get_server()->get_player() };
+    if (!to_player) {
         enet_peer_disconnect(peer, 0);
         return;
     }
 
     if (type == packet::NET_MESSAGE_SERVER_HELLO) {
         packet::core::ServerHello server_hello{};
-        packet::PacketHelper::send(server_hello, *server_player);
+        packet::PacketHelper::send(server_hello, *to_player);
     }
     else if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
-
-        spdlog::debug(
-            "Got a message coming in from the address {}:{}:",
-            network::format_ip_address(peer->address.host),
-            peer->address.port
-        );
-
-        if (
-            message_callback_.forEachIf([&](const auto& callback)
-            {
-                return !callback(*player_, *server_player, message);
-            })
-        ) {
-            server_player->send_packet(byte_stream.get_data(), 0);
-        }
+        message_callback_(*player_, *to_player, message);
     }
     else {
         spdlog::warn(
@@ -130,9 +115,6 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
             peer->address.port
         );
         spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
-
-        // Send the packet back to the client
-        server_player->send_packet(byte_stream.get_data(), 0);
     }
 }
 

@@ -3,7 +3,6 @@
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include "server.hpp"
-
 #include "../client/client.hpp"
 #include "../packet/packet_types.hpp"
 #include "../utils/network.hpp"
@@ -69,8 +68,8 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
-    const player::Player* client_player{ core_->get_client()->get_player() };
-    if (!client_player) {
+    const player::Player* to_player{ core_->get_client()->get_player() };
+    if (!to_player) {
         enet_peer_disconnect(peer, 0);
         return;
     }
@@ -78,21 +77,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
     if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
-
-        spdlog::debug(
-            "Got a message coming in from the address {}:{}:",
-            network::format_ip_address(peer->address.host),
-            peer->address.port
-        );
-
-        if (
-            message_callback_.forEachIf([&](const auto& callback)
-            {
-                return !callback(*player_, *client_player, message);
-            })
-        ) {
-            client_player->send_packet(byte_stream.get_data(), 0);
-        }
+        message_callback_(*player_, *to_player, message);
     }
     else {
         spdlog::warn(
@@ -101,8 +86,6 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             peer->address.port
         );
         spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
-
-        client_player->send_packet(byte_stream.get_data(), 0);
     }
 }
 

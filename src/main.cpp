@@ -38,7 +38,6 @@ int main()
         core::Core core{};
         core.add_extension(new extension::web_server::WebServerExtension{ &core });
         core.add_extension(new extension::parser::ParserExtension{ &core });
-        core.run();
 
         // Test extension if it works
         const auto ext{ core.query_extension<IParserExtension>() };
@@ -50,21 +49,22 @@ int main()
         // Print only client messages
         ext->get_message_callback().append(
             eventpp::conditionalFunctor(
-                [](const IParserExtension::ParserCallback& callback)
+                [](const IParserExtension::MessageParser& callback)
                 {
                     spdlog::info(
                         "Message incoming from {}: \n{}",
                         callback.type == IParserExtension::ParseType::FromClient ? "client" : "server",
-                        callback.text.get_raw()
+                        callback.text.get_raw("|", "\t")
                     );
-                    return true;
                 },
-                [](const IParserExtension::ParserCallback& callback)
+                [](const IParserExtension::MessageParser& callback)
                 {
                     return callback.type == IParserExtension::ParseType::FromClient;
                 }
             )
         );
+
+        core.run();
     }
     catch (const spdlog::spdlog_ex& ex) {
         spdlog::error("Log initialization failed: {}", ex.what());

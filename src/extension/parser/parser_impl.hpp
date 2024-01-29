@@ -24,25 +24,25 @@ public:
         core_->get_server()->get_message_callback().prepend([this](
             const player::Player& from, const player::Player& to, const std::string& message
         ) {
-            message_callback_(ParserCallback{
+            const TextParse text{ message };
+            message_callback_(MessageParser{
                 ParseType::FromClient,
                 from,
                 to,
-                TextParse{ message }
+                text
             });
-            return true;
         });
 
         core_->get_client()->get_message_callback().prepend([this](
             const player::Player& from, const player::Player& to, const std::string& message
         ) {
-            message_callback_(ParserCallback{
+            const TextParse text{ message };
+            message_callback_(MessageParser{
                 ParseType::FromServer,
                 from,
                 to,
-                TextParse{ message }
+                text
             });
-            return true;
         });
     }
 

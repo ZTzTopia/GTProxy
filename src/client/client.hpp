@@ -3,14 +3,13 @@
 
 #include "enet_wrapper.hpp"
 #include "../core/core.hpp"
-#include "../packet/packet_types.hpp"
 #include "../player/player.hpp"
 
 namespace client {
 class Client final : public ENetWrapper {
     using ConnectionCallback = eventpp::CallbackList<void(const player::Player&)>;
     using DisconnectionCallback = eventpp::CallbackList<void(const player::Player&)>;
-    using MessageCallback = eventpp::CallbackList<bool(const player::Player&, const player::Player&, const std::string&)>;
+    using MessageCallback = eventpp::CallbackList<void(const player::Player&, const player::Player&, const std::string&)>;
 
 public:
     explicit Client(core::Core* core);
