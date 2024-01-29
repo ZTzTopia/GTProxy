@@ -1,8 +1,6 @@
 #pragma once
+#include <algorithm>
 #include <vector>
-#include <httplib.h>
-#include <magic_enum/magic_enum.hpp>
-#include <spdlog/spdlog.h>
 
 #include "text_parse.hpp"
 
@@ -45,31 +43,5 @@ inline std::string format_ip_address(const uint32_t ip_address)
         (ip_address >> 16) & 0xFF,
         (ip_address >> 24) & 0xFF
     );
-}
-
-inline bool validate_server_response(const httplib::Result& response)
-{
-    if (!response) {
-        spdlog::error(
-            "Response is null with error: httplib::Error::{}",
-            magic_enum::enum_name(response.error())
-        );
-        return false;
-    }
-
-    const httplib::Error error_response{ response.error() };
-    const int status_code{ response->status };
-
-    if (error_response != httplib::Error::Success || status_code != 200) {
-        spdlog::error(
-            "Failed to get response from server: {}",
-            error_response == httplib::Error::Success
-                ? std::format("HTTP status code: {}", status_code)
-                : std::format("HTTP error: {}", httplib::to_string(error_response))
-        );
-        return false;
-    }
-
-    return true;
 }
 }

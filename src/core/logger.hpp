@@ -26,8 +26,8 @@ public:
     {
         return std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
             "proxy.log",
-            1024 * 1024 * 5,
-            16
+            1024 * 1024 * 2,
+            4
         );
     }
 

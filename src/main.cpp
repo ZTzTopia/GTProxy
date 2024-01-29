@@ -1,5 +1,9 @@
+#include <eventpp/utilities/conditionalfunctor.h>
+
 #include "core/core.hpp"
 #include "core/logger.hpp"
+#include "extension/parser/parser_impl.hpp"
+#include "extension/web_server/web_server_impl.hpp"
 
 int main()
 {
@@ -32,7 +36,35 @@ int main()
         );
 
         core::Core core{};
+        core.add_extension(new extension::web_server::WebServerExtension{ &core });
+        core.add_extension(new extension::parser::ParserExtension{ &core });
         core.run();
+
+        // Test extension if it works
+        const auto ext{ core.query_extension<IParserExtension>() };
+        if (!ext) {
+            spdlog::error("Parser extension not found");
+            return 1;
+        }
+
+        // Print only client messages
+        ext->get_message_callback().append(
+            eventpp::conditionalFunctor(
+                [](const IParserExtension::ParserCallback& callback)
+                {
+                    spdlog::info(
+                        "Message incoming from {}: \n{}",
+                        callback.type == IParserExtension::ParseType::FromClient ? "client" : "server",
+                        callback.text.get_raw()
+                    );
+                    return true;
+                },
+                [](const IParserExtension::ParserCallback& callback)
+                {
+                    return callback.type == IParserExtension::ParseType::FromClient;
+                }
+            )
+        );
     }
     catch (const spdlog::spdlog_ex& ex) {
         spdlog::error("Log initialization failed: {}", ex.what());

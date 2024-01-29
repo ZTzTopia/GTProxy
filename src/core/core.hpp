@@ -1,7 +1,10 @@
 #pragma once
+#include <vector>
 #include <eventpp/callbacklist.h>
+#include <spdlog/spdlog.h>
 
 #include "config.hpp"
+#include "../extension/extension.hpp"
 
 namespace server {
 class Server;
@@ -12,13 +15,26 @@ class Client;
 }
 
 namespace core {
-class Core {
+class Core final : public extension::Extensible {
 public:
     Core();
-    ~Core();
+    ~Core() override;
 
     void run();
     void stop() { run_ = false; }
+
+    bool add_extension(extension::IExtension* ext) override
+    {
+        spdlog::debug("Checking if extension with UID 0x{:x} should be ignored", ext->get_uid());
+        for (const auto& ignore_uid : config_.get<std::vector<std::string>>("extension.ignore")) {
+            if (ext->get_uid() == std::stoull(ignore_uid, nullptr, 16)) {
+                spdlog::info("Ignoring extension with UID 0x{:x}", ext->get_uid());
+                return false;
+            }
+        }
+
+        return extension::Extensible::add_extension(ext);
+    }
 
     [[nodiscard]] Config& get_config() { return config_; }
     [[nodiscard]] server::Server* get_server() const { return server_; }
@@ -26,9 +42,6 @@ public:
 
     [[nodiscard]] eventpp::CallbackList<void()>& get_init_callback() { return init_callback_; }
     [[nodiscard]] eventpp::CallbackList<void()>& get_tick_callback() { return tick_callback_; }
-
-    [[nodiscard]] std::tuple<std::string, uint16_t> get_address() const { return { address_, port_ }; }
-    void set_address(const std::string& address, const uint16_t port) { address_ = address; port_ = port; }
 
 private:
     Config config_;
@@ -41,8 +54,5 @@ private:
 
     eventpp::CallbackList<void()> init_callback_;
     eventpp::CallbackList<void()> tick_callback_;
-
-    std::string address_;
-    uint16_t port_;
 };
 }

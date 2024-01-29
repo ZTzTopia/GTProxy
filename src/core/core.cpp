@@ -10,7 +10,6 @@ namespace core {
 Core::Core()
     : run_{ true }
     , tick_{ 0 }
-    , port_{ 0 }
 {
     if (enet_initialize() != 0) {
         throw std::runtime_error{ "Failed to initialize ENet" };
@@ -18,8 +17,6 @@ Core::Core()
 
     server_ = new server::Server{ this };
     client_ = new client::Client{ this };
-
-    init_callback_();
 }
 
 Core::~Core()
@@ -31,6 +28,11 @@ Core::~Core()
 
 void Core::run()
 {
+    init_callback_();
+    for (const auto& ext : std::views::values(extensions_)) {
+        ext->init();
+    }
+
     constexpr std::chrono::microseconds sleep_timer{ static_cast<int>(5.0f * 1000.0f) };
     auto prev{ std::chrono::high_resolution_clock::now() };
     std::chrono::microseconds sleep_duration{ sleep_timer };
@@ -54,6 +56,9 @@ void Core::run()
 
         // Call the tick callback
         tick_callback_(); // TODO: Pass tick related arguments to the callback
+        for (const auto& ext : std::views::values(extensions_)) {
+            ext->tick();
+        }
 
         if (sleep_duration > std::chrono::microseconds::zero()) {
             std::this_thread::sleep_for(sleep_duration);

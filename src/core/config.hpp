@@ -4,7 +4,7 @@
 #include <variant>
 
 namespace core {
-typedef std::variant<int, unsigned int, std::string, bool> ConfigStorage;
+using ConfigStorage = std::variant<int, unsigned int, std::string, bool, std::vector<std::string>>;
 
 class Config {
 public:

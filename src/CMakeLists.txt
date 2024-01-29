@@ -4,6 +4,8 @@ file(GLOB GTPROXY_INCLUDE_FILES
     client/*.hpp
     core/*.hpp
     packet/*.hpp
+    extension/*.hpp
+    extension/**/*.hpp
     packet/message/*.hpp
     player/*.hpp
     server/*.hpp
@@ -13,6 +15,8 @@ file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
     client/*.cpp
     core/*.cpp
+    extension/*.cpp
+    extension/**/*.cpp
     packet/*.cpp
     player/*.cpp
     server/*.cpp

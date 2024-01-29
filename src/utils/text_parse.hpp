@@ -97,11 +97,11 @@ public:
         m_data.erase(it);
     }
 
-    [[nodiscard]] std::string get_raw(const std::string& delimiter = "|") const
+    [[nodiscard]] std::string get_raw(const std::string& delimiter = "|", const std::string& prepend_text = "\t") const
     {
         std::string raw_data{};
         for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
-            raw_data += it->first;
+            raw_data += prepend_text + it->first;
             for (const auto& token : it->second) {
                 raw_data += delimiter + token;
             }

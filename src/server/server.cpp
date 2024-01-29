@@ -12,50 +12,27 @@ namespace server {
 Server::Server(core::Core* core)
     : ENetWrapper{ static_cast<enet_uint16>(core->get_config().get<unsigned int>("server.port")), 1 }
     , core_{ core }
-    , web_server_{ core }
     , player_{ nullptr }
 {
     if (!host_) {
         throw std::runtime_error{ "Failed to create an ENet server host!" };
     }
 
-    core_->get_init_callback().append([&]()
-    {
-        core_->get_client()->get_connect_callback().append([&](const auto& player)
-        {
-
-        });
-
-        core_->get_client()->get_disconnect_callback().append([&](const auto& player)
-        {
-
-        });
-
-        core_->get_client()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
-        {
-            return true;
-        });
-    });
-
     spdlog::info(
         "The server is up and running with port {} and {} peers can join!",
         host_->address.port,
         host_->peerCount
     );
-
-    web_server_.listen("0.0.0.0", 443);
 }
 
 Server::~Server()
 {
     delete player_;
-    web_server_.stop();
 }
 
 void Server::process()
 {
     // Perform server processing here
-
     ENetWrapper::process();
 }
 
@@ -92,6 +69,12 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
+    const player::Player* client_player{ core_->get_client()->get_player() };
+    if (!client_player) {
+        enet_peer_disconnect(peer, 0);
+        return;
+    }
+
     if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
@@ -102,15 +85,14 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             peer->address.port
         );
 
-        for (const auto& msg : TextParse::tokenize(message, "\n")) {
-            spdlog::debug("\t{}", msg);
+        if (
+            message_callback_.forEachIf([&](const auto& callback)
+            {
+                return !callback(*player_, *client_player, message);
+            })
+        ) {
+            client_player->send_packet(byte_stream.get_data(), 0);
         }
-
-        const TextParse text_parse{ message };
-        receive_message_callback_.forEachIf([&](const auto& callback)
-        {
-            return !callback(*player_, text_parse);
-        });
     }
     else {
         spdlog::warn(
@@ -118,7 +100,9 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             network::format_ip_address(peer->address.host),
             peer->address.port
         );
-        spdlog::warn("\t{} ({})", magic_enum::enum_name(type), type);
+        spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
+
+        client_player->send_packet(byte_stream.get_data(), 0);
     }
 }
 

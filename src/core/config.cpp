@@ -9,7 +9,8 @@ static const std::map<std::string, ConfigStorage> config_defaults{
     { "server.port", 16999 },
     { "server.address", "www.growtopia1.com" },
     { "client.game_version", "4.35" },
-    { "client.protocol", 192 }
+    { "client.protocol", 192 },
+    { "extension.ignore", std::vector<std::string>{ "0xdeadbeef" } },
 };
 
 Config::Config()
@@ -22,22 +23,28 @@ Config::Config()
         ifs >> j;
 
         for (const auto& [key, value] : j.items()) {
-            switch (value.type()) {
-            case nlohmann::json::value_t::number_integer:
-                config_[key] = value.get<int>();
-                break;
-            case nlohmann::json::value_t::number_unsigned:
+            if (value.is_number_unsigned()) {
                 config_[key] = value.get<unsigned int>();
-                break;
-            case nlohmann::json::value_t::string:
+            }
+            else if (value.is_number_integer()) {
+                config_[key] = value.get<int>();
+            }
+            else if (value.is_string()) {
                 config_[key] = value.get<std::string>();
-                break;
-            case nlohmann::json::value_t::boolean:
+            }
+            else if (value.is_boolean()) {
                 config_[key] = value.get<bool>();
-                break;
-            default:
-                // Handle invalid type
-                break;
+            }
+            else if (value.is_array()) {
+                if (!value.empty() && value[0].is_string()) {
+                    config_[key] = value.get<std::vector<std::string>>();
+                }
+                else {
+                    throw std::runtime_error{ "Invalid configuration array value type" };
+                }
+            }
+            else {
+                throw std::runtime_error{ "Invalid configuration value type" };
             }
         }
     }
@@ -64,16 +71,16 @@ Config::Config()
                 if constexpr (std::is_same_v<T, int>) {
                     j[key] = val;
                 }
-
-                if constexpr (std::is_same_v<T, unsigned int>) {
+                else if constexpr (std::is_same_v<T, unsigned int>) {
                     j[key] = val;
                 }
-
-                if constexpr (std::is_same_v<T, std::string>) {
+                else if constexpr (std::is_same_v<T, std::string>) {
                     j[key] = val;
                 }
-
-                if constexpr (std::is_same_v<T, bool>) {
+                else if constexpr (std::is_same_v<T, bool>) {
+                    j[key] = val;
+                }
+                else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
                     j[key] = val;
                 }
             }, value);

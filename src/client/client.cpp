@@ -3,6 +3,7 @@
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include "client.hpp"
+#include "../extension/web_server/web_server.hpp"
 #include "../packet/packet_helper.hpp"
 #include "../packet/message/core.hpp"
 #include "../server/server.hpp"
@@ -23,19 +24,27 @@ Client::Client(core::Core* core)
     {
         core_->get_server()->get_connect_callback().append([&](const auto& player)
         {
-            auto [address, port]{ core_->get_address() };
-            player_ = new player::Player{ connect(address, port) };
-            pre_connect_callback_(*player_);
-        });
+            const auto ext{ core_->get_extension(0x153bd697) };
+            if (!ext) {
+                spdlog::warn("The web server extension is not loaded!");
+                spdlog::warn("Trying to using config address and port instead...");
 
-        core_->get_server()->get_disconnect_callback().append([&](const auto& player)
-        {
+                const core::Config config{ core_->get_config() };
+                player_ = new player::Player{
+                    connect(
+                        config.get<std::string>("server.address"),
+                        config.get<unsigned int>("server.port")
+                    )
+                };
+                return;
+            }
 
-        });
-
-        core_->get_server()->get_receive_message_callback().append([&](const auto& player, const auto& text_parse)
-        {
-            return true;
+            player_ = new player::Player{
+                connect(
+                    ext->call_method<std::string>("get_server_address"),
+                    ext->call_method<uint16_t>("get_server_port")
+                )
+            };
         });
     });
 
@@ -50,7 +59,6 @@ Client::~Client()
 void Client::process()
 {
     // Perform client processing here
-
     ENetWrapper::process();
 }
 
@@ -86,15 +94,15 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         return;
     }
 
-    if (type == packet::NET_MESSAGE_SERVER_HELLO) {
-        player::Player* player{ core_->get_server()->get_player() };
-        if (!player) {
-            enet_peer_disconnect(peer, 0);
-            return;
-        }
+    player::Player* server_player{ core_->get_server()->get_player() };
+    if (!server_player) {
+        enet_peer_disconnect(peer, 0);
+        return;
+    }
 
+    if (type == packet::NET_MESSAGE_SERVER_HELLO) {
         packet::core::ServerHello server_hello{};
-        packet::PacketHelper::send(server_hello, *player);
+        packet::PacketHelper::send(server_hello, *server_player);
     }
     else if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
         std::string message{};
@@ -106,15 +114,14 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
             peer->address.port
         );
 
-        for (const auto& msg : TextParse::tokenize(message, "\n")) {
-            spdlog::debug("\t{}", msg);
+        if (
+            message_callback_.forEachIf([&](const auto& callback)
+            {
+                return !callback(*player_, *server_player, message);
+            })
+        ) {
+            server_player->send_packet(byte_stream.get_data(), 0);
         }
-
-        const TextParse text_parse{ message };
-        receive_message_callback_.forEachIf([&](const auto& callback)
-        {
-            return !callback(*player_, text_parse);
-        });
     }
     else {
         spdlog::warn(
@@ -122,7 +129,10 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
             network::format_ip_address(peer->address.host),
             peer->address.port
         );
-        spdlog::warn("\t{} ({})", magic_enum::enum_name(type), type);
+        spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
+
+        // Send the packet back to the client
+        server_player->send_packet(byte_stream.get_data(), 0);
     }
 }
 
