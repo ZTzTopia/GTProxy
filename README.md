@@ -1,4 +1,4 @@
-# Growtopia Proxy
+# Growtopia Proxy (WIP!)
 
 [![Github Action](https://img.shields.io/github/actions/workflow/status/ZTzTopia/GTProxy/cmake_ci.yml?branch=develop&logo=github&logoColor=white)](https://github.com/ZTzTopia/GTProxy/actions?query=workflow%3ACI)
 [![GitHub Release](https://img.shields.io/github/v/release/ZTzTopia/GTProxy.svg?color=orange&logo=docusign&logoColor=orange)](https://github.com/ZTzTopia/GTProxy/releases/latest) 
@@ -45,13 +45,17 @@ $ cmake --build .
 ## Credits
 
 - [Conan, the C/C++ Package Manager](https://conan.io/): The open source, decentralized and multi-platform package manager to create and share all your native binaries
+- [cpp-httplib](https://github.com/yhirose/cpp-httplib): A C++ header-only HTTP/HTTPS server and client library
+- [ENet](https://github.com/lsalzman/enet): ENet reliable UDP networking library
+- [eventpp](https://github.com/wqking/eventpp): Event Dispatcher and callback list for C++
+- [fmt](https://github.com/fmtlib/fmt): A modern formatting library
+- [glm](https://github.com/g-truc/glm): OpenGL Mathematics (GLM)
 - [LibreSSL](https://www.libressl.org/) is a version of the TLS/crypto stack forked from OpenSSL in 2014, with goals of modernizing the codebase, improving security, and applying best practice development processes
 - [magic_enum](https://github.com/Neargye/magic_enum): Static reflection for enums (to string, from string, iteration)
 - [nlohmann_json](https://github.com/nlohmann/json): JSON for Modern C++
 - [pcg-cpp](https://github.com/imneme/pcg-cpp): Random number generator
 - [randutils.hpp](https://gist.github.com/imneme/540829265469e673d045): Random utilities
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
-- [eventpp](https://github.com/wqking/eventpp): Event Dispatcher and callback list for C++
 
 ## License
 

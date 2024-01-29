@@ -8,13 +8,12 @@ class GTProxyRecipe(ConanFile):
 
     def requirements(self):
         self.requires("cpp-httplib/[~0.14]")
-        self.requires("fmt/10.1.1")
+        self.requires("fmt/10.2.1")
         self.requires("glm/[~0.9.9]")
-        self.requires("libressl/[~3.5]")
         self.requires("magic_enum/[~0.9]")
         self.requires("nlohmann_json/[~3.11]")
         self.requires("pcg-cpp/cci.20220409")
-        self.requires("spdlog/[~1.12]")
+        self.requires("spdlog/[~1.13]")
 
     def layout(self):
         cmake_layout(self)
