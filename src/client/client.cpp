@@ -74,28 +74,28 @@ void Client::on_connect(ENetPeer* peer)
 
 void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
-    ByteStream byte_stream{ reinterpret_cast<std::byte*>(packet->data), packet->dataLength };
-    if (byte_stream.get_size() < 4 || byte_stream.get_size() > 786432 /* 768kb */) {
-        enet_peer_disconnect(peer, 0);
-        return;
-    }
-
-    enet_packet_destroy(packet);
-
     if (!player_) {
-        enet_peer_disconnect(peer, 0);
-        return;
-    }
-
-    packet::NetMessageType type{};
-    if (!byte_stream.read(type)) {
         enet_peer_disconnect(peer, 0);
         return;
     }
 
     player::Player* to_player{ core_->get_server()->get_player() };
     if (!to_player) {
-        enet_peer_disconnect(peer, 0);
+        player_->disconnect();
+        return;
+    }
+
+    ByteStream byte_stream{ reinterpret_cast<std::byte*>(packet->data), packet->dataLength };
+    if (byte_stream.get_size() < 4 || byte_stream.get_size() > 786432 /* 768kb */) {
+        player_->disconnect();
+        return;
+    }
+
+    enet_packet_destroy(packet);
+
+    packet::NetMessageType type{};
+    if (!byte_stream.read(type)) {
+        player_->disconnect();
         return;
     }
 
@@ -141,5 +141,13 @@ void Client::on_disconnect(ENetPeer* peer)
 
     delete player_;
     player_ = nullptr;
+
+    const player::Player* to_player{ core_->get_server()->get_player() };
+    if (!to_player) {
+        return;
+    }
+
+    enet_host_flush(host_); // Flush all outgoing packets before disconnecting
+    to_player->disconnect();
 }
 }

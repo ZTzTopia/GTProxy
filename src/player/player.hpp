@@ -13,6 +13,7 @@ public:
 
     void disconnect() const { enet_peer_disconnect(peer_, 0); }
     void disconnect_now() const { enet_peer_disconnect_now(peer_, 0); }
+    void disconnect_later() const { enet_peer_disconnect_later(peer_, 0); }
 
     bool send_packet(const std::vector<std::byte>& data, int channel = 0) const;
 

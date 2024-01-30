@@ -52,38 +52,53 @@ void Server::on_connect(ENetPeer* peer)
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 {
-    ByteStream byte_stream{ reinterpret_cast<std::byte*>(packet->data), packet->dataLength };
-    if (byte_stream.get_size() < 4 || byte_stream.get_size() > 16384 /* 16kb */) {
-        enet_peer_disconnect(peer, 0);
-        return;
-    }
-
-    enet_packet_destroy(packet);
-
     if (!player_) {
-        enet_peer_disconnect(peer, 0);
-        return;
-    }
-
-    packet::NetMessageType type{};
-    if (!byte_stream.read(type)) {
         enet_peer_disconnect(peer, 0);
         return;
     }
 
     const player::Player* to_player{ core_->get_client()->get_player() };
     if (!to_player) {
-        enet_peer_disconnect(peer, 0);
+        player_->disconnect();
+        return;
+    }
+
+    ByteStream byte_stream{ reinterpret_cast<std::byte*>(packet->data), packet->dataLength };
+    if (byte_stream.get_size() < 4 || byte_stream.get_size() > 16384 /* 16kb */) {
+        player_->disconnect();
+        return;
+    }
+
+    enet_packet_destroy(packet);
+
+    packet::NetMessageType type{};
+    if (!byte_stream.read(type)) {
+        player_->disconnect();
         return;
     }
 
     if (type == packet::NET_MESSAGE_GENERIC_TEXT || type == packet::NET_MESSAGE_GAME_MESSAGE) {
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
+
         message_callback_(*player_, *to_player, message);
+
+        if (message.find("action|quit") != std::string::npos) {
+            player_->disconnect();
+        }
     }
     else if (type == packet::NET_MESSAGE_GAME_PACKET) {
+        packet::GameUpdatePacket game_update_packet{};
+        byte_stream.read(game_update_packet);
+
         packet_callback_(*player_, *to_player, byte_stream.get_data());
+
+        if (game_update_packet.type == packet::PACKET_DISCONNECT) {
+            // Because Growtopia's client is force recreate the ENetHost when the client is
+            // disconnected, we need to disconnect the client immediately.
+            player_->disconnect_now();
+            on_disconnect(peer);
+        }
     }
     else {
         spdlog::warn(
@@ -113,5 +128,13 @@ void Server::on_disconnect(ENetPeer* peer)
 
     delete player_;
     player_ = nullptr;
+
+    const player::Player* to_player{ core_->get_client()->get_player() };
+    if (!to_player) {
+        return;
+    }
+
+    enet_host_flush(host_); // Flush all outgoing packets before disconnecting
+    to_player->disconnect();
 }
 }
