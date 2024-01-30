@@ -1,6 +1,7 @@
 #include <future>
 #include <chrono>
 #include <enet/enet.h>
+#include <spdlog/spdlog.h>
 
 #include "core.hpp"
 #include "../client/client.hpp"
@@ -26,9 +27,22 @@ Core::~Core()
     enet_deinitialize();
 }
 
+bool Core::add_extension(extension::IExtension* ext)
+{
+    spdlog::debug("Checking if extension with UID 0x{:x} should be ignored", ext->get_uid());
+    for (const auto& ignore_uid : config_.get<std::vector<std::string>>("extension.ignore")) {
+        if (ext->get_uid() == std::stoull(ignore_uid, nullptr, 16)) {
+            spdlog::info("Ignoring extension with UID 0x{:x}", ext->get_uid());
+            return false;
+        }
+    }
+
+    return extension::Extensible::add_extension(ext);
+}
+
 void Core::run()
 {
-    init_callback_();
+    event_dispatcher_.dispatch(EventInit{});
     for (const auto& ext : std::views::values(extensions_)) {
         ext->init();
     }
@@ -55,7 +69,7 @@ void Core::run()
         client_future.get();
 
         // Call the tick callback
-        tick_callback_(); // TODO: Pass tick related arguments to the callback
+        event_dispatcher_.dispatch(EventTick{}); // TODO: Pass tick related arguments to the callback
         for (const auto& ext : std::views::values(extensions_)) {
             ext->tick();
         }

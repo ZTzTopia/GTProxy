@@ -1,5 +1,3 @@
-#include <eventpp/utilities/conditionalfunctor.h>
-
 #include "core/core.hpp"
 #include "core/logger.hpp"
 #include "extension/parser/parser_impl.hpp"
@@ -38,48 +36,6 @@ int main()
         core::Core core{};
         core.add_extension(new extension::web_server::WebServerExtension{ &core });
         core.add_extension(new extension::parser::ParserExtension{ &core });
-
-        // Test extension if it works
-        const auto ext{ core.query_extension<IParserExtension>() };
-        if (!ext) {
-            spdlog::error("Parser extension not found");
-            return 1;
-        }
-
-        ext->get_message_callback().append(
-            [](const IParserExtension::MessageParser& message_parser)
-            {
-                spdlog::info(
-                    "Message incoming from {}: \n{}",
-                    message_parser.type == IParserExtension::ParseType::FromClient ? "client" : "server",
-                    message_parser.text.get_raw("|", "\t")
-                );
-            }
-        );
-
-        ext->get_packet_callback().append(
-            [](const IParserExtension::PacketParser& packet_parser)
-            {
-                spdlog::info(
-                    "Packet incoming from {}:",
-                    packet_parser.type == IParserExtension::ParseType::FromClient ? "client" : "server"
-                );
-
-                spdlog::info(
-                    "\tPacket type: {} ({})",
-                    magic_enum::enum_name(packet_parser.packet.type),
-                    magic_enum::enum_integer(packet_parser.packet.type)
-                );
-
-                if (packet_parser.packet.type == packet::PACKET_CALL_FUNCTION) {
-                    spdlog::info(
-                        "\tWanna call a function \"{}\"",
-                        packet_parser.variant.get(0)
-                    );
-                }
-            }
-        );
-
         core.run();
     }
     catch (const spdlog::spdlog_ex& ex) {

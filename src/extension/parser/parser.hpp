@@ -1,37 +1,51 @@
 #pragma once
 #include "../extension.hpp"
-#include "../../packet/packet_types.hpp"
 #include "../../packet/packet_variant.hpp"
 #include "../../player/player.hpp"
-#include "../../utils/text_parse.hpp"
 
 struct IParserExtension : extension::IExtension {
     PROVIDE_EXT_UID(0x4ea75473);
 
-    enum class ParseType {
-        FromClient,
-        FromServer
+    enum class EventType {
+        CallFunction
     };
 
-    struct Parser {
-        ParseType type;
-        player::Player from;
-        player::Player to;
+    class Event {
+    public:
+        explicit Event(const EventType type)
+            : type(type)
+            , from(core::EventFrom::FromAny)
+            , canceled(false)
+        {
+
+        }
+
+        Event(const EventType type, const core::EventFrom from)
+            : type(type)
+            , from(from)
+            , canceled(false)
+        {
+
+        }
+
+        EventType type;
+        mutable core::EventFrom from;
+        mutable bool canceled;
     };
 
-    struct MessageParser : Parser {
-        TextParse text;
+    EVENTPP_MAKE_EVENT(
+        EventCallFunction, Event, (EventType::CallFunction, core::EventFrom::FromAny),
+        G(player::Player, player),
+        G(player::Player, target),
+        G(std::string, function_name),
+        G(packet::Variant, args)
+    );
+
+    struct EventPolicies {
+        static EventType getEvent(const Event& e) { return e.type; }
+        static bool canContinueInvoking(const Event& e) { return !e.canceled; }
     };
 
-    struct PacketParser : Parser {
-        packet::GameUpdatePacket packet;
-        std::vector<std::byte> ext_data;
-        packet::Variant variant;
-    };
-
-    using MessageCallback = eventpp::CallbackList<void(const MessageParser&)>;
-    using PacketCallback = eventpp::CallbackList<void(const PacketParser&)>;
-
-    [[nodiscard]] virtual MessageCallback& get_message_callback() = 0;
-    [[nodiscard]] virtual PacketCallback& get_packet_callback() = 0;
+    using EventDispatcher = eventpp::EventDispatcher<EventType, void(const Event&), EventPolicies>;
+    [[nodiscard]] virtual EventDispatcher& get_event_dispatcher() = 0;
 };

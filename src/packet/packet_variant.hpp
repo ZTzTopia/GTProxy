@@ -147,7 +147,10 @@ public:
         return true;
     }
 
-    [[nodiscard]] std::vector<variant> variants() const { return variants_; }
+    void add(const variant& value)
+    {
+        variants_.emplace_back(value);
+    }
 
     template <typename T = std::string>
     [[nodiscard]] T get(const std::size_t index) const
@@ -163,6 +166,18 @@ public:
             return T{}; // or some other default value
         }
     }
+
+    void set(const std::size_t index, const variant& value)
+    {
+        if (index > variants_.size()) {
+            return;
+        }
+
+        variants_[index] = value;
+    }
+
+    [[nodiscard]] std::vector<variant> get_variants() const { return variants_; }
+    [[nodiscard]] std::size_t size() const { return variants_.size(); }
 
 private:
     std::vector<variant> variants_;

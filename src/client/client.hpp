@@ -1,5 +1,4 @@
 #pragma once
-#include <eventpp/callbacklist.h>
 
 #include "enet_wrapper.hpp"
 #include "../core/core.hpp"
@@ -7,11 +6,6 @@
 
 namespace client {
 class Client final : public ENetWrapper {
-    using ConnectionCallback = eventpp::CallbackList<void(const player::Player&)>;
-    using DisconnectionCallback = eventpp::CallbackList<void(const player::Player&)>;
-    using MessageCallback = eventpp::CallbackList<void(const player::Player&, const player::Player&, const std::string&)>;
-    using PacketCallback = eventpp::CallbackList<void(const player::Player&, const player::Player&, const std::vector<std::byte>&)>;
-
 public:
     explicit Client(core::Core* core);
     ~Client() override;
@@ -24,18 +18,8 @@ public:
 
     [[nodiscard]] player::Player* get_player() const { return player_; }
 
-    [[nodiscard]] ConnectionCallback& get_connect_callback() { return connect_callback_; }
-    [[nodiscard]] DisconnectionCallback& get_disconnect_callback() { return disconnect_callback_; }
-    [[nodiscard]] MessageCallback& get_message_callback() { return message_callback_; }
-    [[nodiscard]] PacketCallback& get_packet_callback() { return packet_callback_; }
-
 private:
     core::Core* core_;
     player::Player* player_;
-
-    ConnectionCallback connect_callback_;
-    DisconnectionCallback disconnect_callback_;
-    MessageCallback message_callback_;
-    PacketCallback packet_callback_;
 };
 }

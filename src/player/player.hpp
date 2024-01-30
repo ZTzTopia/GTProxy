@@ -5,7 +5,9 @@
 namespace player {
 class Player  {
 public:
+    Player() : peer_{ nullptr } {}
     explicit Player(ENetPeer* peer);
+    Player(const Player& other) noexcept { peer_ = other.peer_; }
     ~Player() = default;
 
     [[nodiscard]] bool is_connected() const { return peer_->state == ENET_PEER_STATE_CONNECTED; }

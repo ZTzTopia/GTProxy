@@ -1,6 +1,5 @@
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
-#include <spdlog/fmt/bin_to_hex.h>
 
 #include "server.hpp"
 #include "../client/client.hpp"
@@ -47,7 +46,10 @@ void Server::on_connect(ENetPeer* peer)
     enet_peer_timeout(peer, 0, 12000, 0);
 
     player_ = new player::Player{ peer };
-    connect_callback_(*player_);
+
+    const core::EventConnection event_connection{ *player_ };
+    event_connection.from = core::EventFrom::FromClient;
+    core_->get_event_dispatcher().dispatch(event_connection);
 }
 
 void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
@@ -81,7 +83,13 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
 
-        message_callback_(*player_, *to_player, message);
+        const core::EventMessage event_message{ *player_, *to_player, TextParse{ message } };
+        event_message.from = core::EventFrom::FromClient;
+        core_->get_event_dispatcher().dispatch(event_message);
+
+        if (!event_message.canceled) {
+            bool _ = to_player->send_packet(byte_stream.get_data(), 0);
+        }
 
         if (message.find("action|quit") != std::string::npos) {
             player_->disconnect();
@@ -91,7 +99,18 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         packet::GameUpdatePacket game_update_packet{};
         byte_stream.read(game_update_packet);
 
-        packet_callback_(*player_, *to_player, byte_stream.get_data());
+        std::vector<std::byte> ext_data{};
+        if (game_update_packet.data_size > 0) {
+            byte_stream.read_vector(ext_data, game_update_packet.data_size);
+        }
+
+        const core::EventPacket event_packet{ *player_, *to_player, game_update_packet, ext_data };
+        event_packet.from = core::EventFrom::FromClient;
+        core_->get_event_dispatcher().dispatch(event_packet);
+
+        if (!event_packet.canceled) {
+            bool _ = to_player->send_packet(byte_stream.get_data(), 0);
+        }
 
         if (game_update_packet.type == packet::PACKET_DISCONNECT) {
             // Because Growtopia's client is force recreate the ENetHost when the client is
@@ -108,8 +127,6 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         );
         spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
     }
-
-    bool _ = to_player->send_packet(byte_stream.get_data(), 0);
 }
 
 void Server::on_disconnect(ENetPeer* peer)
@@ -124,7 +141,9 @@ void Server::on_disconnect(ENetPeer* peer)
         return;
     }
 
-    disconnect_callback_(*player_);
+    const core::EventDisconnection event_disconnection{ *player_ };
+    event_disconnection.from = core::EventFrom::FromClient;
+    core_->get_event_dispatcher().dispatch(event_disconnection);
 
     delete player_;
     player_ = nullptr;
