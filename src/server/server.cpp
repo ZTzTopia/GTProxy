@@ -157,6 +157,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
             peer->address.port
         );
         spdlog::warn("\t{} ({})", magic_enum::enum_name(type), magic_enum::enum_integer(type));
+        std::ignore = to_player->send_packet(byte_stream.get_data(), 0);
     }
 }
 
