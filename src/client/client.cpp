@@ -12,13 +12,20 @@
 
 namespace client {
 Client::Client(core::Core* core)
-    : ENetWrapper{ 1 }
-    , core_{ core }
+    : core_{ core }
     , player_{ nullptr }
 {
+    host_ = enet_host_create(nullptr, 1, 2, 0, 0);
     if (!host_) {
-        throw std::runtime_error{ "Failed to create an ENet client host!" };
+        return;
     }
+
+    if (enet_host_compress_with_range_coder(host_) != 0) {
+        return;
+    }
+
+    host_->checksum = enet_crc32;
+    host_->usingNewPacket = 1;
 
     core_->get_event_dispatcher().appendListener(
         core::EventType::Connection,
@@ -57,13 +64,46 @@ Client::Client(core::Core* core)
 
 Client::~Client()
 {
+    enet_host_destroy(host_);
     delete player_;
+}
+
+ENetPeer* Client::connect(const std::string& host, const enet_uint16 port) const
+{
+    if (!host_) {
+        return nullptr;
+    }
+
+    ENetAddress address{};
+    enet_address_set_host(&address, host.c_str());
+    address.port = port;
+
+    return enet_host_connect(host_, &address, 2, 0);
 }
 
 void Client::process()
 {
     // Perform client processing here
-    ENetWrapper::process();
+    if (!host_) {
+        return;
+    }
+
+    ENetEvent ev{};
+    while (enet_host_service(host_, &ev, 16) > 0) {
+        switch (ev.type) {
+        case ENET_EVENT_TYPE_CONNECT:
+            on_connect(ev.peer);
+            break;
+        case ENET_EVENT_TYPE_DISCONNECT:
+            on_disconnect(ev.peer);
+            break;
+        case ENET_EVENT_TYPE_RECEIVE:
+            on_receive(ev.peer, ev.packet);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void Client::on_connect(ENetPeer* peer)
@@ -119,7 +159,7 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         core_->get_event_dispatcher().dispatch(event_message);
 
         if (!event_message.canceled) {
-            bool _ = to_player->send_packet(byte_stream.get_data(), 0);
+            std::ignore = to_player->send_packet(byte_stream.get_data(), 0);
         }
     }
     else if (type == packet::NET_MESSAGE_GAME_PACKET) {
@@ -136,7 +176,7 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         core_->get_event_dispatcher().dispatch(event_packet);
 
         if (!event_packet.canceled) {
-            bool _ = to_player->send_packet(byte_stream.get_data(), 0);
+            std::ignore = to_player->send_packet(byte_stream.get_data(), 0);
         }
     }
     else {

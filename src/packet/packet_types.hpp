@@ -1,7 +1,4 @@
 #pragma once
-#include <map>
-
-#include "../utils/byte_stream.hpp"
 
 namespace packet {
 enum NetMessageType : uint32_t {
@@ -15,13 +12,6 @@ enum NetMessageType : uint32_t {
     NET_MESSAGE_CLIENT_LOG_REQUEST,
     NET_MESSAGE_CLIENT_LOG_RESPONSE,
     NET_MESSAGE_MAX
-};
-
-static const std::map<std::string, uint8_t> message_actions{
-    { "refresh_item_data", 1 },
-    { "refresh_player_tribute_data", 2 },
-    { "quit", 3 },
-    { "enter_game", 4 }
 };
 
 enum PacketType : uint8_t {

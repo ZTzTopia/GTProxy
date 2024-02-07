@@ -1,5 +1,6 @@
 #include "core/core.hpp"
 #include "core/logger.hpp"
+
 #include "extension/parser/parser_impl.hpp"
 #include "extension/web_server/web_server_impl.hpp"
 
@@ -13,13 +14,7 @@ int main()
             core::Logger::create_file_sink()
         };
 
-        logger.set_logger(
-            std::make_shared<spdlog::logger>(
-                "GTProxy",
-                sinks.begin(),
-                sinks.end()
-            )
-        );
+        logger.set_logger(std::make_shared<spdlog::logger>("GTProxy", sinks.begin(), sinks.end()));
         logger.get_logger()->set_level(spdlog::level::trace);
 
         spdlog::register_logger(logger.get_logger());

@@ -26,9 +26,12 @@ public:
         data_.insert(data_.end(), begin, end);
     }
 
-    void write_vector(const std::vector<std::byte>& vec)
+    void write_vector(const std::vector<std::byte>& vec, const bool write_length_info = true)
     {
-        write(static_cast<LengthType>(vec.size()));
+        if (write_length_info) {
+            write(static_cast<LengthType>(vec.size()));
+        }
+
         write_data(vec.data(), vec.size());
     }
 
@@ -52,6 +55,13 @@ public:
         write_data(str.c_str(), str.size());
     }
 
+    template <typename T>
+    ByteStream& operator<<(const T& value)
+    {
+        write(value);
+        return *this;
+    }
+
     bool read_data(void* ptr, const std::size_t size)
     {
         if (data_.size() - read_offset_ < size) {
@@ -63,8 +73,18 @@ public:
         return true;
     }
 
-    bool read_vector(std::vector<std::byte>& vec, std::size_t length = 0)
+    bool read_vector(std::vector<std::byte>& vec, LengthType length = 0)
     {
+        if (length == 0) {
+            if (!read<LengthType>(length)) {
+                return false;
+            }
+        }
+
+        if (data_.size() < static_cast<std::size_t>(length)) {
+            return false;
+        }
+
         vec.resize(length);
         read_data(&vec[0], length);
         return true;
@@ -92,6 +112,13 @@ public:
         str.resize(static_cast<std::size_t>(length));
         read_data(&str[0], static_cast<std::size_t>(length));
         return true;
+    }
+
+    template <typename T>
+    ByteStream& operator>>(T& value)
+    {
+        read(value);
+        return *this;
     }
 
     void skip(const std::size_t size) { read_offset_ += size; }

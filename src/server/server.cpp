@@ -8,13 +8,24 @@
 
 namespace server {
 Server::Server(core::Core* core)
-    : ENetWrapper{ static_cast<enet_uint16>(core->get_config().get<unsigned int>("server.port")), 1 }
-    , core_{ core }
+    : core_{ core }
     , player_{ nullptr }
 {
+    ENetAddress address{};
+    address.host = ENET_HOST_ANY;
+    address.port = core->get_config().get<unsigned int>("server.port");
+
+    host_ = enet_host_create(&address, 1, 2, 0, 0);
     if (!host_) {
-        throw std::runtime_error{ "Failed to create an ENet server host!" };
+        return;
     }
+
+    if (enet_host_compress_with_range_coder(host_) != 0) {
+        return;
+    }
+
+    host_->checksum = enet_crc32;
+    host_->usingNewPacketForServer = 1;
 
     spdlog::info(
         "The server is up and running with port {} and {} peers can join!",
@@ -25,13 +36,33 @@ Server::Server(core::Core* core)
 
 Server::~Server()
 {
+    enet_host_destroy(host_);
     delete player_;
 }
 
 void Server::process()
 {
     // Perform server processing here
-    ENetWrapper::process();
+    if (!host_) {
+        return;
+    }
+
+    ENetEvent ev{};
+    while (enet_host_service(host_, &ev, 16) > 0) {
+        switch (ev.type) {
+        case ENET_EVENT_TYPE_CONNECT:
+            on_connect(ev.peer);
+            break;
+        case ENET_EVENT_TYPE_DISCONNECT:
+            on_disconnect(ev.peer);
+            break;
+        case ENET_EVENT_TYPE_RECEIVE:
+            on_receive(ev.peer, ev.packet);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void Server::on_connect(ENetPeer* peer)
@@ -88,7 +119,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         core_->get_event_dispatcher().dispatch(event_message);
 
         if (!event_message.canceled) {
-            bool _ = to_player->send_packet(byte_stream.get_data(), 0);
+            std::ignore = to_player->send_packet(byte_stream.get_data(), 0);
         }
 
         if (message.find("action|quit") != std::string::npos) {
@@ -109,7 +140,7 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         core_->get_event_dispatcher().dispatch(event_packet);
 
         if (!event_packet.canceled) {
-            bool _ = to_player->send_packet(byte_stream.get_data(), 0);
+            std::ignore = to_player->send_packet(byte_stream.get_data(), 0);
         }
 
         if (game_update_packet.type == packet::PACKET_DISCONNECT) {

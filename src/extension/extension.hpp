@@ -166,8 +166,9 @@ private:
  * This class is used to provide a way to extend a class.
  * It is used to extend the Core class.
  */
-struct Extensible {
-	virtual ~Extensible() = default;
+class Extensible {
+public:
+	virtual ~Extensible() { remove_extensions(); }
 
 	/**
 	 * @brief Add an extension to the class.
@@ -178,6 +179,15 @@ struct Extensible {
 	 */
 	virtual bool add_extension(IExtension* ext)
 	{
+		if (!ext) {
+			return false;
+		}
+
+		const auto it{ extensions_.find(ext->get_uid()) };
+		if (it != extensions_.end() && it->second != ext) {
+			remove_extension(ext->get_uid());
+		}
+
 		return extensions_.emplace(ext->get_uid(), ext).second;
 	}
 
@@ -256,6 +266,14 @@ struct Extensible {
 
 		extensions_.erase(it);
 		return true;
+	}
+
+private:
+	void remove_extensions()
+	{
+		for (const auto& ext : std::views::values(extensions_)) {
+			remove_extension(ext);
+		}
 	}
 
 protected:
