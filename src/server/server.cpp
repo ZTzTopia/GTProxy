@@ -4,6 +4,7 @@
 #include "server.hpp"
 #include "../client/client.hpp"
 #include "../packet/packet_types.hpp"
+#include "../utils/byte_stream.hpp"
 #include "../utils/network.hpp"
 
 namespace server {

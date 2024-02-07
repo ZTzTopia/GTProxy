@@ -3,11 +3,9 @@
 #include <spdlog/spdlog.h>
 
 #include "client.hpp"
-
 #include "../packet/packet_helper.hpp"
 #include "../packet/message/core.hpp"
 #include "../server/server.hpp"
-#include "../utils/hash.hpp"
 #include "../utils/network.hpp"
 
 namespace client {
@@ -35,27 +33,14 @@ Client::Client(core::Core* core)
                 return;
             }
 
-            const auto ext{ core_->get_extension(0x153bd697) };
-            if (!ext) {
-                spdlog::warn("The web server extension is not loaded!");
-                spdlog::warn("Trying to using config address and port instead...");
+            spdlog::warn("The web server extension is not loaded!");
+            spdlog::warn("Trying to using config address and port instead...");
 
-                const core::Config config{ core_->get_config() };
-                player_ = new player::Player{
-                    connect(
-                        config.get<std::string>("server.address"),
-                        config.get<unsigned int>("server.port")
-                    )
-                };
-                return;
-            }
-
-            player_ = new player::Player{
-                connect(
-                    ext->call_method<std::string>("get_server_address"),
-                    ext->call_method<uint16_t>("get_server_port")
-                )
-            };
+            const core::Config config{ core_->get_config() };
+            std::ignore = connect(
+                config.get<std::string>("server.address"),
+                config.get<unsigned int>("server.port")
+            );
         })
     );
 
@@ -113,6 +98,8 @@ void Client::on_connect(ENetPeer* peer)
         network::format_ip_address(peer->address.host),
         peer->address.port
     );
+
+    player_ = new player::Player{ peer };
 
     const core::EventConnection event_connection{ *player_ };
     event_connection.from = core::EventFrom::FromServer;

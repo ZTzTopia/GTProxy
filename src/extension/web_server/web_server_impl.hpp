@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 
 #include "web_server.hpp"
+#include "../../client/client.hpp"
 #include "../../core/core.hpp"
 #include "../../utils/network.hpp"
 
@@ -21,8 +22,7 @@ public:
         , server_{ "./resources/cert.pem", "./resources/key.pem" }
         , port_{ 65535 }
     {
-        add_callable_method("get_server_address", std::bind(&WebServerExtension::get_server_address, this));
-        add_callable_method("get_server_port", [this]{ return get_server_port(); });
+
     }
 
     ~WebServerExtension() override
@@ -32,6 +32,19 @@ public:
 
     void init() override
     {
+        core_->get_event_dispatcher().prependListener(
+            core::EventType::Connection,
+            eventpp::argumentAdapter<void(const core::EventConnection&)>([&](const core::EventConnection& evt)
+            {
+                if (evt.from != core::EventFrom::FromClient) {
+                    return;
+                }
+
+                std::ignore = core_->get_client()->connect(address_, port_);
+                evt.canceled = true;
+            })
+        );
+
         server_.set_logger([](const httplib::Request& req, const httplib::Response& res)
         {
             spdlog::info("{} {} {}", req.method, req.path, res.status);
@@ -76,16 +89,6 @@ public:
     void free() override
     {
         delete this;
-    }
-
-    std::string get_server_address() const
-    {
-        return address_;
-    }
-
-    uint16_t get_server_port() const
-    {
-        return port_;
     }
 
 protected:
