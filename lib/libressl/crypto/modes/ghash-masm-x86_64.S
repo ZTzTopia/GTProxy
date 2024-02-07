@@ -751,6 +751,7 @@ PUBLIC	gcm_init_clmul
 
 ALIGN	16
 gcm_init_clmul	PROC PUBLIC
+	endbr64
 	movdqu	xmm2,XMMWORD PTR[rdx]
 	pshufd	xmm2,xmm2,78
 
@@ -816,6 +817,7 @@ PUBLIC	gcm_gmult_clmul
 
 ALIGN	16
 gcm_gmult_clmul	PROC PUBLIC
+	endbr64
 	movdqu	xmm0,XMMWORD PTR[rcx]
 	movdqa	xmm5,XMMWORD PTR[$L$bswap_mask]
 	movdqu	xmm2,XMMWORD PTR[rdx]
@@ -866,6 +868,7 @@ PUBLIC	gcm_ghash_clmul
 
 ALIGN	16
 gcm_ghash_clmul	PROC PUBLIC
+	endbr64
 $L$SEH_begin_gcm_ghash_clmul::
 
 DB	048h,083h,0ech,058h		
@@ -1082,6 +1085,8 @@ DB	102,15,56,0,197
 	DB	0F3h,0C3h		;repret
 $L$SEH_end_gcm_ghash_clmul::
 gcm_ghash_clmul	ENDP
+.text$	ENDS
+.rdata	SEGMENT READONLY ALIGN(8)
 ALIGN	64
 $L$bswap_mask::
 DB	15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
@@ -1128,16 +1133,14 @@ $L$rem_8bit::
 	DW	0A7D0h,0A612h,0A454h,0A596h,0A0D8h,0A11Ah,0A35Ch,0A29Eh
 	DW	0B5E0h,0B422h,0B664h,0B7A6h,0B2E8h,0B32Ah,0B16Ch,0B0AEh
 	DW	0BBF0h,0BA32h,0B874h,0B9B6h,0BCF8h,0BD3Ah,0BF7Ch,0BEBEh
-
-DB	71,72,65,83,72,32,102,111,114,32,120,56,54,95,54,52
-DB	44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32
-DB	60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111
-DB	114,103,62,0
 ALIGN	64
+.rdata	ENDS
+.text$	SEGMENT ALIGN(64) 'CODE'
 EXTERN	__imp_RtlVirtualUnwind:NEAR
 
 ALIGN	16
 se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx

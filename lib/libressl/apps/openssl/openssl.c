@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.35 2023/06/11 13:02:10 jsg Exp $ */
+/* $OpenBSD: openssl.c,v 1.33 2023/04/25 16:11:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -329,6 +329,10 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_CIPHER, "sm4-ofb", enc_main },
 	{ FUNC_TYPE_CIPHER, "sm4-cfb", enc_main },
 #endif
+#ifdef ZLIB
+	{ FUNC_TYPE_CIPHER, "zlib", enc_main },
+#endif
+
 	{ 0, NULL, NULL }
 };
 
@@ -380,11 +384,15 @@ openssl_shutdown(void)
 int
 main(int argc, char **argv)
 {
+	ARGS arg;
 	char *to_free = NULL;
 	int i, ret = 0;
 	char *p;
 	LHASH_OF(FUNCTION) * prog = NULL;
 	long errline;
+
+	arg.data = NULL;
+	arg.count = 0;
 
 	if (pledge("stdio cpath wpath rpath inet dns proc flock tty", NULL) == -1) {
 		fprintf(stderr, "openssl: pledge: %s\n", strerror(errno));
@@ -465,6 +473,7 @@ main(int argc, char **argv)
 	}
 	if (prog != NULL)
 		lh_FUNCTION_free(prog);
+	free(arg.data);
 
 	openssl_shutdown();
 

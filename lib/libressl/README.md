@@ -3,9 +3,8 @@
 
 [![Linux Build Status](https://github.com/libressl/portable/actions/workflows/linux_test.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/linux_test.yml)
 [![macOS Build Status](https://github.com/libressl/portable/actions/workflows/macos_test.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/macos_test.yml)
-[![Android Build Status](https://github.com/libressl/portable/actions/workflows/android_test.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/android_test.yml)
-[![Cross Build Status](https://github.com/libressl/portable/actions/workflows/cross_test.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/cross_test.yml)
-[![Solaris Build Status](https://github.com/libressl/portable/actions/workflows/solaris_test.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/solaris_test.yml)
+[![Android_Build Status](https://github.com/libressl/portable/actions/workflows/android_test.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/android_test.yml)
+[![Cross_Build Status](https://github.com/libressl/portable/actions/workflows/cross_test.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/cross_test.yml)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/libressl.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:libressl)
 [![ASan Status](https://github.com/libressl/portable/actions/workflows/linux_test_asan.yml/badge.svg)](https://github.com/libressl/portable/actions/workflows/linux_test_asan.yml)
 
@@ -41,7 +40,7 @@ At the time of this writing, LibreSSL is known to build and work on:
 * FreeBSD (tested with 9.2 and later)
 * NetBSD (7.0 or later recommended)
 * HP-UX (11i)
-* Solaris 11 and later
+* Solaris (11 and later preferred)
 * Mac OS X (tested with 10.8 and later)
 * AIX (5.3 and later)
 
@@ -182,7 +181,7 @@ It will tell CMake to find LibreSSL and if found will let you use the following 
 * LibreSSL::SSL
 * LibreSSL::TLS
 
-If you for example want to use the LibreSSL TLS library in your test program, include it like so (SSL and Crypto are required by TLS and included automatically too):
+If you for example want to use the LibreSSL TLS library in your test program, include it like so (SSL and Cryto are required by TLS and included automatically too):
 
 ```cmake
 target_link_libraries(test LibreSSL::TLS)

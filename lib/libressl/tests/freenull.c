@@ -1,4 +1,4 @@
-/*	$OpenBSD: freenull.c.head,v 1.6 2023/07/28 17:13:56 tb Exp $	*/
+/*	$OpenBSD: freenull.c.head,v 1.4 2022/01/15 02:46:12 inoguchi Exp $	*/
 
 #include <openssl/asn1.h>
 #include <openssl/cmac.h>
@@ -6,6 +6,7 @@
 #include <openssl/comp.h>
 #include <openssl/conf_api.h>
 #include <openssl/ct.h>
+#include <openssl/dso.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -58,6 +59,7 @@ main(int argc, char **argv)
 	BASIC_CONSTRAINTS_free(NULL);
 	BIO_free(NULL);
 	BIO_meth_free(NULL);
+	BN_BLINDING_free(NULL);
 	BN_CTX_free(NULL);
 	BN_GENCB_free(NULL);
 	BN_MONT_CTX_free(NULL);
@@ -68,6 +70,7 @@ main(int argc, char **argv)
 	CMAC_CTX_free(NULL);
 	CMS_ContentInfo_free(NULL);
 	CMS_ReceiptRequest_free(NULL);
+	COMP_CTX_free(NULL);
 	CONF_free(NULL);
 	CRL_DIST_POINTS_free(NULL);
 	CTLOG_STORE_free(NULL);
@@ -81,6 +84,7 @@ main(int argc, char **argv)
 	DSA_SIG_free(NULL);
 	DSA_free(NULL);
 	DSA_meth_free(NULL);
+	DSO_free(NULL);
 	ECDSA_SIG_free(NULL);
 	EC_GROUP_clear_free(NULL);
 	EC_GROUP_free(NULL);

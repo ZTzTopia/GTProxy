@@ -72,6 +72,7 @@ PUBLIC	aesni_encrypt
 
 ALIGN	16
 aesni_encrypt	PROC PUBLIC
+	endbr64
 	movups	xmm2,XMMWORD PTR[rcx]
 	mov	eax,DWORD PTR[240+r8]
 	movups	xmm0,XMMWORD PTR[r8]
@@ -93,6 +94,7 @@ PUBLIC	aesni_decrypt
 
 ALIGN	16
 aesni_decrypt	PROC PUBLIC
+	endbr64
 	movups	xmm2,XMMWORD PTR[rcx]
 	mov	eax,DWORD PTR[240+r8]
 	movups	xmm0,XMMWORD PTR[r8]
@@ -112,6 +114,7 @@ aesni_decrypt	ENDP
 
 ALIGN	16
 _aesni_encrypt3	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -145,6 +148,7 @@ _aesni_encrypt3	ENDP
 
 ALIGN	16
 _aesni_decrypt3	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -178,6 +182,7 @@ _aesni_decrypt3	ENDP
 
 ALIGN	16
 _aesni_encrypt4	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -216,6 +221,7 @@ _aesni_encrypt4	ENDP
 
 ALIGN	16
 _aesni_decrypt4	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -254,6 +260,7 @@ _aesni_decrypt4	ENDP
 
 ALIGN	16
 _aesni_encrypt6	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -311,6 +318,7 @@ _aesni_encrypt6	ENDP
 
 ALIGN	16
 _aesni_decrypt6	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -368,6 +376,7 @@ _aesni_decrypt6	ENDP
 
 ALIGN	16
 _aesni_encrypt8	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -438,6 +447,7 @@ _aesni_encrypt8	ENDP
 
 ALIGN	16
 _aesni_decrypt8	PROC PRIVATE
+	endbr64
 	movups	xmm0,XMMWORD PTR[rcx]
 	shr	eax,1
 	movups	xmm1,XMMWORD PTR[16+rcx]
@@ -520,6 +530,7 @@ $L$SEH_begin_aesni_ecb_encrypt::
 	mov	r8,QWORD PTR[40+rsp]
 
 
+	endbr64
 	and	rdx,-16
 	jz	$L$ecb_ret
 
@@ -837,6 +848,7 @@ $L$SEH_begin_aesni_ccm64_encrypt_blocks::
 	mov	r9,QWORD PTR[48+rsp]
 
 
+	endbr64
 	lea	rsp,QWORD PTR[((-88))+rsp]
 	movaps	XMMWORD PTR[rsp],xmm6
 	movaps	XMMWORD PTR[16+rsp],xmm7
@@ -1034,7 +1046,6 @@ $L$SEH_begin_aesni_ctr32_encrypt_blocks::
 	mov	r8,QWORD PTR[40+rsp]
 
 
-	endbr64
 	lea	rax,QWORD PTR[rsp]
 	push	rbp
 	sub	rsp,192
@@ -2585,6 +2596,7 @@ PUBLIC	aesni_set_decrypt_key
 
 ALIGN	16
 aesni_set_decrypt_key	PROC PUBLIC
+	endbr64
 	sub	rsp,8
 	call	__aesni_set_encrypt_key
 	shl	edx,4
@@ -2623,6 +2635,7 @@ PUBLIC	aesni_set_encrypt_key
 
 ALIGN	16
 aesni_set_encrypt_key	PROC PUBLIC
+	endbr64
 __aesni_set_encrypt_key::
 	sub	rsp,8
 	mov	rax,-1
@@ -2811,6 +2824,8 @@ $L$key_expansion_256b::
 	DB	0F3h,0C3h		;repret
 aesni_set_encrypt_key	ENDP
 
+.text$	ENDS
+.rdata	SEGMENT READONLY ALIGN(8)
 ALIGN	64
 $L$bswap_mask::
 DB	15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
@@ -2820,16 +2835,14 @@ $L$increment64::
 	DD	1,0,0,0
 $L$xts_magic::
 	DD	087h,0,1,0
-
-DB	65,69,83,32,102,111,114,32,73,110,116,101,108,32,65,69
-DB	83,45,78,73,44,32,67,82,89,80,84,79,71,65,77,83
-DB	32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115
-DB	115,108,46,111,114,103,62,0
 ALIGN	64
+.rdata	ENDS
+.text$	SEGMENT ALIGN(64) 'CODE'
 EXTERN	__imp_RtlVirtualUnwind:NEAR
 
 ALIGN	16
 ecb_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx
@@ -2849,6 +2862,7 @@ ecb_se_handler	ENDP
 
 ALIGN	16
 ccm64_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx
@@ -2890,6 +2904,7 @@ ccm64_se_handler	ENDP
 
 ALIGN	16
 ctr32_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx
@@ -2925,6 +2940,7 @@ ctr32_se_handler	ENDP
 
 ALIGN	16
 xts_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx
@@ -2964,6 +2980,7 @@ xts_se_handler	ENDP
 
 ALIGN	16
 cbc_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx

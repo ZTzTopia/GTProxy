@@ -29,7 +29,7 @@ add_executable(${PROJECT_NAME}
 # Try to find the required packages
 find_package(fmt REQUIRED)
 find_package(glm REQUIRED)
-find_package(httplib REQUIRED)
+# find_package(httplib REQUIRED)
 find_package(magic_enum REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(pcg-cpp REQUIRED)
@@ -48,6 +48,10 @@ target_link_libraries(${PROJECT_NAME}
     nlohmann_json::nlohmann_json
     pcg-cpp::pcg-cpp
     spdlog::spdlog)
+
+# ?????????
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/lib/libressl/include)
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE 

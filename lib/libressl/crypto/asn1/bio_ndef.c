@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.24 2023/07/28 09:58:30 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.22 2023/04/25 19:08:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -60,9 +60,6 @@
 #include <openssl/err.h>
 
 #include "asn1_local.h"
-
-int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix, asn1_ps_func *prefix_free);
-int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix, asn1_ps_func *suffix_free);
 
 /* Experimental NDEF ASN1 BIO support routines */
 
@@ -174,7 +171,7 @@ static int
 ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
 	NDEF_SUPPORT *ndef_aux;
-	unsigned char *p = NULL;
+	unsigned char *p;
 	int derlen;
 
 	if (!parg)
@@ -182,13 +179,13 @@ ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
 	ndef_aux = *(NDEF_SUPPORT **)parg;
 
-	if ((derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it)) <= 0)
-		return 0;
-
+	derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
+	p = malloc(derlen);
 	ndef_aux->derbuf = p;
 	*pbuf = p;
+	derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
 
-	if (*ndef_aux->boundary == NULL)
+	if (!*ndef_aux->boundary)
 		return 0;
 
 	*plen = *ndef_aux->boundary - *pbuf;
@@ -234,7 +231,7 @@ static int
 ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
 	NDEF_SUPPORT *ndef_aux;
-	unsigned char *p = NULL;
+	unsigned char *p;
 	int derlen;
 	const ASN1_AUX *aux;
 	ASN1_STREAM_ARG sarg;
@@ -254,15 +251,14 @@ ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	    &ndef_aux->val, ndef_aux->it, &sarg) <= 0)
 		return 0;
 
-	if ((derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it)) <= 0)
-		return 0;
-
+	derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
+	p = malloc(derlen);
 	ndef_aux->derbuf = p;
 	*pbuf = p;
+	derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
 
-	if (*ndef_aux->boundary == NULL)
+	if (!*ndef_aux->boundary)
 		return 0;
-
 	*pbuf = *ndef_aux->boundary;
 	*plen = derlen - (*ndef_aux->boundary - ndef_aux->derbuf);
 

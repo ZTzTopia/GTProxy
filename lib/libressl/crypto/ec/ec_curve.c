@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.42 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.41 2023/05/02 13:01:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -3122,7 +3122,6 @@ EC_GROUP_new_by_curve_name(int nid)
 	ECerror(EC_R_UNKNOWN_GROUP);
 	return NULL;
 }
-LCRYPTO_ALIAS(EC_GROUP_new_by_curve_name);
 
 size_t
 EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
@@ -3141,7 +3140,6 @@ EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
 
 	return CURVE_LIST_LENGTH;
 }
-LCRYPTO_ALIAS(EC_get_builtin_curves);
 
 static const struct {
 	const char *name;
@@ -3176,7 +3174,6 @@ EC_curve_nid2nist(int nid)
 
 	return NULL;
 }
-LCRYPTO_ALIAS(EC_curve_nid2nist);
 
 int
 EC_curve_nist2nid(const char *name)
@@ -3190,4 +3187,3 @@ EC_curve_nist2nid(const char *name)
 
 	return NID_undef;
 }
-LCRYPTO_ALIAS(EC_curve_nist2nid);

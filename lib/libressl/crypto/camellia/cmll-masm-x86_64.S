@@ -74,6 +74,7 @@ PUBLIC	Camellia_EncryptBlock
 
 ALIGN	16
 Camellia_EncryptBlock	PROC PUBLIC
+	endbr64
 	mov	eax,128
 	sub	eax,edi
 	mov	edi,3
@@ -96,6 +97,7 @@ $L$SEH_begin_Camellia_EncryptBlock_Rounds::
 	mov	rcx,r9
 
 
+	endbr64
 	push	rbx
 	push	rbp
 	push	r13
@@ -147,6 +149,7 @@ Camellia_EncryptBlock_Rounds	ENDP
 
 ALIGN	16
 _x86_64_Camellia_encrypt	PROC PRIVATE
+	endbr64
 	xor	r9d,DWORD PTR[r14]
 	xor	r8d,DWORD PTR[4+r14]
 	xor	r11d,DWORD PTR[8+r14]
@@ -356,6 +359,7 @@ PUBLIC	Camellia_DecryptBlock
 
 ALIGN	16
 Camellia_DecryptBlock	PROC PUBLIC
+	endbr64
 	mov	eax,128
 	sub	eax,edi
 	mov	edi,3
@@ -378,6 +382,7 @@ $L$SEH_begin_Camellia_DecryptBlock_Rounds::
 	mov	rcx,r9
 
 
+	endbr64
 	push	rbx
 	push	rbp
 	push	r13
@@ -429,6 +434,7 @@ Camellia_DecryptBlock_Rounds	ENDP
 
 ALIGN	16
 _x86_64_Camellia_decrypt	PROC PRIVATE
+	endbr64
 	xor	r9d,DWORD PTR[r14]
 	xor	r8d,DWORD PTR[4+r14]
 	xor	r11d,DWORD PTR[8+r14]
@@ -646,6 +652,7 @@ $L$SEH_begin_Camellia_Ekeygen::
 	mov	rdx,r8
 
 
+	endbr64
 	push	rbx
 	push	rbp
 	push	r13
@@ -1189,6 +1196,8 @@ $L$key_epilogue::
 	DB	0F3h,0C3h		;repret
 $L$SEH_end_Camellia_Ekeygen::
 Camellia_Ekeygen	ENDP
+.text$	ENDS
+.rdata	SEGMENT READONLY ALIGN(8)
 ALIGN	64
 $L$Camellia_SIGMA::
 	DD	03bcc908bh,0a09e667fh,04caa73b2h,0b67ae858h
@@ -1708,6 +1717,8 @@ $L$Camellia_SBOX::
 	DD	0008f8f8fh,0e300e3e3h
 	DD	000010101h,040004040h
 	DD	0003d3d3dh,04f004f4fh
+.rdata	ENDS
+.text$	SEGMENT ALIGN(64) 'CODE'
 PUBLIC	Camellia_cbc_encrypt
 
 ALIGN	16
@@ -1724,6 +1735,7 @@ $L$SEH_begin_Camellia_cbc_encrypt::
 	mov	r9,QWORD PTR[48+rsp]
 
 
+	endbr64
 	cmp	rdx,0
 	je	$L$cbc_abort
 	push	rbx
@@ -1956,10 +1968,6 @@ $L$cbc_abort::
 	DB	0F3h,0C3h		;repret
 $L$SEH_end_Camellia_cbc_encrypt::
 Camellia_cbc_encrypt	ENDP
-
-DB	67,97,109,101,108,108,105,97,32,102,111,114,32,120,56,54
-DB	95,54,52,32,98,121,32,60,97,112,112,114,111,64,111,112
-DB	101,110,115,115,108,46,111,114,103,62,0
 
 .text$	ENDS
 END

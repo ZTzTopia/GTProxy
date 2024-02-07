@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.56 2023/08/03 18:53:56 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.44 2023/04/11 18:58:20 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -114,52 +114,11 @@ ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	return 1;
 }
 
-static int
-ec_decode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx)
-{
-	if (bn == NULL)
-		return 1;
-
-	if (group->meth->field_decode != NULL)
-		return group->meth->field_decode(group, bn, x, ctx);
-
-	return bn_copy(bn, x);
-}
-
-static int
-ec_encode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx)
-{
-	if (!BN_nnmod(bn, x, &group->field, ctx))
-		return 0;
-
-	if (group->meth->field_encode != NULL)
-		return group->meth->field_encode(group, bn, bn, ctx);
-
-	return 1;
-}
-
-static int
-ec_encode_z_coordinate(const EC_GROUP *group, BIGNUM *bn, int *is_one,
-    const BIGNUM *z, BN_CTX *ctx)
-{
-	if (!BN_nnmod(bn, z, &group->field, ctx))
-		return 0;
-
-	*is_one = BN_is_one(bn);
-	if (*is_one && group->meth->field_set_to_one != NULL)
-		return group->meth->field_set_to_one(group, bn, ctx);
-
-	if (group->meth->field_encode != NULL)
-		return group->meth->field_encode(group, bn, bn, ctx);
-
-	return 1;
-}
-
 int
 ec_GFp_simple_group_set_curve(EC_GROUP *group,
     const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
-	BIGNUM *a_plus_3;
+	BIGNUM *tmp_a;
 	int ret = 0;
 
 	/* p must be a prime > 3 */
@@ -170,45 +129,69 @@ ec_GFp_simple_group_set_curve(EC_GROUP *group,
 
 	BN_CTX_start(ctx);
 
-	if ((a_plus_3 = BN_CTX_get(ctx)) == NULL)
+	if ((tmp_a = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
+	/* group->field */
 	if (!bn_copy(&group->field, p))
 		goto err;
 	BN_set_negative(&group->field, 0);
 
-	if (!ec_encode_scalar(group, &group->a, a, ctx))
+	/* group->a */
+	if (!BN_nnmod(tmp_a, a, p, ctx))
 		goto err;
-	if (!ec_encode_scalar(group, &group->b, b, ctx))
+	if (group->meth->field_encode) {
+		if (!group->meth->field_encode(group, &group->a, tmp_a, ctx))
+			goto err;
+	} else if (!bn_copy(&group->a, tmp_a))
 		goto err;
 
-	if (!BN_set_word(a_plus_3, 3))
+	/* group->b */
+	if (!BN_nnmod(&group->b, b, p, ctx))
 		goto err;
-	if (!BN_mod_add(a_plus_3, a_plus_3, a, &group->field, ctx))
-		goto err;
+	if (group->meth->field_encode)
+		if (!group->meth->field_encode(group, &group->b, &group->b, ctx))
+			goto err;
 
-	group->a_is_minus3 = BN_is_zero(a_plus_3);
+	/* group->a_is_minus3 */
+	if (!BN_add_word(tmp_a, 3))
+		goto err;
+	group->a_is_minus3 = (0 == BN_cmp(tmp_a, &group->field));
 
 	ret = 1;
 
  err:
 	BN_CTX_end(ctx);
-
+	
 	return ret;
 }
 
 int
-ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
-    BIGNUM *b, BN_CTX *ctx)
+ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 {
 	if (p != NULL) {
 		if (!bn_copy(p, &group->field))
 			return 0;
 	}
-	if (!ec_decode_scalar(group, a, &group->a, ctx))
-		return 0;
-	if (!ec_decode_scalar(group, b, &group->b, ctx))
-		return 0;
+	if (group->meth->field_decode != NULL) {
+		if (a != NULL) {
+			if (!group->meth->field_decode(group, a, &group->a, ctx))
+				return 0;
+		}
+		if (b != NULL) {
+			if (!group->meth->field_decode(group, b, &group->b, ctx))
+				return 0;
+		}
+	} else {
+		if (a != NULL) {
+			if (!bn_copy(a, &group->a))
+				return 0;
+		}
+		if (b != NULL) {
+			if (!bn_copy(b, &group->b))
+				return 0;
+		}
+	}
 
 	return 1;
 }
@@ -222,52 +205,62 @@ ec_GFp_simple_group_get_degree(const EC_GROUP *group)
 int
 ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 {
-	BIGNUM *p, *a, *b, *discriminant;
+	BIGNUM *a, *b, *order, *tmp_1, *tmp_2;
+	const BIGNUM *p = &group->field;
 	int ret = 0;
 
 	BN_CTX_start(ctx);
 
-	if ((p = BN_CTX_get(ctx)) == NULL)
-		goto err;
 	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((discriminant = BN_CTX_get(ctx)) == NULL)
+	if ((tmp_1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp_2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((order = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
-		goto err;
+	if (group->meth->field_decode) {
+		if (!group->meth->field_decode(group, a, &group->a, ctx))
+			goto err;
+		if (!group->meth->field_decode(group, b, &group->b, ctx))
+			goto err;
+	} else {
+		if (!bn_copy(a, &group->a))
+			goto err;
+		if (!bn_copy(b, &group->b))
+			goto err;
+	}
 
 	/*
-	 * Check that the discriminant 4a^3 + 27b^2 is non-zero modulo p.
+	 * check the discriminant: y^2 = x^3 + a*x + b is an elliptic curve
+	 * <=> 4*a^3 + 27*b^2 != 0 (mod p) 0 =< a, b < p
 	 */
+	if (BN_is_zero(a)) {
+		if (BN_is_zero(b))
+			goto err;
+	} else if (!BN_is_zero(b)) {
+		if (!BN_mod_sqr(tmp_1, a, p, ctx))
+			goto err;
+		if (!BN_mod_mul(tmp_2, tmp_1, a, p, ctx))
+			goto err;
+		if (!BN_lshift(tmp_1, tmp_2, 2))
+			goto err;
+		/* tmp_1 = 4*a^3 */
 
-	if (BN_is_zero(a) && BN_is_zero(b))
-		goto err;
-	if (BN_is_zero(a) || BN_is_zero(b))
-		goto done;
+		if (!BN_mod_sqr(tmp_2, b, p, ctx))
+			goto err;
+		if (!BN_mul_word(tmp_2, 27))
+			goto err;
+		/* tmp_2 = 27*b^2 */
 
-	/* Compute the discriminant: first 4a^3, then 27b^2, then their sum. */
-	if (!BN_mod_sqr(discriminant, a, p, ctx))
-		goto err;
-	if (!BN_mod_mul(discriminant, discriminant, a, p, ctx))
-		goto err;
-	if (!BN_lshift(discriminant, discriminant, 2))
-		goto err;
-
-	if (!BN_mod_sqr(b, b, p, ctx))
-		goto err;
-	if (!BN_mul_word(b, 27))
-		goto err;
-
-	if (!BN_mod_add(discriminant, discriminant, b, p, ctx))
-		goto err;
-
-	if (BN_is_zero(discriminant))
-		goto err;
-
- done:
+		if (!BN_mod_add(a, tmp_1, tmp_2, p, ctx))
+			goto err;
+		if (BN_is_zero(a))
+			goto err;
+	}
 	ret = 1;
 
  err:
@@ -325,25 +318,39 @@ ec_GFp_simple_set_Jprojective_coordinates(const EC_GROUP *group,
 {
 	int ret = 0;
 
-	/*
-	 * Setting individual coordinates allows the creation of bad points.
-	 * EC_POINT_set_Jprojective_coordinates() checks at the API boundary.
-	 */
-
 	if (x != NULL) {
-		if (!ec_encode_scalar(group, &point->X, x, ctx))
+		if (!BN_nnmod(&point->X, x, &group->field, ctx))
 			goto err;
+		if (group->meth->field_encode != NULL) {
+			if (!group->meth->field_encode(group, &point->X, &point->X, ctx))
+				goto err;
+		}
 	}
 	if (y != NULL) {
-		if (!ec_encode_scalar(group, &point->Y, y, ctx))
+		if (!BN_nnmod(&point->Y, y, &group->field, ctx))
 			goto err;
+		if (group->meth->field_encode != NULL) {
+			if (!group->meth->field_encode(group, &point->Y, &point->Y, ctx))
+				goto err;
+		}
 	}
 	if (z != NULL) {
-		if (!ec_encode_z_coordinate(group, &point->Z, &point->Z_is_one,
-		    z, ctx))
-			goto err;
-	}
+		int Z_is_one;
 
+		if (!BN_nnmod(&point->Z, z, &group->field, ctx))
+			goto err;
+		Z_is_one = BN_is_one(&point->Z);
+		if (group->meth->field_encode != NULL) {
+			if (Z_is_one && (group->meth->field_set_to_one != 0)) {
+				if (!group->meth->field_set_to_one(group, &point->Z, ctx))
+					goto err;
+			} else {
+				if (!group->meth->field_encode(group, &point->Z, &point->Z, ctx))
+					goto err;
+			}
+		}
+		point->Z_is_one = Z_is_one;
+	}
 	ret = 1;
 
  err:
@@ -356,12 +363,33 @@ ec_GFp_simple_get_Jprojective_coordinates(const EC_GROUP *group,
 {
 	int ret = 0;
 
-	if (!ec_decode_scalar(group, x, &point->X, ctx))
-		goto err;
-	if (!ec_decode_scalar(group, y, &point->Y, ctx))
-		goto err;
-	if (!ec_decode_scalar(group, z, &point->Z, ctx))
-		goto err;
+	if (group->meth->field_decode != NULL) {
+		if (x != NULL) {
+			if (!group->meth->field_decode(group, x, &point->X, ctx))
+				goto err;
+		}
+		if (y != NULL) {
+			if (!group->meth->field_decode(group, y, &point->Y, ctx))
+				goto err;
+		}
+		if (z != NULL) {
+			if (!group->meth->field_decode(group, z, &point->Z, ctx))
+				goto err;
+		}
+	} else {
+		if (x != NULL) {
+			if (!bn_copy(x, &point->X))
+				goto err;
+		}
+		if (y != NULL) {
+			if (!bn_copy(y, &point->Y))
+				goto err;
+		}
+		if (z != NULL) {
+			if (!bn_copy(z, &point->Z))
+				goto err;
+		}
+	}
 
 	ret = 1;
 
@@ -383,10 +411,11 @@ ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *poin
 }
 
 int
-ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
-    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
+    BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
-	BIGNUM *z, *Z, *Z_1, *Z_2, *Z_3;
+	BIGNUM *Z, *Z_1, *Z_2, *Z_3;
+	const BIGNUM *Z_;
 	int ret = 0;
 
 	if (EC_POINT_is_at_infinity(group, point) > 0) {
@@ -396,8 +425,6 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 
 	BN_CTX_start(ctx);
 
-	if ((z = BN_CTX_get(ctx)) == NULL)
-		goto err;
 	if ((Z = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((Z_1 = BN_CTX_get(ctx)) == NULL)
@@ -407,59 +434,77 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 	if ((Z_3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	/* Convert from projective coordinates (X, Y, Z) into (X/Z^2, Y/Z^3). */
+	/* transform  (X, Y, Z)  into  (x, y) := (X/Z^2, Y/Z^3) */
 
-	if (!ec_decode_scalar(group, z, &point->Z, ctx))
-		goto err;
-
-	if (BN_is_one(z)) {
-		if (!ec_decode_scalar(group, x, &point->X, ctx))
+	if (group->meth->field_decode) {
+		if (!group->meth->field_decode(group, Z, &point->Z, ctx))
 			goto err;
-		if (!ec_decode_scalar(group, y, &point->Y, ctx))
-			goto err;
-		goto done;
-	}
-
-	if (BN_mod_inverse_ct(Z_1, z, &group->field, ctx) == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if (group->meth->field_encode == NULL) {
-		/* field_sqr works on standard representation */
-		if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
-			goto err;
+		Z_ = Z;
 	} else {
-		if (!BN_mod_sqr(Z_2, Z_1, &group->field, ctx))
-			goto err;
+		Z_ = &point->Z;
 	}
 
-	if (x != NULL) {
-		/*
-		 * in the Montgomery case, field_mul will cancel out
-		 * Montgomery factor in X:
-		 */
-		if (!group->meth->field_mul(group, x, &point->X, Z_2, ctx))
+	if (BN_is_one(Z_)) {
+		if (group->meth->field_decode) {
+			if (x != NULL) {
+				if (!group->meth->field_decode(group, x, &point->X, ctx))
+					goto err;
+			}
+			if (y != NULL) {
+				if (!group->meth->field_decode(group, y, &point->Y, ctx))
+					goto err;
+			}
+		} else {
+			if (x != NULL) {
+				if (!bn_copy(x, &point->X))
+					goto err;
+			}
+			if (y != NULL) {
+				if (!bn_copy(y, &point->Y))
+					goto err;
+			}
+		}
+	} else {
+		if (BN_mod_inverse_ct(Z_1, Z_, &group->field, ctx) == NULL) {
+			ECerror(ERR_R_BN_LIB);
 			goto err;
-	}
-	if (y != NULL) {
-		if (group->meth->field_encode == NULL) {
-			/* field_mul works on standard representation */
-			if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx))
+		}
+		if (group->meth->field_encode == 0) {
+			/* field_sqr works on standard representation */
+			if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
 				goto err;
 		} else {
-			if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx))
+			if (!BN_mod_sqr(Z_2, Z_1, &group->field, ctx))
 				goto err;
 		}
 
-		/*
-		 * in the Montgomery case, field_mul will cancel out
-		 * Montgomery factor in Y:
-		 */
-		if (!group->meth->field_mul(group, y, &point->Y, Z_3, ctx))
-			goto err;
+		if (x != NULL) {
+			/*
+			 * in the Montgomery case, field_mul will cancel out
+			 * Montgomery factor in X:
+			 */
+			if (!group->meth->field_mul(group, x, &point->X, Z_2, ctx))
+				goto err;
+		}
+		if (y != NULL) {
+			if (group->meth->field_encode == 0) {
+				/* field_mul works on standard representation */
+				if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx))
+					goto err;
+			} else {
+				if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx))
+					goto err;
+			}
+
+			/*
+			 * in the Montgomery case, field_mul will cancel out
+			 * Montgomery factor in Y:
+			 */
+			if (!group->meth->field_mul(group, y, &point->Y, Z_3, ctx))
+				goto err;
+		}
 	}
 
- done:
 	ret = 1;
 
  err:
@@ -659,9 +704,11 @@ ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX 
 	BIGNUM *n0, *n1, *n2, *n3;
 	int ret = 0;
 
-	if (EC_POINT_is_at_infinity(group, a) > 0)
-		return EC_POINT_set_to_infinity(group, r);
-
+	if (EC_POINT_is_at_infinity(group, a) > 0) {
+		BN_zero(&r->Z);
+		r->Z_is_one = 0;
+		return 1;
+	}
 	field_mul = group->meth->field_mul;
 	field_sqr = group->meth->field_sqr;
 	p = &group->field;
@@ -1115,7 +1162,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *po
 			goto err;
 		}
 	}
-	if (group->meth->field_encode != NULL) {
+	if (group->meth->field_encode != 0) {
 		/*
 		 * in the Montgomery case, we just turned  R*H  (representing
 		 * H) into  1/(R*H),  but we need  R*(1/H)  (representing
@@ -1165,7 +1212,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *po
 			if (!group->meth->field_mul(group, &p->Y, &p->Y, tmp1, ctx))
 				goto err;
 
-			if (group->meth->field_set_to_one != NULL) {
+			if (group->meth->field_set_to_one != 0) {
 				if (!group->meth->field_set_to_one(group, &p->Z, ctx))
 					goto err;
 			} else {
@@ -1226,8 +1273,8 @@ ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	/* Generate lambda in [1, group->field). */
-	if (!bn_rand_interval(lambda, 1, &group->field))
+	/* Generate lambda in [1, group->field - 1] */
+	if (!bn_rand_interval(lambda, BN_value_one(), &group->field))
 		goto err;
 
 	if (group->meth->field_encode != NULL &&
@@ -1557,4 +1604,3 @@ EC_GFp_simple_method(void)
 {
 	return &ec_GFp_simple_method;
 }
-LCRYPTO_ALIAS(EC_GFp_simple_method);

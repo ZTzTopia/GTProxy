@@ -13,7 +13,6 @@ include_directories(
 	../apps/openssl
 	../apps/openssl/compat
 	../include
-	${CMAKE_BINARY_DIR}/include
 	../include/compat
 )
 
@@ -154,11 +153,6 @@ add_executable(bn_cmp bn_cmp.c)
 target_link_libraries(bn_cmp ${OPENSSL_TEST_LIBS})
 add_test(bn_cmp bn_cmp)
 
-# bn_convert
-add_executable(bn_convert bn_convert.c)
-target_link_libraries(bn_convert ${OPENSSL_TEST_LIBS})
-add_test(bn_convert bn_convert)
-
 # bn_gcd
 add_executable(bn_gcd bn_cmp.c)
 target_link_libraries(bn_gcd ${OPENSSL_TEST_LIBS})
@@ -178,11 +172,6 @@ set_source_files_properties(bn_mod_exp.c PROPERTIES COMPILE_FLAGS
 target_link_libraries(bn_mod_exp ${OPENSSL_TEST_LIBS})
 add_test(bn_mod_exp bn_mod_exp)
 
-# bn_mod_inverse
-add_executable(bn_mod_inverse bn_mod_inverse.c)
-target_link_libraries(bn_mod_inverse ${OPENSSL_TEST_LIBS})
-add_test(bn_mod_inverse bn_mod_inverse)
-
 # bn_mod_sqrt
 add_executable(bn_mod_sqrt bn_mod_sqrt.c)
 target_link_libraries(bn_mod_sqrt ${OPENSSL_TEST_LIBS})
@@ -198,10 +187,10 @@ add_executable(bn_primes bn_primes.c)
 target_link_libraries(bn_primes ${OPENSSL_TEST_LIBS})
 add_test(bn_primes bn_primes)
 
-# bn_print
-add_executable(bn_print bn_print.c)
-target_link_libraries(bn_print ${OPENSSL_TEST_LIBS})
-add_test(bn_print bn_print)
+# bn_rand_interval
+add_executable(bn_rand_interval bn_rand_interval.c)
+target_link_libraries(bn_rand_interval ${OPENSSL_TEST_LIBS})
+add_test(bn_rand_interval bn_rand_interval)
 
 # bn_shift
 add_executable(bn_shift bn_shift.c)
@@ -313,11 +302,6 @@ add_test(dsatest dsatest)
 # 	add_test(NAME dtlstest COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/dtlstest.sh)
 # 	set_tests_properties(dtlstest PROPERTIES ENVIRONMENT "srcdir=${TEST_SOURCE_DIR}")
 # endif()
-
-# ecc_cdh
-add_executable(ecc_cdh ecc_cdh.c)
-target_link_libraries(ecc_cdh ${OPENSSL_TEST_LIBS})
-add_test(ecc_cdh ecc_cdh)
 
 # ec_asn1_test
 add_executable(ec_asn1_test ec_asn1_test.c)
@@ -601,23 +585,14 @@ add_executable(sha_test sha_test.c)
 target_link_libraries(sha_test ${OPENSSL_TEST_LIBS})
 add_test(sha_test sha_test)
 
+# XXX HAVE_SOCKETPAIR
 # signertest
-if(NOT CMAKE_SYSTEM_NAME MATCHES "WindowsStore")
-	set(SIGNERTEST_SRC signertest.c)
-	check_function_exists(pipe2 HAVE_PIPE2)
-	if(HAVE_PIPE2)
-		add_definitions(-DHAVE_PIPE2)
-	else()
-		set(SIGNERTEST_SRC ${SIGNERTEST_SRC} compat/pipe2.c)
-	endif()
-
-	set_source_files_properties(signertest.c PROPERTIES COMPILE_FLAGS
-	      -DCERTSDIR=\\"${CMAKE_CURRENT_SOURCE_DIR}\\")
-	add_executable(signertest ${SIGNERTEST_SRC})
-	target_link_libraries(signertest ${LIBTLS_TEST_LIBS})
-	target_include_directories(signertest BEFORE PUBLIC ../tls)
-	add_test(signertest signertest)
-endif()
+# add_executable(signertest signertest.c)
+# target_link_libraries(signertest ${LIBTLS_TEST_LIBS})
+# target_include_directories(signertest BEFORE PUBLIC ../tls)
+# set_source_files_properties(signertest.c PROPERTIES COMPILE_FLAGS
+#	-DCERTSDIR=\\"${CMAKE_CURRENT_SOURCE_DIR}\\")
+# add_test(signertest signertest)
 
 # sm2crypttest
 # sm2evptest

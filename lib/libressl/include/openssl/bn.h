@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.75 2023/07/31 05:04:06 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.71 2023/04/27 06:48:47 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -318,6 +318,7 @@ void BN_zero(BIGNUM *a);
 int BN_one(BIGNUM *a);
 
 const BIGNUM *BN_value_one(void);
+char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
 void	BN_CTX_free(BN_CTX *c);
 void	BN_CTX_start(BN_CTX *ctx);
@@ -448,11 +449,40 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from);
 BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
     const BIGNUM *mod, BN_CTX *ctx);
 
+/* BN_BLINDING flags */
+#define	BN_BLINDING_NO_UPDATE	0x00000001
+#define	BN_BLINDING_NO_RECREATE	0x00000002
+
+BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod);
+void BN_BLINDING_free(BN_BLINDING *b);
+int BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx);
+int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
+int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
+int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
+int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *);
+
+CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
+unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
+void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
+BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
+    const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+    int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
+    BN_MONT_CTX *m_ctx);
+
 /* Primes from RFC 2409 */
+BIGNUM *get_rfc2409_prime_768(BIGNUM *bn);
+BIGNUM *get_rfc2409_prime_1024(BIGNUM *bn);
 BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
 BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
 
 /* Primes from RFC 3526 */
+BIGNUM *get_rfc3526_prime_1536(BIGNUM *bn);
+BIGNUM *get_rfc3526_prime_2048(BIGNUM *bn);
+BIGNUM *get_rfc3526_prime_3072(BIGNUM *bn);
+BIGNUM *get_rfc3526_prime_4096(BIGNUM *bn);
+BIGNUM *get_rfc3526_prime_6144(BIGNUM *bn);
+BIGNUM *get_rfc3526_prime_8192(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn);
@@ -517,7 +547,6 @@ void ERR_load_BN_strings(void);
 #define BN_R_ENCODING_ERROR				 104
 #define BN_R_EXPAND_ON_STATIC_BIGNUM_DATA		 105
 #define BN_R_INPUT_NOT_REDUCED				 110
-#define BN_R_INVALID_ARGUMENT				 118
 #define BN_R_INVALID_LENGTH				 106
 #define BN_R_INVALID_RANGE				 115
 #define BN_R_NOT_A_SQUARE				 111

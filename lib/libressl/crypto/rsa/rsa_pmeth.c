@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.39 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.38 2023/05/05 12:21:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -877,3 +877,4 @@ const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
 	.ctrl = pkey_rsa_ctrl,
 	.ctrl_str = pkey_rsa_ctrl_str
 };
+

@@ -152,7 +152,6 @@ if(HOST_ASM_MASM_X86_64)
 		whrlpool/wp-masm-x86_64.S
 		cpuid-masm-x86_64.S
 	)
-	add_definitions(-Dendbr64=)
 	add_definitions(-DAES_ASM)
 	add_definitions(-DBSAES_ASM)
 	add_definitions(-DVPAES_ASM)
@@ -193,7 +192,6 @@ if(HOST_ASM_MINGW64_X86_64)
 		whrlpool/wp-mingw64-x86_64.S
 		cpuid-mingw64-x86_64.S
 	)
-	add_definitions(-Dendbr64=)
 	add_definitions(-DAES_ASM)
 	add_definitions(-DBSAES_ASM)
 	add_definitions(-DVPAES_ASM)
@@ -258,6 +256,7 @@ set(
 	aes/aes_ctr.c
 	aes/aes_ecb.c
 	aes/aes_ige.c
+	aes/aes_misc.c
 	aes/aes_ofb.c
 	aes/aes_wrap.c
 	asn1/a_bitstr.c
@@ -294,6 +293,7 @@ set(
 	asn1/p5_pbev2.c
 	asn1/p8_pkey.c
 	asn1/t_crl.c
+	asn1/t_pkey.c
 	asn1/t_req.c
 	asn1/t_spki.c
 	asn1/t_x509.c
@@ -346,6 +346,7 @@ set(
 	bio/bss_null.c
 	bio/bss_sock.c
 	bn/bn_add.c
+	bn/bn_blind.c
 	bn/bn_bpsw.c
 	bn/bn_const.c
 	bn/bn_convert.c
@@ -362,8 +363,6 @@ set(
 	bn/bn_mont.c
 	bn/bn_mul.c
 	bn/bn_prime.c
-	bn/bn_primitives.c
-	bn/bn_print.c
 	bn/bn_rand.c
 	bn/bn_recp.c
 	bn/bn_shift.c
@@ -371,6 +370,7 @@ set(
 	bn/bn_sqr.c
 	bn/bn_word.c
 	buffer/buf_err.c
+	buffer/buf_str.c
 	buffer/buffer.c
 	bytestring/bs_ber.c
 	bytestring/bs_cbb.c
@@ -391,6 +391,7 @@ set(
 	cmac/cmac.c
 	cms/cms_asn1.c
 	cms/cms_att.c
+	cms/cms_cd.c
 	cms/cms_dd.c
 	cms/cms_enc.c
 	cms/cms_env.c
@@ -402,6 +403,10 @@ set(
 	cms/cms_pwri.c
 	cms/cms_sd.c
 	cms/cms_smime.c
+	comp/c_rle.c
+	comp/c_zlib.c
+	comp/comp_err.c
+	comp/comp_lib.c
 	conf/conf_api.c
 	conf/conf_def.c
 	conf/conf_err.c
@@ -461,6 +466,11 @@ set(
 	dsa/dsa_ossl.c
 	dsa/dsa_pmeth.c
 	dsa/dsa_prn.c
+	dso/dso_dlfcn.c
+	dso/dso_err.c
+	dso/dso_lib.c
+	dso/dso_null.c
+	dso/dso_openssl.c
 	ec/ec_ameth.c
 	ec/ec_asn1.c
 	ec/ec_check.c
@@ -479,9 +489,38 @@ set(
 	ec/ecp_oct.c
 	ec/ecp_smpl.c
 	ec/ecx_methods.c
-	ecdh/ecdh.c
-	ecdsa/ecdsa.c
-	engine/engine_stubs.c
+	ecdh/ecdh_kdf.c
+	ecdh/ech_err.c
+	ecdh/ech_key.c
+	ecdh/ech_lib.c
+	ecdsa/ecs_asn1.c
+	ecdsa/ecs_err.c
+	ecdsa/ecs_lib.c
+	ecdsa/ecs_ossl.c
+	engine/eng_all.c
+	engine/eng_cnf.c
+	engine/eng_ctrl.c
+	engine/eng_dyn.c
+	engine/eng_err.c
+	engine/eng_fat.c
+	engine/eng_init.c
+	engine/eng_lib.c
+	engine/eng_list.c
+	engine/eng_openssl.c
+	engine/eng_pkey.c
+	engine/eng_table.c
+	engine/tb_asnmth.c
+	engine/tb_cipher.c
+	engine/tb_dh.c
+	engine/tb_digest.c
+	engine/tb_dsa.c
+	engine/tb_ecdh.c
+	engine/tb_ecdsa.c
+	engine/tb_eckey.c
+	engine/tb_pkmeth.c
+	engine/tb_rand.c
+	engine/tb_rsa.c
+	engine/tb_store.c
 	err/err.c
 	err/err_all.c
 	err/err_prn.c
@@ -569,8 +608,10 @@ set(
 	kdf/kdf_err.c
 	lhash/lh_stats.c
 	lhash/lhash.c
-	md4/md4.c
-	md5/md5.c
+	md4/md4_dgst.c
+	md4/md4_one.c
+	md5/md5_dgst.c
+	md5/md5_one.c
 	modes/cbc128.c
 	modes/ccm128.c
 	modes/cfb128.c
@@ -635,11 +676,12 @@ set(
 	rc2/rc2_skey.c
 	rc2/rc2cfb64.c
 	rc2/rc2ofb64.c
-	ripemd/ripemd.c
+	ripemd/rmd_dgst.c
+	ripemd/rmd_one.c
 	rsa/rsa_ameth.c
 	rsa/rsa_asn1.c
-	rsa/rsa_blinding.c
 	rsa/rsa_chk.c
+	rsa/rsa_crpt.c
 	rsa/rsa_eay.c
 	rsa/rsa_err.c
 	rsa/rsa_gen.c
@@ -776,13 +818,6 @@ if(NOT HAVE_FREEZERO)
 	set(EXTRA_EXPORT ${EXTRA_EXPORT} freezero)
 endif()
 
-if(NOT HAVE_GETOPT)
-	set(CRYPTO_SRC ${CRYPTO_SRC} compat/getopt_long.c)
-	set(EXTRA_EXPORT ${EXTRA_EXPORT} getopt)
-	set(EXTRA_EXPORT ${EXTRA_EXPORT} optarg)
-	set(EXTRA_EXPORT ${EXTRA_EXPORT} optind)
-endif()
-
 if(NOT HAVE_GETPAGESIZE)
 	set(CRYPTO_SRC ${CRYPTO_SRC} compat/getpagesize.c)
 endif()
@@ -907,7 +942,7 @@ else()
 		   (NOT "${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64"))
 			add_definitions(-DOPENSSL_NO_ASM)
 		endif()
-	elseif(WIN32 AND NOT MINGW)
+	elseif(WIN32)
 		add_definitions(-DOPENSSL_NO_ASM)
 	endif()
 endif()
@@ -961,8 +996,7 @@ target_include_directories(crypto_obj
 		x509
 		../include/compat
 	PUBLIC
-		../include
-		${CMAKE_BINARY_DIR}/include)
+		../include)
 
 if(HOST_AARCH64)
 	target_include_directories(crypto_obj PRIVATE bn/arch/aarch64/)
@@ -989,33 +1023,13 @@ add_library(crypto $<TARGET_OBJECTS:crypto_obj> empty.c)
 export_symbol(crypto ${CMAKE_CURRENT_BINARY_DIR}/crypto_p.sym)
 target_link_libraries(crypto ${PLATFORM_LIBS})
 if (WIN32)
-	set(CRYPTO_POSTFIX -${CRYPTO_MAJOR_VERSION} PARENT_SCOPE)
+	set(CRYPTO_POSTFIX -${CRYPTO_MAJOR_VERSION})
 endif()
 set_target_properties(crypto PROPERTIES
 	OUTPUT_NAME crypto${CRYPTO_POSTFIX}
-	ARCHIVE_OUTPUT_NAME crypto${CRYPTO_POSTFIX}
-	EXPORT_NAME Crypto
-	VERSION ${CRYPTO_VERSION}
-	SOVERSION ${CRYPTO_MAJOR_VERSION}
-)
-
-target_include_directories(
-	crypto
-	PUBLIC
-	$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
-	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-
-install(
-	TARGETS crypto
-	EXPORT Crypto-target
-)
-
-export(
-	EXPORT Crypto-target
-	FILE "${LibreSSL_BINARY_DIR}/LibreSSL-Crypto.cmake"
-	NAMESPACE LibreSSL::
-)
+	ARCHIVE_OUTPUT_NAME crypto${CRYPTO_POSTFIX})
+set_target_properties(crypto PROPERTIES VERSION
+	${CRYPTO_VERSION} SOVERSION ${CRYPTO_MAJOR_VERSION})
 
 if(ENABLE_LIBRESSL_INSTALL)
 	install(
@@ -1023,12 +1037,6 @@ if(ENABLE_LIBRESSL_INSTALL)
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-	)
-	install(
-		EXPORT Crypto-target
-		FILE "LibreSSL-Crypto.cmake"
-		NAMESPACE LibreSSL::
-		DESTINATION "${LIBRESSL_INSTALL_CMAKEDIR}"
 	)
 endif(ENABLE_LIBRESSL_INSTALL)
 

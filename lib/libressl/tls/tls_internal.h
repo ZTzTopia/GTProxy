@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.83 2023/06/27 18:19:59 tb Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.81 2023/04/09 18:26:26 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -29,7 +29,7 @@
 __BEGIN_HIDDEN_DECLS
 
 #ifndef TLS_DEFAULT_CA_FILE
-#define TLS_DEFAULT_CA_FILE	"/etc/ssl/cert.pem"
+#define TLS_DEFAULT_CA_FILE 	"/etc/ssl/cert.pem"
 #endif
 
 #define TLS_CIPHERS_DEFAULT	"TLSv1.3:TLSv1.2+AEAD+ECDHE:TLSv1.2+AEAD+DHE"
@@ -298,7 +298,7 @@ int tls_cert_pubkey_hash(X509 *_cert, char **_hash);
 int tls_password_cb(char *_buf, int _size, int _rwflag, void *_u);
 
 RSA_METHOD *tls_signer_rsa_method(void);
-EC_KEY_METHOD *tls_signer_ecdsa_method(void);
+ECDSA_METHOD *tls_signer_ecdsa_method(void);
 
 #define TLS_PADDING_NONE			0
 #define TLS_PADDING_RSA_PKCS1			1

@@ -72,6 +72,7 @@ OPTION	DOTNAME
 
 ALIGN	16
 _x86_64_AES_encrypt	PROC PRIVATE
+	endbr64
 	xor	eax,DWORD PTR[r15]
 	xor	ebx,DWORD PTR[4+r15]
 	xor	ecx,DWORD PTR[8+r15]
@@ -225,6 +226,7 @@ _x86_64_AES_encrypt	ENDP
 
 ALIGN	16
 _x86_64_AES_encrypt_compact	PROC PRIVATE
+	endbr64
 	lea	r8,QWORD PTR[128+r14]
 	mov	edi,DWORD PTR[((0-128))+r8]
 	mov	ebp,DWORD PTR[((32-128))+r8]
@@ -413,6 +415,7 @@ $L$SEH_begin_AES_encrypt::
 	mov	rdx,r8
 
 
+	endbr64
 	push	rbx
 	push	rbp
 	push	r12
@@ -479,6 +482,7 @@ AES_encrypt	ENDP
 
 ALIGN	16
 _x86_64_AES_decrypt	PROC PRIVATE
+	endbr64
 	xor	eax,DWORD PTR[r15]
 	xor	ebx,DWORD PTR[4+r15]
 	xor	ecx,DWORD PTR[8+r15]
@@ -634,6 +638,7 @@ _x86_64_AES_decrypt	ENDP
 
 ALIGN	16
 _x86_64_AES_decrypt_compact	PROC PRIVATE
+	endbr64
 	lea	r8,QWORD PTR[128+r14]
 	mov	edi,DWORD PTR[((0-128))+r8]
 	mov	ebp,DWORD PTR[((32-128))+r8]
@@ -873,6 +878,7 @@ $L$SEH_begin_AES_decrypt::
 	mov	rdx,r8
 
 
+	endbr64
 	push	rbx
 	push	rbp
 	push	r12
@@ -951,6 +957,7 @@ $L$SEH_begin_AES_set_encrypt_key::
 	mov	rdx,r8
 
 
+	endbr64
 	push	rbx
 	push	rbp
 	push	r12
@@ -979,6 +986,7 @@ AES_set_encrypt_key	ENDP
 
 ALIGN	16
 _x86_64_AES_set_encrypt_key	PROC PRIVATE
+	endbr64
 	mov	ecx,esi
 	mov	rsi,rdi
 	mov	rdi,rdx
@@ -1228,6 +1236,7 @@ $L$SEH_begin_AES_set_decrypt_key::
 	mov	rdx,r8
 
 
+	endbr64
 	push	rbx
 	push	rbp
 	push	r12
@@ -1435,6 +1444,7 @@ $L$SEH_begin_AES_cbc_encrypt::
 	mov	r9,QWORD PTR[48+rsp]
 
 
+	endbr64
 	cmp	rdx,0
 	je	$L$cbc_epilogue
 	pushfq
@@ -1887,6 +1897,8 @@ $L$cbc_epilogue::
 	DB	0F3h,0C3h		;repret
 $L$SEH_end_AES_cbc_encrypt::
 AES_cbc_encrypt	ENDP
+.text$	ENDS
+.rdata	SEGMENT READONLY ALIGN(8)
 ALIGN	64
 $L$AES_Te::
 	DD	0a56363c6h,0a56363c6h
@@ -2671,15 +2683,14 @@ DB	017h,02bh,004h,07eh,0bah,077h,0d6h,026h
 DB	0e1h,069h,014h,063h,055h,021h,00ch,07dh
 	DD	080808080h,080808080h,0fefefefeh,0fefefefeh
 	DD	01b1b1b1bh,01b1b1b1bh,0,0
-DB	65,69,83,32,102,111,114,32,120,56,54,95,54,52,44,32
-DB	67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97
-DB	112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103
-DB	62,0
 ALIGN	64
+.rdata	ENDS
+.text$	SEGMENT ALIGN(64) 'CODE'
 EXTERN	__imp_RtlVirtualUnwind:NEAR
 
 ALIGN	16
 block_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx
@@ -2738,6 +2749,7 @@ block_se_handler	ENDP
 
 ALIGN	16
 key_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx
@@ -2795,6 +2807,7 @@ key_se_handler	ENDP
 
 ALIGN	16
 cbc_se_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx

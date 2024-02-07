@@ -899,7 +899,6 @@ aesni_ccm64_decrypt_blocks:
 .type	aesni_ctr32_encrypt_blocks,@function
 .align	16
 aesni_ctr32_encrypt_blocks:
-	endbr64
 	leaq	(%rsp),%rax
 	pushq	%rbp
 	subq	$32,%rsp

@@ -13,6 +13,7 @@ whirlpool_block:
 	movq	%rdx,%rsi
 	movq	%r8,%rdx
 
+	endbr64
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
@@ -598,6 +599,7 @@ whirlpool_block:
 	retq
 .LSEH_end_whirlpool_block:
 
+.section	.rodata
 .p2align	6
 
 .Ltable:

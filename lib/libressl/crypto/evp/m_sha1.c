@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha1.c,v 1.25 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: m_sha1.c,v 1.23 2023/04/16 16:42:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

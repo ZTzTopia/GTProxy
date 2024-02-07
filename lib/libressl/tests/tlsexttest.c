@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.82 2023/07/05 17:30:14 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.81 2023/04/27 10:53:58 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1774,11 +1774,10 @@ static const unsigned char tlsext_sni_client[] = {
 	0x6c, 0x2e, 0x6f, 0x72, 0x67,
 };
 
-/* An empty array is an incomplete type and sizeof() is undefined. */
 static const unsigned char tlsext_sni_server[] = {
-	0x00,
+	0x00
 };
-static size_t tlsext_sni_server_len = 0;
+const size_t sizeof_tlsext_sni_server = 0;
 
 static int
 test_tlsext_sni_client(void)
@@ -1976,9 +1975,9 @@ test_tlsext_sni_server(void)
 	if (!CBB_finish(&cbb, &data, &dlen))
 		errx(1, "failed to finish CBB");
 
-	if (dlen != tlsext_sni_server_len) {
+	if (dlen != sizeof_tlsext_sni_server) {
 		FAIL("got server SNI with length %zu, "
-		    "want length %zu\n", dlen, tlsext_sni_server_len);
+		    "want length %zu\n", dlen, sizeof_tlsext_sni_server);
 		goto err;
 	}
 
@@ -1987,14 +1986,14 @@ test_tlsext_sni_server(void)
 		fprintf(stderr, "received:\n");
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
-		hexdump(tlsext_sni_server, tlsext_sni_server_len);
+		hexdump(tlsext_sni_server, sizeof_tlsext_sni_server);
 		goto err;
 	}
 
 	free(ssl->session->tlsext_hostname);
 	ssl->session->tlsext_hostname = NULL;
 
-	CBS_init(&cbs, tlsext_sni_server, tlsext_sni_server_len);
+	CBS_init(&cbs, tlsext_sni_server, sizeof_tlsext_sni_server);
 	if (!client_funcs->parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server SNI\n");
 		goto err;
@@ -3189,7 +3188,7 @@ test_tlsext_srtp_server(void)
 }
 #endif /* OPENSSL_NO_SRTP */
 
-static const unsigned char tlsext_clienthello_default[] = {
+unsigned char tlsext_clienthello_default[] = {
 	0x00, 0x34, 0x00, 0x0b, 0x00, 0x02, 0x01, 0x00,
 	0x00, 0x0a, 0x00, 0x0a, 0x00, 0x08, 0x00, 0x1d,
 	0x00, 0x17, 0x00, 0x18, 0x00, 0x19, 0x00, 0x23,
@@ -3199,11 +3198,10 @@ static const unsigned char tlsext_clienthello_default[] = {
 	0x04, 0x03, 0x02, 0x01, 0x02, 0x03,
 };
 
-/* An empty array is an incomplete type and sizeof() is undefined. */
-static const unsigned char tlsext_clienthello_disabled[] = {
-	0x00,
+unsigned char tlsext_clienthello_disabled[] = {
+	0x00
 };
-static size_t tlsext_clienthello_disabled_len = 0;
+const size_t sizeof_tlsext_clienthello_disabled = 0;
 
 static int
 test_tlsext_clienthello_build(void)
@@ -3294,18 +3292,18 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 
-	if (dlen != tlsext_clienthello_disabled_len) {
+	if (dlen != sizeof_tlsext_clienthello_disabled) {
 		FAIL("got clienthello extensions with length %zu, "
 		    "want length %zu\n", dlen,
-		    tlsext_clienthello_disabled_len);
+		    sizeof_tlsext_clienthello_disabled);
 		compare_data(data, dlen, tlsext_clienthello_disabled,
-		    tlsext_clienthello_disabled_len);
+		    sizeof_tlsext_clienthello_disabled);
 		goto err;
 	}
 	if (memcmp(data, tlsext_clienthello_disabled, dlen) != 0) {
 		FAIL("clienthello extensions differs:\n");
 		compare_data(data, dlen, tlsext_clienthello_disabled,
-		    tlsext_clienthello_disabled_len);
+		    sizeof_tlsext_clienthello_disabled);
 		goto err;
 	}
 

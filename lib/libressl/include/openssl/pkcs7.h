@@ -70,7 +70,7 @@ extern "C" {
 #endif
 
 #if defined(_WIN32) && defined(__WINCRYPT_H__)
-#if !defined(LIBRESSL_INTERNAL) && !defined(LIBRESSL_DISABLE_OVERRIDE_WINCRYPT_DEFINES_WARNING)
+#ifndef LIBRESSL_INTERNAL
 #ifdef _MSC_VER
 #pragma message("Warning, overriding WinCrypt defines")
 #else

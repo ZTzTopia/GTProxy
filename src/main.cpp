@@ -2,6 +2,7 @@
 #include "core/logger.hpp"
 
 #include "extension/parser/parser_impl.hpp"
+#include "extension/sub_server_switch/sub_server_switch_impl.hpp"
 #include "extension/web_server/web_server_impl.hpp"
 
 int main()
@@ -31,6 +32,7 @@ int main()
         core::Core core{};
         core.add_extension(new extension::web_server::WebServerExtension{ &core });
         core.add_extension(new extension::parser::ParserExtension{ &core });
+        core.add_extension(new extension::sub_server_switch::SubServerSwitchExtension{ &core });
         core.run();
     }
     catch (const spdlog::spdlog_ex& ex) {

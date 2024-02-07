@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.41 2023/07/08 12:24:10 beck Exp $ */
+/* $OpenBSD: sha512.c,v 1.38 2023/05/19 00:54:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -66,8 +66,9 @@
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
 
-/* Ensure that SHA_LONG64 and uint64_t are equivalent. */
-CTASSERT(sizeof(SHA_LONG64) == sizeof(uint64_t));
+#if !defined(__STRICT_ALIGNMENT) || defined(SHA512_ASM)
+#define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+#endif
 
 #ifdef SHA512_ASM
 void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
@@ -117,77 +118,60 @@ static const SHA_LONG64 K512[80] = {
 	U64(0x5fcb6fab3ad6faec), U64(0x6c44198c4a475817),
 };
 
-static inline SHA_LONG64
-Sigma0(SHA_LONG64 x)
-{
-	return crypto_ror_u64(x, 28) ^ crypto_ror_u64(x, 34) ^
-	    crypto_ror_u64(x, 39);
-}
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+# if defined(__x86_64) || defined(__x86_64__)
+#   define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
+				asm ("bswapq	%0"		\
+				: "=r"(ret)			\
+				: "0"(ret)); ret;		})
+# elif (defined(__i386) || defined(__i386__))
+#   define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
+			 unsigned int hi=p[0],lo=p[1];		\
+				asm ("bswapl %0; bswapl %1;"	\
+				: "=r"(lo),"=r"(hi)		\
+				: "0"(lo),"1"(hi));		\
+				((SHA_LONG64)hi)<<32|lo;	})
+# endif
+#endif
 
-static inline SHA_LONG64
-Sigma1(SHA_LONG64 x)
-{
-	return crypto_ror_u64(x, 14) ^ crypto_ror_u64(x, 18) ^
-	    crypto_ror_u64(x, 41);
-}
+#ifndef PULL64
+#if BYTE_ORDER == BIG_ENDIAN
+#define PULL64(x)	(x)
+#else
+#define B(x, j)		(((SHA_LONG64)(*(((const unsigned char *)(&x))+j)))<<((7-j)*8))
+#define PULL64(x)	(B(x,0)|B(x,1)|B(x,2)|B(x,3)|B(x,4)|B(x,5)|B(x,6)|B(x,7))
+#endif
+#endif
 
-static inline SHA_LONG64
-sigma0(SHA_LONG64 x)
-{
-	return crypto_ror_u64(x, 1) ^ crypto_ror_u64(x, 8) ^ (x >> 7);
-}
+#define ROTR(x, s)	crypto_ror_u64(x, s)
 
-static inline SHA_LONG64
-sigma1(SHA_LONG64 x)
-{
-	return crypto_ror_u64(x, 19) ^ crypto_ror_u64(x, 61) ^ (x >> 6);
-}
+#define Sigma0(x)	(ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
+#define Sigma1(x)	(ROTR((x),14) ^ ROTR((x),18) ^ ROTR((x),41))
+#define sigma0(x)	(ROTR((x),1)  ^ ROTR((x),8)  ^ ((x)>>7))
+#define sigma1(x)	(ROTR((x),19) ^ ROTR((x),61) ^ ((x)>>6))
 
-static inline SHA_LONG64
-Ch(SHA_LONG64 x, SHA_LONG64 y, SHA_LONG64 z)
-{
-	return (x & y) ^ (~x & z);
-}
+#define Ch(x, y, z)	(((x) & (y)) ^ ((~(x)) & (z)))
+#define Maj(x, y, z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-static inline SHA_LONG64
-Maj(SHA_LONG64 x, SHA_LONG64 y, SHA_LONG64 z)
-{
-	return (x & y) ^ (x & z) ^ (y & z);
-}
+#define	ROUND_00_15(i, a, b, c, d, e, f, g, h, Wt)		do {	\
+	T1 = h + Sigma1(e) + Ch(e, f, g) + K512[i] + Wt;		\
+	T2 = Sigma0(a) + Maj(a, b, c);					\
+	d += T1;							\
+	h = T1 + T2;							\
+								} while (0)
 
-static inline void
-sha512_msg_schedule_update(SHA_LONG64 *W0, SHA_LONG64 W1,
-    SHA_LONG64 W9, SHA_LONG64 W14)
-{
-	*W0 = sigma1(W14) + W9 + sigma0(W1) + *W0;
-}
-
-static inline void
-sha512_round(SHA_LONG64 *a, SHA_LONG64 *b, SHA_LONG64 *c, SHA_LONG64 *d,
-    SHA_LONG64 *e, SHA_LONG64 *f, SHA_LONG64 *g, SHA_LONG64 *h,
-    SHA_LONG64 Kt, SHA_LONG64 Wt)
-{
-	SHA_LONG64 T1, T2;
-
-	T1 = *h + Sigma1(*e) + Ch(*e, *f, *g) + Kt + Wt;
-	T2 = Sigma0(*a) + Maj(*a, *b, *c);
-
-	*h = *g;
-	*g = *f;
-	*f = *e;
-	*e = *d + T1;
-	*d = *c;
-	*c = *b;
-	*b = *a;
-	*a = T1 + T2;
-}
+#define	ROUND_16_80(i, j, a, b, c, d, e, f, g, h, X)		do {	\
+	s0 = sigma0(X[(j + 1) & 0x0f]);					\
+	s1 = sigma1(X[(j + 14) & 0x0f]);				\
+	X[(j) & 0x0f] += s0 + s1 + X[(j + 9) & 0x0f];			\
+	ROUND_00_15(i + j, a, b, c, d, e, f, g, h, X[(j) & 0x0f]);	\
+								} while (0)
 
 static void
 sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
 {
-	const uint8_t *in = _in;
-	const SHA_LONG64 *in64;
-	SHA_LONG64 a, b, c, d, e, f, g, h;
+	const SHA_LONG64 *in = _in;
+	SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1, T2;
 	SHA_LONG64 X[16];
 	int i;
 
@@ -201,97 +185,56 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
 		g = ctx->h[6];
 		h = ctx->h[7];
 
-		if ((size_t)in % sizeof(SHA_LONG64) == 0) {
-			/* Input is 64 bit aligned. */
-			in64 = (const SHA_LONG64 *)in;
-			X[0] = be64toh(in64[0]);
-			X[1] = be64toh(in64[1]);
-			X[2] = be64toh(in64[2]);
-			X[3] = be64toh(in64[3]);
-			X[4] = be64toh(in64[4]);
-			X[5] = be64toh(in64[5]);
-			X[6] = be64toh(in64[6]);
-			X[7] = be64toh(in64[7]);
-			X[8] = be64toh(in64[8]);
-			X[9] = be64toh(in64[9]);
-			X[10] = be64toh(in64[10]);
-			X[11] = be64toh(in64[11]);
-			X[12] = be64toh(in64[12]);
-			X[13] = be64toh(in64[13]);
-			X[14] = be64toh(in64[14]);
-			X[15] = be64toh(in64[15]);
-		} else {
-			/* Input is not 64 bit aligned. */
-			X[0] = crypto_load_be64toh(&in[0 * 8]);
-			X[1] = crypto_load_be64toh(&in[1 * 8]);
-			X[2] = crypto_load_be64toh(&in[2 * 8]);
-			X[3] = crypto_load_be64toh(&in[3 * 8]);
-			X[4] = crypto_load_be64toh(&in[4 * 8]);
-			X[5] = crypto_load_be64toh(&in[5 * 8]);
-			X[6] = crypto_load_be64toh(&in[6 * 8]);
-			X[7] = crypto_load_be64toh(&in[7 * 8]);
-			X[8] = crypto_load_be64toh(&in[8 * 8]);
-			X[9] = crypto_load_be64toh(&in[9 * 8]);
-			X[10] = crypto_load_be64toh(&in[10 * 8]);
-			X[11] = crypto_load_be64toh(&in[11 * 8]);
-			X[12] = crypto_load_be64toh(&in[12 * 8]);
-			X[13] = crypto_load_be64toh(&in[13 * 8]);
-			X[14] = crypto_load_be64toh(&in[14 * 8]);
-			X[15] = crypto_load_be64toh(&in[15 * 8]);
-		}
-		in += SHA512_CBLOCK;
-
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[0], X[0]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[1], X[1]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[2], X[2]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[3], X[3]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[4], X[4]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[5], X[5]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[6], X[6]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[7], X[7]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[8], X[8]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[9], X[9]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[10], X[10]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[11], X[11]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[12], X[12]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[13], X[13]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[14], X[14]);
-		sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[15], X[15]);
+		X[0] = PULL64(in[0]);
+		ROUND_00_15(0, a, b, c, d, e, f, g, h, X[0]);
+		X[1] = PULL64(in[1]);
+		ROUND_00_15(1, h, a, b, c, d, e, f, g, X[1]);
+		X[2] = PULL64(in[2]);
+		ROUND_00_15(2, g, h, a, b, c, d, e, f, X[2]);
+		X[3] = PULL64(in[3]);
+		ROUND_00_15(3, f, g, h, a, b, c, d, e, X[3]);
+		X[4] = PULL64(in[4]);
+		ROUND_00_15(4, e, f, g, h, a, b, c, d, X[4]);
+		X[5] = PULL64(in[5]);
+		ROUND_00_15(5, d, e, f, g, h, a, b, c, X[5]);
+		X[6] = PULL64(in[6]);
+		ROUND_00_15(6, c, d, e, f, g, h, a, b, X[6]);
+		X[7] = PULL64(in[7]);
+		ROUND_00_15(7, b, c, d, e, f, g, h, a, X[7]);
+		X[8] = PULL64(in[8]);
+		ROUND_00_15(8, a, b, c, d, e, f, g, h, X[8]);
+		X[9] = PULL64(in[9]);
+		ROUND_00_15(9, h, a, b, c, d, e, f, g, X[9]);
+		X[10] = PULL64(in[10]);
+		ROUND_00_15(10, g, h, a, b, c, d, e, f, X[10]);
+		X[11] = PULL64(in[11]);
+		ROUND_00_15(11, f, g, h, a, b, c, d, e, X[11]);
+		X[12] = PULL64(in[12]);
+		ROUND_00_15(12, e, f, g, h, a, b, c, d, X[12]);
+		X[13] = PULL64(in[13]);
+		ROUND_00_15(13, d, e, f, g, h, a, b, c, X[13]);
+		X[14] = PULL64(in[14]);
+		ROUND_00_15(14, c, d, e, f, g, h, a, b, X[14]);
+		X[15] = PULL64(in[15]);
+		ROUND_00_15(15, b, c, d, e, f, g, h, a, X[15]);
 
 		for (i = 16; i < 80; i += 16) {
-			sha512_msg_schedule_update(&X[0], X[1], X[9], X[14]);
-			sha512_msg_schedule_update(&X[1], X[2], X[10], X[15]);
-			sha512_msg_schedule_update(&X[2], X[3], X[11], X[0]);
-			sha512_msg_schedule_update(&X[3], X[4], X[12], X[1]);
-			sha512_msg_schedule_update(&X[4], X[5], X[13], X[2]);
-			sha512_msg_schedule_update(&X[5], X[6], X[14], X[3]);
-			sha512_msg_schedule_update(&X[6], X[7], X[15], X[4]);
-			sha512_msg_schedule_update(&X[7], X[8], X[0], X[5]);
-			sha512_msg_schedule_update(&X[8], X[9], X[1], X[6]);
-			sha512_msg_schedule_update(&X[9], X[10], X[2], X[7]);
-			sha512_msg_schedule_update(&X[10], X[11], X[3], X[8]);
-			sha512_msg_schedule_update(&X[11], X[12], X[4], X[9]);
-			sha512_msg_schedule_update(&X[12], X[13], X[5], X[10]);
-			sha512_msg_schedule_update(&X[13], X[14], X[6], X[11]);
-			sha512_msg_schedule_update(&X[14], X[15], X[7], X[12]);
-			sha512_msg_schedule_update(&X[15], X[0], X[8], X[13]);
-
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 0], X[0]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 1], X[1]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 2], X[2]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 3], X[3]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 4], X[4]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 5], X[5]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 6], X[6]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 7], X[7]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 8], X[8]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 9], X[9]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 10], X[10]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 11], X[11]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 12], X[12]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 13], X[13]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 14], X[14]);
-			sha512_round(&a, &b, &c, &d, &e, &f, &g, &h, K512[i + 15], X[15]);
+			ROUND_16_80(i, 0, a, b, c, d, e, f, g, h, X);
+			ROUND_16_80(i, 1, h, a, b, c, d, e, f, g, X);
+			ROUND_16_80(i, 2, g, h, a, b, c, d, e, f, X);
+			ROUND_16_80(i, 3, f, g, h, a, b, c, d, e, X);
+			ROUND_16_80(i, 4, e, f, g, h, a, b, c, d, X);
+			ROUND_16_80(i, 5, d, e, f, g, h, a, b, c, X);
+			ROUND_16_80(i, 6, c, d, e, f, g, h, a, b, X);
+			ROUND_16_80(i, 7, b, c, d, e, f, g, h, a, X);
+			ROUND_16_80(i, 8, a, b, c, d, e, f, g, h, X);
+			ROUND_16_80(i, 9, h, a, b, c, d, e, f, g, X);
+			ROUND_16_80(i, 10, g, h, a, b, c, d, e, f, X);
+			ROUND_16_80(i, 11, f, g, h, a, b, c, d, e, X);
+			ROUND_16_80(i, 12, e, f, g, h, a, b, c, d, X);
+			ROUND_16_80(i, 13, d, e, f, g, h, a, b, c, X);
+			ROUND_16_80(i, 14, c, d, e, f, g, h, a, b, X);
+			ROUND_16_80(i, 15, b, c, d, e, f, g, h, a, X);
 		}
 
 		ctx->h[0] += a;
@@ -302,6 +245,8 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
 		ctx->h[5] += f;
 		ctx->h[6] += g;
 		ctx->h[7] += h;
+
+		in += SHA_LBLOCK;
 	}
 }
 
@@ -325,21 +270,18 @@ SHA384_Init(SHA512_CTX *c)
 
 	return 1;
 }
-LCRYPTO_ALIAS(SHA384_Init);
 
 int
 SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
 {
 	return SHA512_Update(c, data, len);
 }
-LCRYPTO_ALIAS(SHA384_Update);
 
 int
 SHA384_Final(unsigned char *md, SHA512_CTX *c)
 {
 	return SHA512_Final(md, c);
 }
-LCRYPTO_ALIAS(SHA384_Final);
 
 unsigned char *
 SHA384(const unsigned char *d, size_t n, unsigned char *md)
@@ -358,7 +300,6 @@ SHA384(const unsigned char *d, size_t n, unsigned char *md)
 
 	return (md);
 }
-LCRYPTO_ALIAS(SHA384);
 
 int
 SHA512_Init(SHA512_CTX *c)
@@ -378,21 +319,25 @@ SHA512_Init(SHA512_CTX *c)
 
 	return 1;
 }
-LCRYPTO_ALIAS(SHA512_Init);
 
 void
 SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
 {
+#ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+	if ((size_t)data % sizeof(c->u.d[0]) != 0) {
+		memcpy(c->u.p, data, sizeof(c->u.p));
+		data = c->u.p;
+	}
+#endif
 	sha512_block_data_order(c, data, 1);
 }
-LCRYPTO_ALIAS(SHA512_Transform);
 
 int
 SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 {
-	const unsigned char *data = _data;
-	unsigned char *p = c->u.p;
-	SHA_LONG64 l;
+	SHA_LONG64	l;
+	unsigned char  *p = c->u.p;
+	const unsigned char *data = (const unsigned char *)_data;
 
 	if (len == 0)
 		return 1;
@@ -421,10 +366,22 @@ SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 	}
 
 	if (len >= sizeof(c->u)) {
-		sha512_block_data_order(c, data, len/sizeof(c->u));
-		data += len;
-		len %= sizeof(c->u);
-		data -= len;
+#ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+		if ((size_t)data % sizeof(c->u.d[0]) != 0) {
+			while (len >= sizeof(c->u)) {
+				memcpy(p, data, sizeof(c->u));
+				sha512_block_data_order(c, p, 1);
+				len -= sizeof(c->u);
+				data += sizeof(c->u);
+			}
+		} else
+#endif
+		{
+			sha512_block_data_order(c, data, len/sizeof(c->u));
+			data += len;
+			len %= sizeof(c->u);
+			data -= len;
+		}
 	}
 
 	if (len != 0) {
@@ -434,7 +391,6 @@ SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 
 	return 1;
 }
-LCRYPTO_ALIAS(SHA512_Update);
 
 int
 SHA512_Final(unsigned char *md, SHA512_CTX *c)
@@ -492,7 +448,6 @@ SHA512_Final(unsigned char *md, SHA512_CTX *c)
 
 	return 1;
 }
-LCRYPTO_ALIAS(SHA512_Final);
 
 unsigned char *
 SHA512(const unsigned char *d, size_t n, unsigned char *md)
@@ -511,7 +466,6 @@ SHA512(const unsigned char *d, size_t n, unsigned char *md)
 
 	return (md);
 }
-LCRYPTO_ALIAS(SHA512);
 
 int
 SHA512_224_Init(SHA512_CTX *c)

@@ -85,6 +85,7 @@ $L$SEH_begin_rc4_md5_enc::
 	mov	r9,QWORD PTR[48+rsp]
 
 
+	endbr64
 	cmp	r9,0
 	je	$L$abort
 	push	rbx

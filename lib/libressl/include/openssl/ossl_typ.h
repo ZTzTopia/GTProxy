@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.30 2023/08/11 05:10:35 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.25 2023/04/25 18:28:05 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -83,7 +83,7 @@ typedef struct ASN1_ITEM_st ASN1_ITEM;
 typedef struct asn1_pctx_st ASN1_PCTX;
 
 #if defined(_WIN32) && defined(__WINCRYPT_H__)
-#if !defined(LIBRESSL_INTERNAL) && !defined(LIBRESSL_DISABLE_OVERRIDE_WINCRYPT_DEFINES_WARNING)
+#ifndef LIBRESSL_INTERNAL
 #ifdef _MSC_VER
 #pragma message("Warning, overriding WinCrypt defines")
 #else
@@ -115,8 +115,8 @@ typedef struct comp_method_st COMP_METHOD;
 
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
-typedef struct evp_md_st EVP_MD;
-typedef struct evp_md_ctx_st EVP_MD_CTX;
+typedef struct env_md_st EVP_MD;
+typedef struct env_md_ctx_st EVP_MD_CTX;
 typedef struct evp_pkey_st EVP_PKEY;
 
 typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
@@ -134,14 +134,14 @@ typedef struct dh_method DH_METHOD;
 typedef struct dsa_st DSA;
 typedef struct dsa_method DSA_METHOD;
 
-typedef struct ec_key_st EC_KEY;
-typedef struct ec_key_method_st EC_KEY_METHOD;
-
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
 typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
 
 typedef struct rand_meth_st RAND_METHOD;
+
+typedef struct ecdh_method ECDH_METHOD;
+typedef struct ecdsa_method ECDSA_METHOD;
 
 typedef struct x509_st X509;
 typedef struct X509_algor_st X509_ALGOR;
@@ -168,6 +168,8 @@ typedef struct store_method_st STORE_METHOD;
 
 typedef struct ui_st UI;
 typedef struct ui_method_st UI_METHOD;
+
+typedef struct st_ERR_FNS ERR_FNS;
 
 typedef struct engine_st ENGINE;
 typedef struct ssl_st SSL;

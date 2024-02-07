@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.9 2023/06/18 19:12:58 tb Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.5 2023/04/09 18:26:26 tb Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -392,8 +392,8 @@ tls_ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 	 * to its calling convention/signature.
 	 */
 
-	pubkey_hash = EC_KEY_get_ex_data(eckey, 0);
-	config = EC_KEY_get_ex_data(eckey, 1);
+	pubkey_hash = ECDSA_get_ex_data(eckey, 0);
+	config = ECDSA_get_ex_data(eckey, 1);
 
 	if (pubkey_hash == NULL || config == NULL)
 		goto err;
@@ -419,30 +419,26 @@ tls_ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 	return (NULL);
 }
 
-EC_KEY_METHOD *
+ECDSA_METHOD *
 tls_signer_ecdsa_method(void)
 {
-	static EC_KEY_METHOD *ecdsa_method = NULL;
-	const EC_KEY_METHOD *default_method;
-	int (*sign)(int type, const unsigned char *dgst, int dlen,
-	    unsigned char *sig, unsigned int *siglen,
-	    const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey);
-	int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
-	    BIGNUM **kinvp, BIGNUM **rp);
+	static ECDSA_METHOD *ecdsa_method = NULL;
 
 	pthread_mutex_lock(&signer_method_lock);
 
 	if (ecdsa_method != NULL)
 		goto out;
 
-	default_method = EC_KEY_get_default_method();
-	ecdsa_method = EC_KEY_METHOD_new(default_method);
+	ecdsa_method = calloc(1, sizeof(*ecdsa_method));
 	if (ecdsa_method == NULL)
 		goto out;
 
-	EC_KEY_METHOD_get_sign(default_method, &sign, &sign_setup, NULL);
-	EC_KEY_METHOD_set_sign(ecdsa_method, sign, sign_setup,
-	    tls_ecdsa_do_sign);
+	ecdsa_method->ecdsa_do_sign = tls_ecdsa_do_sign;
+	ecdsa_method->name = strdup("libtls ECDSA method");
+	if (ecdsa_method->name == NULL) {
+		free(ecdsa_method);
+		ecdsa_method = NULL;
+	}
 
  out:
 	pthread_mutex_unlock(&signer_method_lock);

@@ -440,7 +440,6 @@ libssl_la_LIBADD = $(abs_top_builddir)/crypto/libcrypto.la \
 	$(libcompatnoopt_la_objects) libbs.la
 libbs_la_SOURCES = bs_ber.c bs_cbb.c bs_cbs.c
 noinst_HEADERS = bytestring.h hidden/ssl_namespace.h \
-	hidden/openssl/srtp.h hidden/openssl/tls1.h \
 	hidden/openssl/ssl.h srtp.h dtls_local.h ssl_local.h \
 	ssl_sigalgs.h ssl_tlsext.h tls_content.h tls_internal.h \
 	tls12_internal.h tls13_internal.h tls13_handshake.h \

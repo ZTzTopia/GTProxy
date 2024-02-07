@@ -85,6 +85,7 @@ $L$SEH_begin_bn_mul_mont_gather5::
 	mov	r9,QWORD PTR[48+rsp]
 
 
+	endbr64
 	test	r9d,3
 	jnz	$L$mul_enter
 	cmp	r9d,8
@@ -495,6 +496,7 @@ $L$SEH_begin_bn_mul4x_mont_gather5::
 	mov	r9,QWORD PTR[48+rsp]
 
 
+	endbr64
 $L$mul4x_enter::
 	mov	r9d,r9d
 	movd	xmm5,DWORD PTR[56+rsp]
@@ -1088,6 +1090,7 @@ PUBLIC	bn_scatter5
 
 ALIGN	16
 bn_scatter5	PROC PUBLIC
+	endbr64
 	cmp	rdx,0
 	jz	$L$scatter_epilogue
 	lea	r8,QWORD PTR[r9*8+r8]
@@ -1106,6 +1109,7 @@ PUBLIC	bn_gather5
 
 ALIGN	16
 bn_gather5	PROC PUBLIC
+	endbr64
 $L$SEH_begin_bn_gather5::
 
 DB	04ch,08dh,014h,024h			
@@ -1265,20 +1269,19 @@ $L$gather::
 	DB	0F3h,0C3h		;repret
 $L$SEH_end_bn_gather5::
 bn_gather5	ENDP
+.text$	ENDS
+.rdata	SEGMENT READONLY ALIGN(8)
 ALIGN	64
 $L$inc::
 	DD	0,0,1,1
 	DD	2,2,2,2
-DB	77,111,110,116,103,111,109,101,114,121,32,77,117,108,116,105
-DB	112,108,105,99,97,116,105,111,110,32,119,105,116,104,32,115
-DB	99,97,116,116,101,114,47,103,97,116,104,101,114,32,102,111
-DB	114,32,120,56,54,95,54,52,44,32,67,82,89,80,84,79
-DB	71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111
-DB	112,101,110,115,115,108,46,111,114,103,62,0
+.rdata	ENDS
+.text$	SEGMENT ALIGN(64) 'CODE'
 EXTERN	__imp_RtlVirtualUnwind:NEAR
 
 ALIGN	16
 mul_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx

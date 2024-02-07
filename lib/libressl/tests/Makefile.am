@@ -170,11 +170,6 @@ TESTS += bn_cmp
 check_PROGRAMS += bn_cmp
 bn_cmp_SOURCES = bn_cmp.c
 
-# bn_convert
-TESTS += bn_convert
-check_PROGRAMS += bn_convert
-bn_convert_SOURCES = bn_convert.c
-
 # bn_gcd
 TESTS += bn_gcd
 check_PROGRAMS += bn_gcd
@@ -193,11 +188,6 @@ check_PROGRAMS += bn_mod_exp
 bn_mod_exp_CPPFLAGS = $(AM_CPPFLAGS) -ULIBRESSL_INTERNAL
 bn_mod_exp_SOURCES = bn_mod_exp.c
 
-# bn_mod_inverse
-TESTS += bn_mod_inverse
-check_PROGRAMS += bn_mod_inverse
-bn_mod_inverse_SOURCES = bn_mod_inverse.c
-
 # bn_mod_sqrt
 TESTS += bn_mod_sqrt
 check_PROGRAMS += bn_mod_sqrt
@@ -213,10 +203,10 @@ TESTS += bn_primes
 check_PROGRAMS += bn_primes
 bn_primes_SOURCES = bn_primes.c
 
-# bn_print
-TESTS += bn_print
-check_PROGRAMS += bn_print
-bn_print_SOURCES = bn_print.c
+# bn_rand_interval
+TESTS += bn_rand_interval
+check_PROGRAMS += bn_rand_interval
+bn_rand_interval_SOURCES = bn_rand_interval.c
 
 # bn_shift
 TESTS += bn_shift
@@ -330,11 +320,6 @@ dsatest_SOURCES = dsatest.c
 #dtlstest_SOURCES = dtlstest.c
 #endif
 #EXTRA_DIST += dtlstest.sh
-
-# ecc_cdh
-TESTS += ecc_cdh
-check_PROGRAMS += ecc_cdh
-ecc_cdh_SOURCES = ecc_cdh.c
 
 # ec_asn1_test
 TESTS += ec_asn1_test
@@ -631,14 +616,12 @@ TESTS += sha_test
 check_PROGRAMS += sha_test
 sha_test_SOURCES = sha_test.c
 
+# XXX HAVE_SOCKETPAIR
 # signertest
-TESTS += signertest
-check_PROGRAMS += signertest
-signertest_CPPFLAGS = -I $(top_srcdir)/tls $(AM_CPPFLAGS) -DCERTSDIR=\"$(srcdir)\"
-signertest_SOURCES = signertest.c
-if !HAVE_PIPE2
-signertest_SOURCES += compat/pipe2.c
-endif
+# TESTS += signertest
+# check_PROGRAMS += signertest
+# signertest_CPPFLAGS = -I $(top_srcdir)/tls $(AM_CPPFLAGS) -DCERTSDIR=\"$(srcdir)\"
+# signertest_SOURCES = signertest.c
 
 # sm2crypttest
 # sm2evptest
@@ -697,6 +680,7 @@ EXTRA_DIST += server1-rsa-chain.pem server1-rsa.pem server2-ecdsa-chain.pem
 EXTRA_DIST += server2-ecdsa.pem server2-rsa-chain.pem server2-rsa.pem
 EXTRA_DIST += server3-ecdsa-chain.pem server3-ecdsa.pem server3-rsa-chain.pem
 EXTRA_DIST += server3-rsa.pem
+
 
 # string_table
 TESTS += string_table

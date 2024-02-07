@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.46 2023/08/11 04:45:27 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.41 2023/04/27 07:10:05 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -262,6 +262,9 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off);
 #endif
 int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 
+typedef struct ec_key_st EC_KEY;
+typedef struct ec_key_method_st EC_KEY_METHOD;
+
 #define EC_PKEY_NO_PARAMETERS	0x001
 #define EC_PKEY_NO_PUBKEY	0x002
 
@@ -323,36 +326,6 @@ void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
 const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
 int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 EC_KEY *EC_KEY_new_method(ENGINE *engine);
-
-int ECDH_size(const EC_KEY *ecdh);
-int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-    EC_KEY *ecdh,
-    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
-
-typedef struct ECDSA_SIG_st ECDSA_SIG;
-
-ECDSA_SIG *ECDSA_SIG_new(void);
-void ECDSA_SIG_free(ECDSA_SIG *sig);
-int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
-ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
-
-const BIGNUM *ECDSA_SIG_get0_r(const ECDSA_SIG *sig);
-const BIGNUM *ECDSA_SIG_get0_s(const ECDSA_SIG *sig);
-void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
-int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
-
-int ECDSA_size(const EC_KEY *eckey);
-
-ECDSA_SIG *ECDSA_do_sign(const unsigned char *digest, int digest_len,
-    EC_KEY *eckey);
-int ECDSA_do_verify(const unsigned char *digest, int digest_len,
-    const ECDSA_SIG *sig, EC_KEY *eckey);
-
-int ECDSA_sign(int type, const unsigned char *digest, int digest_len,
-    unsigned char *signature, unsigned int *signature_len, EC_KEY *eckey);
-int ECDSA_verify(int type, const unsigned char *digest, int digest_len,
-    const unsigned char *signature, int signature_len, EC_KEY *eckey);
-
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth);
 void EC_KEY_METHOD_free(EC_KEY_METHOD *meth);
 void EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
@@ -365,20 +338,8 @@ void EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
 void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
     int (*keygen)(EC_KEY *key));
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
-    int (*ckey)(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
-        const EC_KEY *ecdh));
-void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
-    int (*sign)(int type, const unsigned char *digest, int digest_len,
-	unsigned char *signature, unsigned int *signature_len,
-	const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey),
-    int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp),
-    ECDSA_SIG *(*sign_sig)(const unsigned char *digest, int digest_len,
-        const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey));
-void EC_KEY_METHOD_set_verify(EC_KEY_METHOD *meth,
-    int (*verify)(int type, const unsigned char *digest, int digest_len,
-	const unsigned char *signature, int signature_len, EC_KEY *eckey),
-    int (*verify_sig)(const unsigned char *digest, int digest_len,
-	const ECDSA_SIG *sig, EC_KEY *eckey));
+    int (*ckey)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
 void EC_KEY_METHOD_get_init(const EC_KEY_METHOD *meth,
     int (**pinit)(EC_KEY *key),
     void (**pfinish)(EC_KEY *key),
@@ -389,20 +350,8 @@ void EC_KEY_METHOD_get_init(const EC_KEY_METHOD *meth,
 void EC_KEY_METHOD_get_keygen(const EC_KEY_METHOD *meth,
     int (**pkeygen)(EC_KEY *key));
 void EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
-    int (**pck)(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
-        const EC_KEY *ecdh));
-void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
-    int (**psign)(int type, const unsigned char *digest, int digest_len,
-        unsigned char *signature, unsigned int *signature_len,
-	const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey),
-    int (**psign_setup)(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp),
-    ECDSA_SIG *(**psign_sig)(const unsigned char *digest, int digest_len,
-        const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey));
-void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
-    int (**pverify)(int type, const unsigned char *digest, int digest_len,
-	const unsigned char *signature, int signature_len, EC_KEY *eckey),
-    int (**pverify_sig)(const unsigned char *digest, int digest_len,
-	const ECDSA_SIG *sig, EC_KEY *eckey));
+    int (**pck)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
 
 EC_KEY *ECParameters_dup(EC_KEY *key);
 
@@ -657,7 +606,6 @@ void ERR_load_EC_strings(void);
 /* Reason codes. */
 #define EC_R_ASN1_ERROR					 115
 #define EC_R_ASN1_UNKNOWN_FIELD				 116
-#define EC_R_BAD_SIGNATURE				 166
 #define EC_R_BIGNUM_OUT_OF_RANGE			 144
 #define EC_R_BUFFER_TOO_SMALL				 100
 #define EC_R_COORDINATES_OUT_OF_RANGE			 146
@@ -681,18 +629,14 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_FORM				 104
 #define EC_R_INVALID_GROUP_ORDER			 122
 #define EC_R_INVALID_KEY				 165
-#define EC_R_INVALID_OUTPUT_LENGTH			 171
 #define EC_R_INVALID_PEER_KEY				 152
 #define EC_R_INVALID_PENTANOMIAL_BASIS			 132
 #define EC_R_INVALID_PRIVATE_KEY			 123
 #define EC_R_INVALID_TRINOMIAL_BASIS			 137
-#define EC_R_KDF_FAILED					 167
 #define EC_R_KDF_PARAMETER_ERROR			 148
-#define EC_R_KEY_TRUNCATION				 168
 #define EC_R_KEYS_NOT_SET				 140
 #define EC_R_MISSING_PARAMETERS				 124
 #define EC_R_MISSING_PRIVATE_KEY			 125
-#define EC_R_NEED_NEW_SETUP_VALUES			 170
 #define EC_R_NOT_A_NIST_PRIME				 135
 #define EC_R_NOT_A_SUPPORTED_NIST_PRIME			 136
 #define EC_R_NOT_IMPLEMENTED				 126
@@ -703,7 +647,6 @@ void ERR_load_EC_strings(void);
 #define EC_R_PEER_KEY_ERROR				 149
 #define EC_R_PKPARAMETERS2GROUP_FAILURE			 127
 #define EC_R_POINT_AT_INFINITY				 106
-#define EC_R_POINT_ARITHMETIC_FAILURE			 169
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
 #define EC_R_SHARED_INFO_ERROR				 150
 #define EC_R_SLOT_FULL					 108

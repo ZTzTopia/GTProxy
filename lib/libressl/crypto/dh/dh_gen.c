@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_gen.c,v 1.21 2023/07/08 15:29:03 beck Exp $ */
+/* $OpenBSD: dh_gen.c,v 1.20 2023/04/13 15:18:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,6 @@ DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
 		return ret->meth->generate_params(ret, prime_len, generator, cb);
 	return dh_builtin_genparams(ret, prime_len, generator, cb);
 }
-LCRYPTO_ALIAS(DH_generate_parameters_ex);
 
 /*
  * We generate DH parameters as follows:
@@ -194,4 +193,3 @@ DH_generate_parameters(int prime_len, int generator,
 	DH_free(ret);
 	return NULL;
 }
-LCRYPTO_ALIAS(DH_generate_parameters);

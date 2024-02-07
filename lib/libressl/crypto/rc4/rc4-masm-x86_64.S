@@ -84,6 +84,8 @@ $L$SEH_begin_RC4::
 	mov	rdx,r8
 	mov	rcx,r9
 
+
+	endbr64
 	or	rsi,rsi
 	jne	$L$entry
 	mov	rdi,QWORD PTR[8+rsp]	;WIN64 epilogue
@@ -615,6 +617,7 @@ $L$SEH_begin_RC4_set_key::
 	mov	rdx,r8
 
 
+	endbr64
 	lea	rdi,QWORD PTR[8+rdi]
 	lea	rdx,QWORD PTR[rsi*1+rdx]
 	neg	rsi
@@ -685,6 +688,35 @@ $L$exit_key::
 	DB	0F3h,0C3h		;repret
 $L$SEH_end_RC4_set_key::
 RC4_set_key	ENDP
+
+PUBLIC	RC4_options
+
+ALIGN	16
+RC4_options	PROC PUBLIC
+	endbr64
+	lea	rax,QWORD PTR[$L$opts]
+	mov	edx,DWORD PTR[OPENSSL_ia32cap_P]
+	bt	edx,20
+	jc	$L$8xchar
+	bt	edx,30
+	jnc	$L$done
+	add	rax,25
+	DB	0F3h,0C3h		;repret
+$L$8xchar::
+	add	rax,12
+$L$done::
+	DB	0F3h,0C3h		;repret
+.text$	ENDS
+.rdata	SEGMENT READONLY ALIGN(8)
+ALIGN	64
+$L$opts::
+DB	114,99,52,40,56,120,44,105,110,116,41,0
+DB	114,99,52,40,56,120,44,99,104,97,114,41,0
+DB	114,99,52,40,49,54,120,44,105,110,116,41,0
+ALIGN	64
+.rdata	ENDS
+.text$	SEGMENT ALIGN(64) 'CODE'
+RC4_options	ENDP
 
 .text$	ENDS
 END

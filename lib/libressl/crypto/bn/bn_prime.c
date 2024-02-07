@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.34 2023/07/20 06:26:27 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.32 2023/05/10 12:21:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,7 +150,6 @@ BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	/* Unrecognised callback type */
 	return 0;
 }
-LCRYPTO_ALIAS(BN_GENCB_call);
 
 int
 BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
@@ -231,16 +230,12 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 
 	return found;
 }
-LCRYPTO_ALIAS(BN_generate_prime_ex);
 
 int
 BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed, BN_GENCB *cb)
 {
 	return BN_is_prime_fasttest_ex(a, checks, ctx_passed, 0, cb);
 }
-LCRYPTO_ALIAS(BN_is_prime_ex);
-
-#define BN_PRIME_MAXIMUM_BITS (32 * 1024)
 
 int
 BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
@@ -251,15 +246,6 @@ BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 	if (checks < 0)
 		return -1;
 
-	/*
-	 * Prime numbers this large do not appear in everyday cryptography
-	 * and checking such numbers for primality is very expensive.
-	 */
-	if (BN_num_bits(a) > BN_PRIME_MAXIMUM_BITS) {
-		BNerror(BN_R_BIGNUM_TOO_LONG);
-		return -1;
-	}
-
 	if (checks == BN_prime_checks)
 		checks = BN_prime_checks_for_size(BN_num_bits(a));
 
@@ -269,7 +255,6 @@ BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 
 	return is_prime;
 }
-LCRYPTO_ALIAS(BN_is_prime_fasttest_ex);
 
 static int
 probable_prime(BIGNUM *rnd, int bits)

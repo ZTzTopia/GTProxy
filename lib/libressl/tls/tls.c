@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.98 2023/07/02 06:37:27 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.96 2023/05/25 07:46:21 op Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -389,7 +389,7 @@ static int
 tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *pkey)
 {
 	RSA_METHOD *rsa_method;
-	EC_KEY_METHOD *ecdsa_method;
+	ECDSA_METHOD *ecdsa_method;
 	RSA *rsa = NULL;
 	EC_KEY *eckey = NULL;
 	int ret = -1;
@@ -427,15 +427,15 @@ tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *p
 		break;
 	case EVP_PKEY_EC:
 		if ((eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL ||
-		    EC_KEY_set_ex_data(eckey, 0, keypair->pubkey_hash) == 0) {
+		    ECDSA_set_ex_data(eckey, 0, keypair->pubkey_hash) == 0) {
 			tls_set_errorx(ctx, "EC key setup failure");
 			goto err;
 		}
 		if (ctx->config->sign_cb != NULL) {
 			ecdsa_method = tls_signer_ecdsa_method();
 			if (ecdsa_method == NULL ||
-			    EC_KEY_set_ex_data(eckey, 1, ctx->config) == 0 ||
-			    EC_KEY_set_method(eckey, ecdsa_method) == 0) {
+			    ECDSA_set_ex_data(eckey, 1, ctx->config) == 0 ||
+			    ECDSA_set_method(eckey, ecdsa_method) == 0) {
 				tls_set_errorx(ctx, "failed to setup EC key");
 				goto err;
 			}
@@ -520,12 +520,16 @@ tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx)
 
 	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2);
 	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv3);
-	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1);
-	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
 
+	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1);
+	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
 	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_2);
 	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_3);
 
+	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_0) == 0)
+		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1);
+	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_1) == 0)
+		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_2) == 0)
 		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_2);
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_3) == 0)

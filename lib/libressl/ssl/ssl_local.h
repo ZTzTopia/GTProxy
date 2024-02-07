@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.7 2023/07/06 07:56:32 beck Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.5 2023/04/25 07:48:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,6 +172,18 @@ __BEGIN_HIDDEN_DECLS
 
 #ifndef LIBRESSL_HAS_DTLS1_2
 #define LIBRESSL_HAS_DTLS1_2
+#endif
+
+#ifndef LIBRESSL_HAS_TLS1_3_CLIENT
+#define LIBRESSL_HAS_TLS1_3_CLIENT
+#endif
+
+#ifndef LIBRESSL_HAS_TLS1_3_SERVER
+#define LIBRESSL_HAS_TLS1_3_SERVER
+#endif
+
+#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) || defined(LIBRESSL_HAS_TLS1_3_SERVER)
+#define LIBRESSL_HAS_TLS1_3
 #endif
 
 /* LOCAL STUFF */
@@ -638,9 +650,6 @@ typedef struct ssl_handshake_st {
 	/* List of certificates received from our peer. */
 	STACK_OF(X509) *peer_certs;
 	STACK_OF(X509) *peer_certs_no_leaf;
-
-	/* Certificate chain resulting from X.509 verification. */
-	STACK_OF(X509) *verified_chain;
 
 	SSL_HANDSHAKE_TLS12 tls12;
 	SSL_HANDSHAKE_TLS13 tls13;
@@ -1121,6 +1130,7 @@ struct ssl_st {
 	int empty_record_count;
 
 	size_t num_tickets; /* Unused, for OpenSSL compatibility */
+	STACK_OF(X509) *verified_chain;
 };
 
 typedef struct ssl3_record_internal_st {

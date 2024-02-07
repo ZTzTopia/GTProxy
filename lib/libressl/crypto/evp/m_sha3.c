@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha3.c,v 1.3 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: m_sha3.c,v 1.1 2023/04/16 17:06:19 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *

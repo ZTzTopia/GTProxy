@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.12 2023/06/02 08:35:10 tb Exp $ */
+/* $OpenBSD: policy.c,v 1.10 2023/04/28 16:50:16 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2023 Bob Beck <beck@openbsd.org>
@@ -279,7 +279,7 @@ struct verify_cert_test verify_cert_tests[] = {
 	},
 	/*  The policy extension cannot be parsed. */
 	{
-		.id = "1 in invalid intermediate policy",
+		.id = "1 in invalid intermediate poicy",
 		.root_file = CERTSDIR "/" "policy_root.pem",
 		.intermediate_file = CERTSDIR "/" "policy_intermediate_invalid.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
@@ -558,13 +558,9 @@ struct verify_cert_test verify_cert_tests[] = {
 		.root_file = CERTSDIR "/" "policy_root.pem",
 		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf_any.pem",
-		.policy_oid_to_check = OID3,
+		.policy_oid_to_check = OID1,
 		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
-		.want_chains = 0,
-		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
-		.want_error_depth = 0,
-		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
-		.want_legacy_error_depth = 0,
+		.want_chains = 1,
 	},
 	/* Both assert anyPolicy. All policies are valid. */
 	{

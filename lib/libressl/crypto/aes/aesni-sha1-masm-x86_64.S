@@ -75,6 +75,7 @@ PUBLIC	aesni_cbc_sha1_enc
 
 ALIGN	16
 aesni_cbc_sha1_enc	PROC PUBLIC
+	endbr64
 
 	mov	r10d,DWORD PTR[((OPENSSL_ia32cap_P+0))]
 	mov	r11d,DWORD PTR[((OPENSSL_ia32cap_P+4))]
@@ -96,6 +97,7 @@ $L$SEH_begin_aesni_cbc_sha1_enc_ssse3::
 	mov	r9,QWORD PTR[48+rsp]
 
 
+	endbr64
 	mov	r10,QWORD PTR[56+rsp]
 
 
@@ -1490,6 +1492,8 @@ $L$epilogue_ssse3::
 	DB	0F3h,0C3h		;repret
 $L$SEH_end_aesni_cbc_sha1_enc_ssse3::
 aesni_cbc_sha1_enc_ssse3	ENDP
+.text$	ENDS
+.rdata	SEGMENT READONLY ALIGN(8)
 ALIGN	64
 K_XX_XX::
 	DD	05a827999h,05a827999h,05a827999h,05a827999h	
@@ -1497,17 +1501,14 @@ K_XX_XX::
 	DD	08f1bbcdch,08f1bbcdch,08f1bbcdch,08f1bbcdch	
 	DD	0ca62c1d6h,0ca62c1d6h,0ca62c1d6h,0ca62c1d6h	
 	DD	000010203h,004050607h,008090a0bh,00c0d0e0fh	
-
-DB	65,69,83,78,73,45,67,66,67,43,83,72,65,49,32,115
-DB	116,105,116,99,104,32,102,111,114,32,120,56,54,95,54,52
-DB	44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32
-DB	60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111
-DB	114,103,62,0
 ALIGN	64
+.rdata	ENDS
+.text$	SEGMENT ALIGN(64) 'CODE'
 EXTERN	__imp_RtlVirtualUnwind:NEAR
 
 ALIGN	16
 ssse3_handler	PROC PRIVATE
+	endbr64
 	push	rsi
 	push	rdi
 	push	rbx

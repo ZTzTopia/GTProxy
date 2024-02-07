@@ -16,6 +16,7 @@ rc4_md5_enc:
 	movq	40(%rsp),%r8
 	movq	48(%rsp),%r9
 
+	endbr64
 	cmpq	$0,%r9
 	je	.Labort
 	pushq	%rbx

@@ -44,6 +44,7 @@ public:
                 };
                 event_call_function.from = event.from;
                 event_dispatcher_.dispatch(event_call_function);
+                event.canceled = event_call_function.canceled;
             })
         );
     }
