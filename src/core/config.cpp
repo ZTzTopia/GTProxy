@@ -12,8 +12,6 @@ static const std::map<std::string, ConfigStorage> config_defaults{
     { "server.printMessage", true },
     { "client.game_version", "4.35" },
     { "client.protocol", 192 },
-    { "client.printGameUpdatePacket", false },
-    { "client.printMessage", false },
     { "extension.ignore", std::vector<std::string>{ "0xdeadbeef" } },
 
 };
