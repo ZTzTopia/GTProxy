@@ -141,7 +141,10 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
         std::string message{};
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
 
-        const core::EventMessage event_message{ *player_, *to_player, TextParse{ message } };
+        TextParse text_parse{ message };
+        spdlog::info("Incoming message from server: \n{}", text_parse.get_raw("|", "\t"));
+
+        const core::EventMessage event_message{ *player_, *to_player, text_parse };
         event_message.from = core::EventFrom::FromServer;
         core_->get_event_dispatcher().dispatch(event_message);
 
@@ -202,6 +205,7 @@ void Client::on_disconnect(ENetPeer* peer)
     }
 
     enet_host_flush(host_); // Flush all outgoing packets before disconnecting
-    to_player->disconnect();
+    to_player->disconnect_now();
+    core_->get_server()->on_disconnect(peer);
 }
 }

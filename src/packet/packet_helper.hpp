@@ -45,7 +45,7 @@ struct PacketHelper {
     // Attempt to send a packet from derived class of NetMessage or NetPacket
     // to a player
     template <class Packet>
-    static bool send(Packet& packet, player::Player& player)
+    static bool send(Packet& packet, const player::Player& player)
     {
         if constexpr (!is_net_message<Packet>::value && !is_net_packet<Packet>::value) {
             return false;

@@ -147,7 +147,8 @@ public:
         return true;
     }
 
-    void add(const variant& value)
+    template<typename T = std::string>
+    void add(const T& value)
     {
         variants_.emplace_back(value);
     }

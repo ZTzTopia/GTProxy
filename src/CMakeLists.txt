@@ -6,6 +6,7 @@ file(GLOB GTPROXY_INCLUDE_FILES
     packet/*.hpp
     extension/*.hpp
     extension/**/*.hpp
+    packet/game/*.hpp
     packet/message/*.hpp
     player/*.hpp
     server/*.hpp
