@@ -1,5 +1,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/bin_to_hex.h>
 
 #include "server.hpp"
 #include "../client/client.hpp"
@@ -116,7 +117,8 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         byte_stream.read(message, byte_stream.get_size() - sizeof(packet::NetMessageType) - 1);
 
         TextParse text_parse{ message };
-        spdlog::info("Incoming message from client: \n{}", text_parse.get_raw("|", "\t"));
+        if (core_->get_config().get<bool>("server.printMessage"))
+            spdlog::info("Incoming message from client: \n{}", text_parse.get_raw("|", "\t"));
 
         const core::EventMessage event_message{ *player_, *to_player, text_parse };
         event_message.from = core::EventFrom::FromClient;
@@ -145,6 +147,9 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
         const core::EventPacket event_packet{ *player_, *to_player, game_update_packet, ext_data };
         event_packet.from = core::EventFrom::FromClient;
         core_->get_event_dispatcher().dispatch(event_packet);
+
+        if (core_->get_config().get<bool>("server.printGameUpdatePacket"))
+            spdlog::info("Incoming GameUpdatePacket {} ({}) from client: {:p}\n", magic_enum::enum_name(game_update_packet.type), magic_enum::enum_integer(game_update_packet.type), spdlog::to_hex(byte_stream.get_data()));
 
         if (!event_packet.canceled) {
             std::ignore = to_player->send_packet(byte_stream.get_data(), 0);
