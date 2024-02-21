@@ -92,6 +92,8 @@ EVENTPP_MAKE_EVENT(
 );
 
 struct EventPolicies {
+    using ArgumentPassingMode = eventpp::ArgumentPassingIncludeEvent;
+
     static EventType getEvent(const Event& e) { return e.type; }
     static bool canContinueInvoking(const Event& e) { return !e.canceled; }
 };

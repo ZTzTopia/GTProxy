@@ -43,10 +43,18 @@ struct IParserExtension : extension::IExtension {
     );
 
     struct EventPolicies {
+        using ArgumentPassingMode = eventpp::ArgumentPassingIncludeEvent;
+
         static EventType getEvent(const Event& e) { return e.type; }
         static bool canContinueInvoking(const Event& e) { return !e.canceled; }
     };
 
-    using EventDispatcher = eventpp::EventDispatcher<EventType, void(const Event&), EventPolicies>;
+    using EventDispatcher = eventpp::HeterEventDispatcher<
+        EventType,
+        eventpp::HeterTuple<
+            void(const EventCallFunction&)
+        >,
+        EventPolicies
+    >;
     [[nodiscard]] virtual EventDispatcher& get_event_dispatcher() = 0;
 };
