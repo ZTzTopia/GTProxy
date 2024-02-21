@@ -142,7 +142,11 @@ private:
 	 * @tparam Args The argument types of the callable object.
 	 */
 	template <typename R, typename ClassType, typename... Args>
+#ifdef _MSC_VER // MSVC
 	struct traits<std::_Binder<std::_Unforced, R(ClassType::*)(Args...) const, ClassType*>> {
+#else // GCC
+	struct traits<std::_Bind<R(ClassType::*)(Args...) const>> {
+#endif
 		using fn = std::function<R(Args...)>;
 	};
 

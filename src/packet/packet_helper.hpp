@@ -81,14 +81,15 @@ struct PacketHelper {
     template <class Packet>
     static bool broadcastToSome(Packet& packet, const std::set<player::Player&>& players)
     {
-        bool result{ true };
-        for (const auto player : players) {
-            if ((result = send(packet, player)) == false) {
-                break;
-            }
-        }
-
-        return result;
+        // bool result{ true };
+        // for (const auto player : players) {
+        //     if ((result = send(packet, player)) == false) {
+        //         break;
+        //     }
+        // }
+        //
+        // return result;
+        return false;
     }
 
     // Attempt to send a packet from derived class of NetMessage or NetPacket
