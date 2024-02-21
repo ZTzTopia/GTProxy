@@ -1,4 +1,3 @@
-#include <eventpp/utilities/argumentadapter.h>
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
@@ -28,7 +27,7 @@ Client::Client(core::Core* core)
 
     core_->get_event_dispatcher().appendListener(
         core::EventType::Connection,
-        eventpp::argumentAdapter<void(const core::EventConnection&)>([&](const core::EventConnection& evt)
+        [&](const core::EventConnection& evt)
         {
             if (evt.from != core::EventFrom::FromClient) {
                 return;
@@ -42,7 +41,7 @@ Client::Client(core::Core* core)
                 config.get<std::string>("server.address"),
                 config.get<unsigned int>("server.port")
             );
-        })
+        }
     );
 
     spdlog::info("The client is ready to connect to the server!");

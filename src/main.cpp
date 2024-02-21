@@ -21,7 +21,13 @@ int main()
         spdlog::register_logger(logger.get_logger());
         spdlog::set_default_logger(logger.get_logger());
         spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [GTProxy] [%^%l%$] %v");
+    }
+    catch (const spdlog::spdlog_ex& ex) {
+        spdlog::error("Log initialization failed: {}", ex.what());
+        return 1;
+    }
 
+    try {
         spdlog::info(
             "Starting GTProxy (v{}.{}.{})",
             GTPROXY_VERSION_MAJOR,
@@ -30,14 +36,21 @@ int main()
         );
 
         core::Core core{};
+
+        /**
+         * Register event listeners and handle events by adding extensions to the core
+         *
+         * Extensions serve as the primary mechanism to enhance the core's functionality.
+         * They allow the addition of new features, such as a web server or a parser.
+         *
+         * This process involves using the dispatch pattern to listen for events emitted by the core.
+         */
         core.add_extension(new extension::web_server::WebServerExtension{ &core });
         core.add_extension(new extension::parser::ParserExtension{ &core });
         core.add_extension(new extension::sub_server_switch::SubServerSwitchExtension{ &core });
+
+        // Run the core (Will block the main thread until the core is stopped)
         core.run();
-    }
-    catch (const spdlog::spdlog_ex& ex) {
-        spdlog::error("Log initialization failed: {}", ex.what());
-        return 1;
     }
     catch (const std::runtime_error& e) {
         spdlog::error("Runtime error: {}", e.what());

@@ -10,20 +10,21 @@ struct IParserExtension : extension::IExtension {
         CallFunction
     };
 
-    class Event {
+    class Event
+    {
     public:
         explicit Event(const EventType type)
-            : type(type)
-            , from(core::EventFrom::FromAny)
-            , canceled(false)
+            : type{ type }
+            , from{ core::EventFrom::FromAny }
+            , canceled{ false }
         {
 
         }
 
         Event(const EventType type, const core::EventFrom from)
-            : type(type)
-            , from(from)
-            , canceled(false)
+            : type{ type }
+            , from{ from }
+            , canceled{ false }
         {
 
         }

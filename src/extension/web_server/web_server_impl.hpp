@@ -34,7 +34,7 @@ public:
     {
         core_->get_event_dispatcher().prependListener(
             core::EventType::Connection,
-            eventpp::argumentAdapter<void(const core::EventConnection&)>([&](const core::EventConnection& evt)
+            [&](const core::EventConnection& evt)
             {
                 if (evt.from != core::EventFrom::FromClient) {
                     return;
@@ -42,7 +42,7 @@ public:
 
                 std::ignore = core_->get_client()->connect(address_, port_);
                 evt.canceled = true;
-            })
+            }
         );
 
         server_.set_logger([](const httplib::Request& req, const httplib::Response& res)

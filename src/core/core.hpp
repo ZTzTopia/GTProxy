@@ -1,5 +1,5 @@
 #pragma once
-#include <eventpp/eventdispatcher.h>
+#include <eventpp/hetereventdispatcher.h>
 #include <eventpp/utilities/eventmaker.h>
 
 #include "config.hpp"
@@ -96,7 +96,18 @@ struct EventPolicies {
     static bool canContinueInvoking(const Event& e) { return !e.canceled; }
 };
 
-using EventDispatcher = eventpp::EventDispatcher<EventType, void(const Event&), EventPolicies>;
+using EventDispatcher = eventpp::HeterEventDispatcher<
+    EventType,
+    eventpp::HeterTuple<
+        void(const EventInit&),
+        void(const EventTick&),
+        void(const EventConnection&),
+        void(const EventDisconnection&),
+        void(const EventMessage&),
+        void(const EventPacket&)
+    >,
+    EventPolicies
+>;
 
 class Core final : public extension::Extensible {
 public:
