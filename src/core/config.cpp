@@ -10,6 +10,7 @@ static const std::map<std::string, ConfigStorage> config_defaults{
     { "server.address", "www.growtopia1.com" },
     { "client.game_version", "4.35" },
     { "client.protocol", 192 },
+    { "client.dnsServer", "cloudflare" },
     { "extension.ignore", std::vector<std::string>{ "0xdeadbeef" } },
     { "log.printMessage", true },
     { "log.printGameUpdatePacket", false },

@@ -139,9 +139,23 @@ protected:
 
     Result resolve_domain_name(const std::string& domain_name)
     {
-        static httplib::Client cli{ "https://dns.google" };
+        std::string host{
+            core_->get_config().get("client.dnsServer") == "cloudflare"
+                ? "cloudflare-dns.com"
+                : "dns.google"
+        };
+        std::string path{
+            core_->get_config().get("client.dnsServer") == "cloudflare"
+                ? "/dns-query"
+                : "/resolve"
+        };
 
-        httplib::Result res{ cli.Get(std::format("/resolve?name={}&type=A", domain_name)) };
+        httplib::Headers headers = {
+            { "Accept", "application/dns-json" }
+        };
+
+        static httplib::Client cli{ std::format("https://{}", host) };
+        httplib::Result res{ cli.Get(std::format("{}?name={}&type=A", path, domain_name), headers) };
         if (!validate_server_response(res)) {
             return { DomainResolverStatus::ServerFail, {} };
         }
@@ -171,7 +185,7 @@ protected:
 
             if (status != DomainResolverStatus::NoError) {
                 spdlog::error(
-                    "Error occurred while resolving {} ip address. Dns server returned {}",
+                    "Error occurred while resolving {} ip address. DNS server returned {}",
                     host,
                     magic_enum::enum_name(status)
                 );
