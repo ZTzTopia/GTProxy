@@ -135,7 +135,7 @@ private:
 	};
 
 	/**
-	 * @brief Traits for std::_Binder.
+	 * @brief Traits for std::bind.
 	 *
 	 * @tparam R The return type of the callable object.
 	 * @tparam ClassType The class type of the callable object.
