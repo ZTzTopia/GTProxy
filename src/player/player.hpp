@@ -19,6 +19,8 @@ public:
 
     [[nodiscard]] bool send_packet(const std::vector<std::byte>& data, int channel = 0) const;
 
+    [[nodiscard]] ENetPeer* get_peer() const { return peer_; }
+
 private:
     ENetPeer* peer_;
 };

@@ -225,6 +225,6 @@ void Client::on_disconnect(ENetPeer* peer)
 
     enet_host_flush(host_); // Flush all outgoing packets before disconnecting
     to_player->disconnect_now();
-    core_->get_server()->on_disconnect(peer);
+    core_->get_server()->on_disconnect(to_player->get_peer());
 }
 }
