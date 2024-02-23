@@ -8,12 +8,12 @@ namespace core {
 static const std::map<std::string, ConfigStorage> config_defaults{
     { "server.port", 16999 },
     { "server.address", "www.growtopia1.com" },
-    { "server.printGameUpdatePacket", false },
-    { "server.printMessage", true },
     { "client.game_version", "4.35" },
     { "client.protocol", 192 },
     { "extension.ignore", std::vector<std::string>{ "0xdeadbeef" } },
-
+    { "log.printMessage", true },
+    { "log.printGameUpdatePacket", false },
+    { "log.printVariant", true },
 };
 
 Config::Config()

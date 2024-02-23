@@ -56,8 +56,34 @@ private:
             return;
         }
 
-        // TODO: Print the variant
-        // spdlog::info("Variant: {}", variant);
+        std::vector variants{ variant.get_variants() };
+        if (variants.empty()) {
+            spdlog::warn("Variants are empty");
+            return;
+        }
+
+        if (core_->get_config().get<bool>("log.printVariant"))  {
+            spdlog::info("Incoming variant from {}:", event.from == core::EventFrom::FromClient ? "client" : "server");
+            for (const auto& var : variants) {
+                switch (packet::Variant::get_type(var)) {
+                case packet::VariantType::FLOAT:
+                    spdlog::info("\t[FLOAT]: {}", std::get<float>(var));
+                    break;
+                case packet::VariantType::STRING:
+                    spdlog::info("\t[STRING]: {}", std::get<std::string>(var));
+                    break;
+                case packet::VariantType::UNSIGNED:
+                    spdlog::info("\t[UNSIGNED]: {}", std::get<uint32_t>(var));
+                    break;
+                case packet::VariantType::SIGNED:
+                    spdlog::info("\t[SIGNED]: {}", std::get<int32_t>(var));
+                    break;
+                default:
+                    spdlog::warn("Unknown variant type");
+                    break;
+                }
+            }
+        }
 
         const EventCallFunction event_call_function{
             event.get_player(),

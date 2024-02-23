@@ -114,6 +114,19 @@ public:
         return raw_data;
     }
 
+    [[nodiscard]] std::vector<std::string> get_key_values(const std::string& delimiter = "|") const
+    {
+        std::vector<std::string> key_values{};
+        for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
+            for (const auto& token : it->second) {
+                key_values.emplace_back(it->first + delimiter + token);
+            }
+        }
+
+        return key_values;
+    }
+
+    [[nodiscard]] std::unordered_map<std::string, std::vector<std::string>> get_data() const { return m_data; }
     [[nodiscard]] bool empty() const { return m_data.empty(); }
 
 private:
