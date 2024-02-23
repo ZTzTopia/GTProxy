@@ -33,6 +33,10 @@ Client::Client(core::Core* core)
                 return;
             }
 
+            if (const auto ext{ core_->get_extension(0x153bd697) }; ext) {
+                return;
+            }
+
             spdlog::warn("The web server extension is not loaded!");
             spdlog::warn("Trying to using config address and port instead...");
 
