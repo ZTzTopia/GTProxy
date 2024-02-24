@@ -12,12 +12,21 @@ public:
     {
         for (const auto& line : tokenize(str, "\n")) {
             std::vector tokens{ tokenize(line, delimiter) };
+
+            if (tokens.empty()) {
+                continue;
+            }
+
+            if (tokens.size() == 1) {
+                continue;
+            }
+
             std::string key{ tokens.front() };
 
             tokens.erase(tokens.begin());
             tokens.shrink_to_fit();
 
-            m_data.emplace(key, tokens);
+            data_.emplace(key, tokens);
         }
     }
 
@@ -37,8 +46,8 @@ public:
 
     [[nodiscard]] std::string get(const std::string& key, const int index = 0) const
     {
-        const auto it{ m_data.find(key) };
-        if (it == m_data.end()) {
+        const auto it{ data_.find(key) };
+        if (it == data_.end()) {
             return {};
         }
 
@@ -75,38 +84,38 @@ public:
 
     void add(const std::string& key, const std::vector<std::string>& value)
     {
-        m_data.emplace(key, value);
+        data_.emplace(key, value);
     }
 
     void set(const std::string& key, const std::vector<std::string>& value)
     {
-        if (!m_data.contains(key)) {
+        if (!data_.contains(key)) {
             return;
         }
 
-        m_data[key] = value;
+        data_[key] = value;
     }
 
     void remove(const std::string& key)
     {
-        const auto it{ m_data.find(key) };
-        if (it == m_data.end()) {
+        const auto it{ data_.find(key) };
+        if (it == data_.end()) {
             return;
         }
 
-        m_data.erase(it);
+        data_.erase(it);
     }
 
     [[nodiscard]] std::string get_raw(const std::string& delimiter = "|", const std::string& prepend_text = "") const
     {
         std::string raw_data{};
-        for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
+        for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
             raw_data += prepend_text + it->first;
             for (const auto& token : it->second) {
                 raw_data += delimiter + token;
             }
 
-            if (std::next(it) != m_data.cend() && !std::next(it)->first.empty()) {
+            if (std::next(it) != data_.cend() && !std::next(it)->first.empty()) {
                 raw_data += '\n';
             }
         }
@@ -117,18 +126,21 @@ public:
     [[nodiscard]] std::vector<std::string> get_key_values(const std::string& delimiter = "|") const
     {
         std::vector<std::string> key_values{};
-        for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
+        for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
+            std::string key_value{ it->first };
             for (const auto& token : it->second) {
-                key_values.emplace_back(it->first + delimiter + token);
+                key_value += delimiter + token;
             }
+
+            key_values.emplace_back(key_value);
         }
 
         return key_values;
     }
 
-    [[nodiscard]] std::unordered_map<std::string, std::vector<std::string>> get_data() const { return m_data; }
-    [[nodiscard]] bool empty() const { return m_data.empty(); }
+    [[nodiscard]] std::unordered_map<std::string, std::vector<std::string>> get_data() const { return data_; }
+    [[nodiscard]] bool empty() const { return data_.empty(); }
 
 private:
-    std::unordered_map<std::string, std::vector<std::string>> m_data;
+    std::unordered_map<std::string, std::vector<std::string>> data_;
 };

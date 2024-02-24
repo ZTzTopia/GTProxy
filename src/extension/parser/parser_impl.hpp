@@ -69,8 +69,29 @@ private:
                 case packet::VariantType::FLOAT:
                     spdlog::info("\t[FLOAT]: {}", std::get<float>(var));
                     break;
-                case packet::VariantType::STRING:
+                case packet::VariantType::STRING: {
+                    TextParse text_parse{ std::get<std::string>(var) };
+                    if (!text_parse.empty()) {
+                        std::vector key_values{ text_parse.get_key_values() };
+                        if (key_values.size() == 1) {
+                            spdlog::info("\t[STRING]: {}", key_values[0]);
+                            break;
+                        }
+
+                        spdlog::info("\t[STRING]:");
+                        for (const auto& key_value : text_parse.get_key_values()) {
+                            spdlog::info("\t\t{}", key_value);
+                        }
+
+                        break;
+                    }
+
                     spdlog::info("\t[STRING]: {}", std::get<std::string>(var));
+                    break;
+                }
+                case packet::VariantType::VEC2:
+                    const glm::vec2 vec2{ std::get<glm::vec2>(var) };
+                    spdlog::info("\t[VEC2]: x: {}, y: {}", vec2.x, vec2.y);
                     break;
                 case packet::VariantType::UNSIGNED:
                     spdlog::info("\t[UNSIGNED]: {}", std::get<uint32_t>(var));
@@ -79,7 +100,6 @@ private:
                     spdlog::info("\t[SIGNED]: {}", std::get<int32_t>(var));
                     break;
                 default:
-                    spdlog::warn("Unknown variant type");
                     break;
                 }
             }
