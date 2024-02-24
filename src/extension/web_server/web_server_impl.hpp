@@ -40,8 +40,20 @@ public:
                     return;
                 }
 
+                // Only allow localhost to redirect to the server.
+                if (evt.get_player().get_peer()->address.host != 16777343) {
+                    return;
+                }
+
+                if (address_.empty() || port_ == 65535) {
+                    return;
+                }
+
                 std::ignore = core_->get_client()->connect(address_, port_);
                 evt.canceled = true;
+
+                address_.clear();
+                port_ = 65535;
             }
         );
 
