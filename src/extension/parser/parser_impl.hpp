@@ -89,10 +89,11 @@ private:
                     spdlog::info("\t[STRING]: {}", std::get<std::string>(var));
                     break;
                 }
-                case packet::VariantType::VEC2:
+                case packet::VariantType::VEC2: {
                     const glm::vec2 vec2{ std::get<glm::vec2>(var) };
                     spdlog::info("\t[VEC2]: x: {}, y: {}", vec2.x, vec2.y);
                     break;
+                }
                 case packet::VariantType::UNSIGNED:
                     spdlog::info("\t[UNSIGNED]: {}", std::get<uint32_t>(var));
                     break;
