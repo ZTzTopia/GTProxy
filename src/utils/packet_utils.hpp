@@ -13,16 +13,12 @@ public:
             return;
         }
 
-        // Create a message packet
         packet::message::Log message_packet{};
         message_packet.msg = message;
 
-        // Send the message packet to the player
         if (!packet::PacketHelper::send(message_packet, *player)) {
             spdlog::error("Failed to send chat message packet to player.");
         }
     }
-
-    
 };
 }

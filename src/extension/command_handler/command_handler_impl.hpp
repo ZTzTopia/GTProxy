@@ -12,10 +12,6 @@
 namespace extension::command_handler {
 class CommandHandlerExtension final : public ICommandHandlerExtension {
     core::Core* core_;
-
-    std::string address_;
-    int port_;
-
 public:
     explicit CommandHandlerExtension(core::Core* core): core_{ core }{
 
@@ -27,16 +23,11 @@ public:
         core_->get_event_dispatcher().prependListener(
             core::EventType::Message,
             [this](const core::EventMessage& event) {
-                // First, re-tokenize the message by retrieving its raw string.
                 TextParse textParse(event.get_message().get_raw(), "|");
-                std::vector<std::string> key_values = textParse.get_key_values("|");
                 
-                // Extract the command from the key "text"
                 std::string command = textParse.get("text");
                 
-                // Check if the command is "/proxy" and log additional information.
                 if (command == "/proxy") {
-                    spdlog::info("Command /proxy executed: sending a message packet...");
                 
                     player::Player* to_player = core_->get_server()->get_player();
                     if (to_player) {
