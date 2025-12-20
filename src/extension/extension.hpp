@@ -145,7 +145,11 @@ private:
 #ifdef _MSC_VER // MSVC
 	struct traits<std::_Binder<std::_Unforced, R(ClassType::*)(Args...) const, ClassType*>> {
 #else // GCC
+#ifndef __APPLE__
 	struct traits<std::_Bind<R(ClassType::*)(Args...) const>> {
+#else
+	struct traits<std::__bind<R(ClassType::*)(Args...) const>> {
+#endif
 #endif
 		using fn = std::function<R(Args...)>;
 	};

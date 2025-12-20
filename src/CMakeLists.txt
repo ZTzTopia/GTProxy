@@ -53,6 +53,8 @@ target_link_libraries(${PROJECT_NAME}
 # ?????????
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/lib/libressl/include)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/lib/enet/include)
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE 
