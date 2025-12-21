@@ -124,7 +124,13 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
     }
 
     ByteStream byte_stream{ reinterpret_cast<std::byte*>(packet->data), packet->dataLength };
-    if (byte_stream.get_size() < 4 || byte_stream.get_size() > 786432 /* 768kb */) {
+    if (byte_stream.get_size() < 4 || byte_stream.get_size() > 2097152 /* 2048kb */) {
+        spdlog::warn(
+            "Received a malformed packet from the server at {}:{} (size {})!",
+            network::format_ip_address(peer->address.host),
+            peer->address.port,
+            byte_stream.get_size()
+        );
         player_->disconnect();
         return;
     }
@@ -171,10 +177,6 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
             byte_stream.read_vector(ext_data, game_update_packet.data_size);
         }
 
-        const core::EventPacket event_packet{ *player_, *to_player, game_update_packet, ext_data };
-        event_packet.from = core::EventFrom::FromServer;
-        core_->get_event_dispatcher().dispatch(event_packet);
-
         if (core_->get_config().get<bool>("log.printGameUpdatePacket")) {
             spdlog::info(
                 "Incoming GameUpdatePacket {} ({}) from server: {:p}\n",
@@ -183,6 +185,10 @@ void Client::on_receive(ENetPeer* peer, ENetPacket* packet)
                 spdlog::to_hex(byte_stream.get_data())
             );
         }
+
+        const core::EventPacket event_packet{ *player_, *to_player, game_update_packet, ext_data };
+        event_packet.from = core::EventFrom::FromServer;
+        core_->get_event_dispatcher().dispatch(event_packet);
 
         if (!event_packet.canceled) {
             std::ignore = to_player->send_packet(byte_stream.get_data(), 0);

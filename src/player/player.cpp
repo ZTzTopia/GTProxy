@@ -3,7 +3,7 @@
 namespace player {
 bool Player::send_packet(const std::vector<std::byte>& data, const int channel) const
 {
-    if (data.size() < 4 || data.size() > 786432 /* 768kb should be enough */) {
+    if (data.size() < 4 || data.size() > 2097152 /* 2048kb should be enough */) {
         return false;
     }
 

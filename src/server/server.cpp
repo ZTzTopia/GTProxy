@@ -76,7 +76,7 @@ void Server::on_connect(ENetPeer* peer)
     );
 
     // GOOD JOB GROWTOPIA TEAM! PLEASE MAKE YOUR CLIENTS HANG LONGER!!!
-    enet_peer_timeout(peer, 0, 12000, 0);
+    enet_peer_timeout(peer, 0, ENET_PEER_TIMEOUT_MAXIMUM / 2, 0);
 
     player_ = new player::Player{ peer };
 
@@ -100,6 +100,12 @@ void Server::on_receive(ENetPeer* peer, ENetPacket* packet)
 
     ByteStream byte_stream{ reinterpret_cast<std::byte*>(packet->data), packet->dataLength };
     if (byte_stream.get_size() < 4 || byte_stream.get_size() > 16384 /* 16kb */) {
+        spdlog::warn(
+            "Received a malformed packet from the address {}:{} with size {} bytes!",
+            network::format_ip_address(peer->address.host),
+            peer->address.port,
+            byte_stream.get_size()
+        );
         player_->disconnect();
         return;
     }
