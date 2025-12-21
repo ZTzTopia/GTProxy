@@ -30,7 +30,7 @@ add_executable(${PROJECT_NAME}
 # Try to find the required packages
 find_package(fmt REQUIRED)
 find_package(glm REQUIRED)
-# find_package(httplib REQUIRED)
+find_package(httplib REQUIRED)
 find_package(magic_enum REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(pcg-cpp REQUIRED)

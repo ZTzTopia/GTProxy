@@ -243,7 +243,7 @@ protected:
             cli.enable_server_certificate_verification(false);
 
             const httplib::Headers headers {
-                { "User-Agent", get_header_value(req.headers, "User-Agent") },
+                { "User-Agent", req.get_header_value("User-Agent") },
                 { "Host", core_->get_config().get("server.address") }
             };
 
