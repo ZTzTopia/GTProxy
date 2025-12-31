@@ -112,11 +112,11 @@ inline bool register_all_packets()
     PacketRegistry::instance().register_core<message::ServerHello>();
     PacketRegistry::instance().register_game<game::Disconnect>();
     PacketRegistry::instance().register_variant<game::OnSendToServer>("OnSendToServer");
-    PacketRegistry::instance().register_message<message::Log>(R"(action\|log)");
-    PacketRegistry::instance().register_message<message::Quit>(R"(action\|quit)");
-    PacketRegistry::instance().register_message<message::QuitToExit>(R"(action\|quit_to_exit)");
-    PacketRegistry::instance().register_message<message::JoinRequest>(R"(action\|join_request\|name\|.+)");
-    PacketRegistry::instance().register_message<message::ValidateWorld>(R"(action\|validate_world)");
+    PacketRegistry::instance().register_message<message::Log>(R"(^action\|log$)");
+    PacketRegistry::instance().register_message<message::Quit>(R"(^action\|quit$)");
+    PacketRegistry::instance().register_message<message::QuitToExit>(R"(^action\|quit_to_exit$)");
+    PacketRegistry::instance().register_message<message::JoinRequest>(R"(^action\|join_request$)");
+    PacketRegistry::instance().register_message<message::ValidateWorld>(R"(^action\|validate_world$)");
     return true;
 }
 }
