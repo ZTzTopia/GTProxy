@@ -1,8 +1,10 @@
 #pragma once
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <unordered_map>
+#include <charconv>
 
 class TextParse {
 public:
@@ -10,37 +12,41 @@ public:
 
     explicit TextParse(const std::string& str, const std::string& delimiter = "|")
     {
+        parse(str, delimiter);
+    }
+
+    void parse(std::string_view str, std::string_view delimiter = "|")
+    {
+        data_.clear();
         for (const auto& line : tokenize(str, "\n")) {
-            std::vector tokens{ tokenize(line, delimiter) };
+            std::vector<std::string_view> tokens{ tokenize(line, delimiter) };
 
-            if (tokens.empty()) {
-                continue;
-            }
-
-            if (tokens.size() == 1) {
+            if (tokens.size() < 2) {
                 continue;
             }
 
             std::string key{ tokens.front() };
+            std::vector<std::string> values;
+            values.reserve(tokens.size() - 1);
+            
+            for (size_t i = 1; i < tokens.size(); ++i) {
+                values.emplace_back(tokens[i]);
+            }
 
-            tokens.erase(tokens.begin());
-            tokens.shrink_to_fit();
-
-            data_.emplace(key, tokens);
+            data_.emplace(std::move(key), std::move(values));
         }
     }
 
-    static std::vector<std::string> tokenize(const std::string& string, const std::string& delimiter = "|")
+    static std::vector<std::string_view> tokenize(std::string_view str, std::string_view delimiter = "|", bool keep_empty = false)
     {
-        std::vector<std::string> tokens{};
-        for (auto&& token : string | std::views::split(delimiter)) {
-            if (token.empty()) {
+        std::vector<std::string_view> tokens{};
+        for (auto&& token : str | std::views::split(delimiter)) {
+            std::string_view sv{ token.begin(), token.end() };
+            if (sv.empty() && !keep_empty) {
                 continue;
             }
-
-            tokens.emplace_back(token.begin(), token.end());
+            tokens.push_back(sv);
         }
-
         return tokens;
     }
 
@@ -51,7 +57,7 @@ public:
             return {};
         }
 
-        if (index < 0 || index >= it->second.size()) {
+        if (index < 0 || index >= static_cast<int>(it->second.size())) {
             return {};
         }
 
@@ -61,23 +67,25 @@ public:
     template <typename T>
     [[nodiscard]] T get(const std::string& key, const int index = 0) const
     {
-        if constexpr (std::is_integral_v<T>) {
-            if constexpr (std::is_unsigned_v<T>) {
-                return std::stoul(get(key, index));
+        std::string val = get(key, index);
+        if (val.empty()) return {};
+
+        T result{};
+        auto [ptr, ec] = std::from_chars(val.data(), val.data() + val.size(), result);
+        if (ec == std::errc{})
+ {
+            return result;
+        }
+
+        // Fallback for types not supported by from_chars (like float/double in some compilers)
+        // or if from_chars fails for other reasons.
+        try {
+            if constexpr (std::is_floating_point_v<T>) {
+                if constexpr (std::is_same_v<T, float>) return std::stof(val);
+                if constexpr (std::is_same_v<T, double>) return std::stod(val);
+                if constexpr (std::is_same_v<T, long double>) return std::stold(val);
             }
-            else {
-                return std::stoi(get(key, index));
-            }
-        }
-        else if constexpr (std::is_same_v<T, double>) {
-            return std::stod(get(key, index));
-        }
-        else if constexpr (std::is_same_v<T, long double>) {
-            return std::stold(get(key, index));
-        }
-        else if constexpr (std::is_same_v<T, float>) {
-            return std::stof(get(key, index));
-        }
+        } catch (...) { }
 
         return {};
     }
@@ -89,21 +97,12 @@ public:
 
     void set(const std::string& key, const std::vector<std::string>& value)
     {
-        if (!data_.contains(key)) {
-            return;
-        }
-
         data_[key] = value;
     }
 
     void remove(const std::string& key)
     {
-        const auto it{ data_.find(key) };
-        if (it == data_.end()) {
-            return;
-        }
-
-        data_.erase(it);
+        data_.erase(key);
     }
 
     [[nodiscard]] std::string get_raw(const std::string& delimiter = "|", const std::string& prepend_text = "") const
@@ -116,29 +115,30 @@ public:
             }
 
             if (std::next(it) != data_.cend() && !std::next(it)->first.empty()) {
-                raw_data += '\n';
+                raw_data += "\n";
             }
         }
 
         return raw_data;
     }
 
-    [[nodiscard]] std::vector<std::string> get_key_values(const std::string& delimiter = "|") const
+    [[nodiscard]] std::vector<std::pair<std::string, std::string>> get_key_values(const std::string& delimiter = "|") const
     {
-        std::vector<std::string> key_values{};
+        std::vector<std::pair<std::string, std::string>> key_values{};
         for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
-            std::string key_value{ it->first };
-            for (const auto& token : it->second) {
-                key_value += delimiter + token;
+            std::string value{};
+            for (size_t i = 0; i < it->second.size(); ++i) {
+                if (i > 0) value += delimiter;
+                value += it->second[i];
             }
 
-            key_values.emplace_back(key_value);
+            key_values.emplace_back(it->first, value);
         }
 
         return key_values;
     }
 
-    [[nodiscard]] std::unordered_map<std::string, std::vector<std::string>> get_data() const { return data_; }
+    [[nodiscard]] const std::unordered_map<std::string, std::vector<std::string>>& get_data() const { return data_; }
     [[nodiscard]] bool empty() const { return data_.empty(); }
 
 private:

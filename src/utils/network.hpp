@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <format>
 #include <vector>
 
 #include "text_parse.hpp"
@@ -17,9 +18,14 @@ inline bool is_valid_ip_address(const std::string& address)
         return false;
     }
 
-    return std::ranges::all_of(parts, [](const std::string& part){
+    return std::ranges::all_of(parts, [](const std::string_view& part){
         try {
-            return std::stoi(part) >= 0 && std::stoi(part) <= 255;
+            uint8_t value{};
+            if (std::from_chars(part.data(), part.data() + part.size(), value).ec != std::errc{}) {
+                return false;
+            }
+
+            return value > 0 && value <= 255;
         }
         catch (const std::exception&) {
             return false;

@@ -19,20 +19,16 @@ enum class VariantType : uint8_t {
 
 using variant = std::variant<float, std::string, glm::vec2, glm::vec3, uint32_t, int32_t>;
 
-class Variant {
+class PacketVariant {
 public:
-    Variant()
-        : variants_{ std::vector<variant>() }
-    {
-
-    }
+    PacketVariant()
+        : variants_{ std::vector<variant>{} }
+    { }
 
     template<typename... Args>
-    explicit Variant(const Args&... args)
+    explicit PacketVariant(const Args&... args)
         : variants_{ { args... } }
-    {
-
-    }
+    { }
 
     [[nodiscard]] static VariantType get_type(const variant& var)
     {
@@ -58,41 +54,41 @@ public:
     {
         const size_t size{ variants_.size() };
 
-        ByteStream<uint32_t> byte_stream{};
-        byte_stream.write<uint8_t>(size);
+        ByteStream<uint32_t> stream{};
+        stream.write<uint8_t>(size);
 
         for (size_t i{ 0 }; i < size; i++) {
             VariantType type{ get_type(variants_[i]) };
 
-            byte_stream.write<uint8_t>(i);
-            byte_stream.write(static_cast<std::underlying_type_t<VariantType>>(type));
+            stream.write<uint8_t>(i);
+            stream.write(static_cast<std::underlying_type_t<VariantType>>(type));
 
             if (type == VariantType::FLOAT) {
-                byte_stream.write(std::get<float>(variants_[i]));
+                stream.write(std::get<float>(variants_[i]));
             }
             else if (type == VariantType::STRING) {
-                byte_stream.write(std::get<std::string>(variants_[i]));
+                stream.write(std::get<std::string>(variants_[i]));
             }
             else if (type == VariantType::VEC2) {
-                glm::vec2 vec{ std::get<glm::vec2>(variants_[i]) };
-                byte_stream.write(vec.x);
-                byte_stream.write(vec.y);
+                const auto vec{ std::get<glm::vec2>(variants_[i]) };
+                stream.write(vec.x);
+                stream.write(vec.y);
             }
             else if (type == VariantType::VEC3) {
-                glm::vec3 vec{ std::get<glm::vec3>(variants_[i]) };
-                byte_stream.write(vec.x);
-                byte_stream.write(vec.y);
-                byte_stream.write(vec.z);
+                const auto vec{ std::get<glm::vec3>(variants_[i]) };
+                stream.write(vec.x);
+                stream.write(vec.y);
+                stream.write(vec.z);
             }
             else if (type == VariantType::UNSIGNED) {
-                byte_stream.write(std::get<uint32_t>(variants_[i]));
+                stream.write(std::get<uint32_t>(variants_[i]));
             }
             else if (type == VariantType::SIGNED) {
-                byte_stream.write(std::get<int32_t>(variants_[i]));
+                stream.write(std::get<int32_t>(variants_[i]));
             }
         }
 
-        return byte_stream.get_data();
+        return stream.get_data();
     }
 
     [[nodiscard]] bool deserialize(const std::vector<std::byte>& data)
@@ -101,6 +97,10 @@ public:
 
         uint8_t size{ 0 };
         byte_stream.read(size);
+
+        if (size == 0) {
+            return false;
+        }
 
         for (uint8_t i{ 0 }; i < size; i++) {
             uint8_t index{ 0 };

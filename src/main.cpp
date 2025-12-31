@@ -1,10 +1,20 @@
+#include <spdlog/spdlog.h>
+#include <csignal>
+
 #include "core/core.hpp"
 #include "core/logger.hpp"
 
-#include "extension/parser/parser_impl.hpp"
-#include "extension/sub_server_switch/sub_server_switch_impl.hpp"
-#include "extension/web_server/web_server_impl.hpp"
-#include "extension/command_handler/command_handler_impl.hpp"
+std::unique_ptr<core::Core> g_core{ nullptr };
+
+void signal_handler(int signal)
+{
+    if (!g_core) {
+        return;
+    }
+
+    spdlog::info("Interrupted by signal {}, stopping...", signal);
+    g_core->stop();
+}
 
 int main()
 {
@@ -36,23 +46,12 @@ int main()
             GTPROXY_VERSION_PATCH
         );
 
-        core::Core core{};
+        g_core = std::make_unique<core::Core>();
 
-        /**
-         * Register event listeners and handle events by adding extensions to the core
-         *
-         * Extensions serve as the primary mechanism to enhance the core's functionality.
-         * They allow the addition of new features, such as a web server or a parser.
-         *
-         * This process involves using the dispatch pattern to listen for events emitted by the core.
-         */
-        core.add_extension(new extension::web_server::WebServerExtension{ &core });
-        core.add_extension(new extension::parser::ParserExtension{ &core });
-        core.add_extension(new extension::sub_server_switch::SubServerSwitchExtension{ &core });
-        core.add_extension(new extension::command_handler::CommandHandlerExtension{ &core });
+        std::signal(SIGINT, signal_handler);
+        std::signal(SIGTERM, signal_handler);
 
-        // Run the core (Will block the main thread until the core is stopped)
-        core.run();
+        g_core->run();
     }
     catch (const std::runtime_error& e) {
         spdlog::error("Runtime error: {}", e.what());
@@ -63,5 +62,7 @@ int main()
         return 1;
     }
 
+    spdlog::info("GTProxy stopped");
+    spdlog::shutdown();
     return 0;
 }

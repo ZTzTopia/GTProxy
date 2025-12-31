@@ -1,54 +1,116 @@
 #pragma once
-#include <set>
+#include <type_traits>
+#include <concepts>
+#include <span>
 #include <magic_enum/magic_enum.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/bin_to_hex.h>
 
 #include "packet_types.hpp"
-#include "../player/player.hpp"
+#include "packet_variant.hpp"
 #include "../utils/byte_stream.hpp"
 #include "../utils/text_parse.hpp"
 
+// What the heck im even doing here
 namespace packet {
+// WOW this is so cool
+template<typename T>
+concept NetworkSender = requires(T& sender, const std::span<const std::byte>& data, int channel) {
+    { sender.write(data, channel) } -> std::convertible_to<bool>;
+    { sender.is_connected() } -> std::convertible_to<bool>;
+};
+
+class IPacket {
+public:
+    virtual ~IPacket() = default;
+
+    [[nodiscard]] virtual NetMessageType message_type() const = 0;
+    [[nodiscard]] virtual PacketType packet_type() const = 0;
+    [[nodiscard]] virtual int channel() const = 0;
+
+    // TODO: Return false on failure instead of throwing
+    [[nodiscard]] virtual bool read(const TextParse&) { throw std::runtime_error("Not implemented"); }
+    [[nodiscard]] virtual bool read(const GameUpdatePacket&, const std::vector<std::byte>&) { throw std::runtime_error("Not implemented"); }
+    [[nodiscard]] virtual bool read(const PacketVariant&) { throw std::runtime_error("Not implemented"); }
+
+    // TODO: Return false on failure instead of throwing
+    virtual void write() { throw std::runtime_error("Not implemented"); }
+    virtual void write(ByteStream<>&) { throw std::runtime_error("Not implemented"); }
+    virtual void write(GameUpdatePacket&, std::vector<std::byte>&) { throw std::runtime_error("Not implemented"); }
+};
+
 template <NetMessageType MsgType, int Channel = 0>
-struct NetMessage {
+struct NetMessage : IPacket {
+    ~NetMessage() override = default;
+
     static constexpr NetMessageType MESSAGE_TYPE = MsgType;
     static constexpr int CHANNEL = Channel;
 
-    [[nodiscard]] virtual bool read(TextParse&) const { return false; }
-    virtual void write(ByteStream<>&) { }
+    [[nodiscard]] NetMessageType message_type() const override { return MESSAGE_TYPE; }
+    [[nodiscard]] PacketType packet_type() const override { return PACKET_MAX; }
+    [[nodiscard]] int channel() const override { return CHANNEL; }
+};
+
+template <PacketType PktType, int Channel = 0>
+struct NetPacket : IPacket {
+    ~NetPacket() override = default;
+
+    static constexpr NetMessageType MESSAGE_TYPE = NET_MESSAGE_GAME_PACKET;
+    static constexpr PacketType PACKET_TYPE = PktType;
+    static constexpr int CHANNEL = Channel;
+
+    [[nodiscard]] NetMessageType message_type() const override { return MESSAGE_TYPE; }
+    [[nodiscard]] PacketType packet_type() const override { return PACKET_TYPE; }
+    [[nodiscard]] int channel() const override { return CHANNEL; }
 };
 
 std::false_type is_net_message_impl(...);
 template <NetMessageType MsgType, int Channel>
 std::true_type is_net_message_impl(NetMessage<MsgType, Channel> const volatile&);
-// Get whether a type is a derived class of NetMessage
+
 template <typename T>
 using is_net_message = decltype(is_net_message_impl(std::declval<T const volatile&>()));
-
-template <PacketType PktType, int Channel = 0>
-struct NetPacket {
-    static constexpr NetMessageType MESSAGE_TYPE = NET_MESSAGE_GAME_PACKET; // Always
-    static constexpr PacketType PACKET_TYPE = PktType;
-    static constexpr int CHANNEL = Channel;
-
-    [[nodiscard]] virtual bool read(const GameUpdatePacket&) const { return false; }
-    virtual void write(GameUpdatePacket&, std::vector<std::byte>&) { }
-};
 
 std::false_type is_net_packet_impl(...);
 template <PacketType PktType, int Channel>
 std::true_type is_net_packet_impl(NetPacket<PktType, Channel> const volatile&);
-// Get whether a type is a derived class of NetPacket
+
 template <typename T>
 using is_net_packet = decltype(is_net_packet_impl(std::declval<T const volatile&>()));
 
 struct PacketHelper {
-    // Attempt to send a packet from derived class of NetMessage or NetPacket
-    // to a player
+    static std::vector<std::byte> serialize(IPacket& packet)
+    {
+        ByteStream byte_stream{};
+        byte_stream.write(magic_enum::enum_underlying(packet.message_type()));
+
+        if (packet.message_type() != NET_MESSAGE_GAME_PACKET) {
+            packet.write(byte_stream);
+        }
+        else {
+            GameUpdatePacket game_packet{};
+            std::vector<std::byte> ext_data{};
+
+            packet.write(game_packet, ext_data);
+
+            game_packet.type = packet.packet_type();
+            if (!ext_data.empty()) {
+                game_packet.flags.extended = 1;
+                game_packet.data_size = static_cast<std::uint32_t>(ext_data.size());
+            }
+
+            byte_stream.write(game_packet);
+            byte_stream.write_data(ext_data.data(), ext_data.size());
+        }
+
+        return byte_stream.get_data();
+    }
+
     template <class Packet>
-    static bool send(Packet& packet, const player::Player& player)
+    static std::vector<std::byte> serialize(Packet& packet)
     {
         if constexpr (!is_net_message<Packet>::value && !is_net_packet<Packet>::value) {
-            return false;
+            return {};
         }
 
         ByteStream byte_stream{};
@@ -66,46 +128,55 @@ struct PacketHelper {
             game_packet.type = Packet::PACKET_TYPE;
             if (!ext_data.empty()) {
                 game_packet.flags.extended = 1;
-                game_packet.data_size = ext_data.size();
+                game_packet.data_size = static_cast<std::uint32_t>(ext_data.size());
             }
 
             byte_stream.write(game_packet);
             byte_stream.write_data(ext_data.data(), ext_data.size());
         }
 
-        return player.send_packet(byte_stream.get_data(), Packet::CHANNEL);
+        return byte_stream.get_data();
     }
 
-    // Attempt to send a packet from derived class of NetMessage or NetPacket
-    // to a set of players
-    template <class Packet>
-    static bool broadcastToSome(Packet& packet, const std::set<player::Player&>& players)
+    static bool write(IPacket& packet, NetworkSender auto& sender)
     {
-        // bool result{ true };
-        // for (const auto player : players) {
-        //     if ((result = send(packet, player)) == false) {
-        //         break;
-        //     }
-        // }
-        //
-        // return result;
-        return false;
+        auto data{ serialize(packet) };
+        if (data.empty()) {
+            return false;
+        }
+
+        data.push_back(static_cast<std::byte>(0x00));
+
+        spdlog::debug(
+            "Sending {} on channel {}: {:p}",
+            magic_enum::enum_name(packet.message_type()),
+            packet.channel(),
+            spdlog::to_hex(data)
+        );
+        return sender.write(data, packet.channel());
     }
 
-    // Attempt to send a packet from derived class of NetMessage or NetPacket
-    // to all players in a world
-    template <class Packet>
-    static bool broadcastToWorld(Packet &packet)
+    template <class Packet, NetworkSender Sender>
+    static bool write(Packet& packet, Sender& sender)
     {
-        return false;
-    }
+        if constexpr (is_net_message<Packet>::value || is_net_packet<Packet>::value) {
+            auto data{ serialize(packet) };
+            if (data.empty()) {
+                return false;
+            }
 
-    // Attempt to send a packet from derived class of NetMessage or NetPacket
-    // to all players
-    template <class Packet>
-    static bool broadcast(Packet &packet)
-    {
-        return false;
+            data.push_back(static_cast<std::byte>(0x00));
+
+            spdlog::debug(
+                "Sending {} on channel {}: {:p}",
+                magic_enum::enum_name(Packet::MESSAGE_TYPE),
+                Packet::CHANNEL,
+                spdlog::to_hex(data)
+            );
+            return sender.write(data, Packet::CHANNEL);
+        }
+
+        return sender.write(packet, 0);
     }
 };
 }

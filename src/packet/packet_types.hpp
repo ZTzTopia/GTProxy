@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 namespace packet {
 enum NetMessageType : uint32_t {

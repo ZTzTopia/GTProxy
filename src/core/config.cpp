@@ -1,99 +1,36 @@
-#include <fstream>
-#include <nlohmann/json.hpp>
+#include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
 
 #include "config.hpp"
 
 namespace core {
-static const std::map<std::string, ConfigStorage> config_defaults{
-    { "server.port", 16999 },
-    { "server.address", "www.growtopia1.com" },
-    { "client.game_version", "5.11" },
-    { "client.protocol", 312 },
-    { "client.dnsServer", "cloudflare" },
-    { "extension.ignore", std::vector<std::string>{ "0xdeadbeef" } },
-    { "log.printMessage", true },
-    { "log.printGameUpdatePacket", false },
-    { "log.printVariant", true },
-};
-
 Config::Config()
 {
-    // Load configuration from file, if available
-    if (std::ifstream ifs{ "config.json" }; ifs.good()) {
-        spdlog::info("Loading config file \"config.json\"...");
-
-        nlohmann::json j{};
-        ifs >> j;
-
-        for (const auto& [key, value] : j.items()) {
-            if (value.is_number_unsigned()) {
-                config_[key] = value.get<unsigned int>();
-            }
-            else if (value.is_number_integer()) {
-                config_[key] = value.get<int>();
-            }
-            else if (value.is_string()) {
-                config_[key] = value.get<std::string>();
-            }
-            else if (value.is_boolean()) {
-                config_[key] = value.get<bool>();
-            }
-            else if (value.is_array()) {
-                if (!value.empty() && value[0].is_string()) {
-                    config_[key] = value.get<std::vector<std::string>>();
-                }
-                else {
-                    throw std::runtime_error{ "Invalid configuration array value type" };
-                }
-            }
-            else {
-                throw std::runtime_error{ "Invalid configuration value type" };
-            }
-        }
-    }
-
-    // Set default values for missing configuration keys
-    bool save_defaults{ false };
-    for (const auto& [key, value] : config_defaults) {
-        if (config_.contains(key)) {
-            continue;
+    if (const auto read_ec = glz::read_file_json(config_, "config.json", std::string{})) {
+        if (read_ec.ec != glz::error_code::file_open_failure) {
+            throw std::runtime_error{
+                fmt::format("Failed to load configuration file: {}", glz::format_error(read_ec))
+            };
         }
 
-        spdlog::warn("Configuration key \"{}\" is missing, setting default value", key);
-
-        config_[key] = value;
-        save_defaults = true;
-    }
-
-    // Save default values to file, if necessary
-    if (save_defaults) {
-        nlohmann::json j{};
-        for (const auto& [key, value] : config_) {
-            std::visit([&]<typename U>(U val) {
-                using T = std::decay_t<decltype(val)>;
-                if constexpr (std::is_same_v<T, int>) {
-                    j[key] = val;
-                }
-                else if constexpr (std::is_same_v<T, unsigned int>) {
-                    j[key] = val;
-                }
-                else if constexpr (std::is_same_v<T, std::string>) {
-                    j[key] = val;
-                }
-                else if constexpr (std::is_same_v<T, bool>) {
-                    j[key] = val;
-                }
-                else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
-                    j[key] = val;
-                }
-            }, value);
+        spdlog::warn("Configuration file \"config.json\" not found. Creating default configuration file...");
+        if (const auto write_ec = glz::write_file_json<glz::opts{.prettify = true}>(config_, "config.json", std::string{})) {
+            throw std::runtime_error{
+                fmt::format("Failed to create default configuration file: {}", glz::format_error(write_ec))
+            };
         }
 
-        std::ofstream ofs{ "config.json" };
-        ofs << std::setw(4) << j << std::endl;
+        spdlog::info("Default configuration file \"config.json\" created successfully.");
+        return;
     }
+
+    // TODO: Add missing keys when new fields are added
 
     spdlog::info("Config file \"config.json\" is all loaded up and ready to go!");
 }
 }
+
+template<> struct glz::meta<core::Config::ServerConfig> : glz::camel_case {};
+template<> struct glz::meta<core::Config::ClientConfig> : glz::camel_case {};
+template<> struct glz::meta<core::Config::LogConfig> : glz::camel_case {};
+template<> struct glz::meta<core::Config::WrapperConfig> : glz::camel_case {};

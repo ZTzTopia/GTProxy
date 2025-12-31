@@ -1,89 +1,58 @@
-#include <future>
 #include <chrono>
-#include <enet/enet.h>
+#include <thread>
+
 #include <spdlog/spdlog.h>
+#include <enet/enet.h>
 
 #include "core.hpp"
-#include "../client/client.hpp"
-#include "../server/server.hpp"
 
 namespace core {
 Core::Core()
-    : run_{ true }
-    , tick_{ 0 }
+    : running_{ true }
 {
     if (enet_initialize() != 0) {
         throw std::runtime_error{ "Failed to initialize ENet" };
     }
 
-    server_ = new server::Server{ this };
-    client_ = new client::Client{ this };
+    server_ = std::make_unique<network::Server>(config_, dispatcher_);
+    client_ = std::make_unique<network::Client>(config_, dispatcher_);
+    web_server_ = std::make_unique<WebServer>(config_, dispatcher_, *client_, *server_);
+
+    packet::register_all_packets();
+
+    session_handler_ = std::make_unique<SessionHandler>(config_, dispatcher_, *client_, *server_);
+
+    spdlog::info("Core initialized successfully");
 }
 
 Core::~Core()
 {
-    delete client_;
-    delete server_;
     enet_deinitialize();
 }
 
-bool Core::add_extension(extension::IExtension* ext)
+void Core::run() const
 {
-    spdlog::debug("Checking if extension with UID 0x{:x} should be ignored", ext->get_uid());
-    for (const auto& ignore_uid : config_.get<std::vector<std::string>>("extension.ignore")) {
-        if (ext->get_uid() == std::stoull(ignore_uid, nullptr, 16)) {
-            spdlog::info("Ignoring extension with UID 0x{:x}", ext->get_uid());
-            return false;
-        }
-    }
+    constexpr auto sleep_timer = std::chrono::microseconds{ 5000 };
+    auto prev = std::chrono::high_resolution_clock::now();
+    auto sleep_duration = sleep_timer;
 
-    return extension::Extensible::add_extension(ext);
-}
-
-void Core::run()
-{
-    event_dispatcher_.dispatch(EventInit{});
-    for (const auto& ext : std::views::values(extensions_)) {
-        ext->init();
-    }
-
-    constexpr std::chrono::microseconds sleep_timer{ static_cast<int>(5.0f * 1000.0f) };
-    auto prev{ std::chrono::high_resolution_clock::now() };
-    std::chrono::microseconds sleep_duration{ sleep_timer };
-
-    while (run_) {
-        const auto now{ std::chrono::high_resolution_clock::now() };
-        // Elapsed time since previous iteration
-        const auto us{ std::chrono::duration_cast<std::chrono::microseconds>(now - prev) };
+    while (running_) {
+        const auto now = std::chrono::high_resolution_clock::now();
+        const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - prev);
         prev = now;
 
-        // Adjust the sleep duration based on the time spent processing
-        sleep_duration += sleep_timer - us;
+        sleep_duration += sleep_timer - elapsed;
 
-        // Use std::async to run server and client processing asynchronously
-        auto server_future{ std::async(std::launch::async, [this] { server_->process(); }) };
-        auto client_future{ std::async(std::launch::async, [this] { client_->process(); }) };
-
-        // Wait for both tasks to complete
-        server_future.get();
-        client_future.get();
-
-        // Call the tick callback
-        event_dispatcher_.dispatch(EventTick{}); // TODO: Pass tick related arguments to the callback
-        for (const auto& ext : std::views::values(extensions_)) {
-            ext->tick();
-        }
+        server_->process();
+        client_->process();
 
         if (sleep_duration > std::chrono::microseconds::zero()) {
             std::this_thread::sleep_for(sleep_duration);
         }
 
-        // Reset sleep_duration if it's greater than sleep_timer
         if (sleep_duration >= sleep_timer) {
             sleep_duration = std::chrono::microseconds::zero();
         }
-
-        tick_++;
     }
 }
 }

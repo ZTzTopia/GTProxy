@@ -1,60 +1,54 @@
 project(Proxy)
 
 file(GLOB GTPROXY_INCLUDE_FILES
-    client/*.hpp
+    *.hpp
     core/*.hpp
+    network/*.hpp
     packet/*.hpp
-    extension/*.hpp
-    extension/**/*.hpp
     packet/game/*.hpp
     packet/message/*.hpp
-    player/*.hpp
-    server/*.hpp
+    packet/stages/*.hpp
     utils/*.hpp)
 
 file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
-    client/*.cpp
     core/*.cpp
-    extension/*.cpp
-    extension/**/*.cpp
+    network/*.cpp
     packet/*.cpp
-    player/*.cpp
-    server/*.cpp
+    packet/stages/*.cpp
     utils/*.cpp)
 
 add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}
     ${GTPROXY_SOURCE_FILES})
 
-# Try to find the required packages
 find_package(fmt REQUIRED)
+find_package(glaze REQUIRED)
 find_package(glm REQUIRED)
 find_package(httplib REQUIRED)
 find_package(magic_enum REQUIRED)
-find_package(nlohmann_json REQUIRED)
 find_package(pcg-cpp REQUIRED)
+find_package(LibreSSL REQUIRED)
 find_package(spdlog REQUIRED)
 
-# Target the required packages
 target_link_libraries(${PROJECT_NAME}
     enet
     eventpp
-    crypto
-    tls
     fmt::fmt
+    glaze::glaze
     glm::glm
     httplib::httplib
+    LibreSSL::TLS
+    LibreSSL::Crypto
     magic_enum::magic_enum
-    nlohmann_json::nlohmann_json
     pcg-cpp::pcg-cpp
     spdlog::spdlog)
 
-# ?????????
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/lib/libressl/include)
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/lib/enet/include)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/lib/libressl/include)
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE 
@@ -70,13 +64,11 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     SPDLOG_FMT_EXTERNAL
     CPPHTTPLIB_OPENSSL_SUPPORT)
 
-# Set the version number
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     GTPROXY_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
     GTPROXY_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
     GTPROXY_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH})
 
-# Enable spdlog debug
 if (NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         GTPROXY_DEBUG)

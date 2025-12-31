@@ -1,29 +1,31 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <span>
+#include <cstring>
 
 template <typename LengthType = std::uint16_t>
 class ByteStream {
 public:
     ByteStream()
-        : data_{ std::vector<std::byte>() }
+        : read_offset_{ 0 }
+    { }
+
+    ByteStream(const std::byte* data, const std::size_t length)
+        : data_span_{ data, length }
         , read_offset_{ 0 }
-    {
+    { }
 
-    }
-
-    ByteStream(std::byte* data, const std::size_t length)
-        : data_{ std::vector(data, data + length) }
+    ByteStream(std::span<const std::byte> span)
+        : data_span_{ span }
         , read_offset_{ 0 }
-    {
-
-    }
+    { }
 
     void write_data(const void* ptr, const std::size_t size)
     {
         const auto begin{ static_cast<const std::byte*>(ptr) };
         const std::byte* end{ begin + size };
-        data_.insert(data_.end(), begin, end);
+        data_vec_.insert(data_vec_.end(), begin, end);
     }
 
     void write_vector(const std::vector<std::byte>& vec, const bool write_length_info = true)
@@ -64,11 +66,11 @@ public:
 
     bool read_data(void* ptr, const std::size_t size)
     {
-        if (data_.size() - read_offset_ < size) {
+        if (get_size() - read_offset_ < size) {
             return false;
         }
 
-        std::memcpy(ptr, data_.data() + read_offset_, size);
+        std::memcpy(ptr, get_raw_ptr() + read_offset_, size);
         read_offset_ += size;
         return true;
     }
@@ -81,20 +83,18 @@ public:
             }
         }
 
-        if (data_.size() < static_cast<std::size_t>(length)) {
+        if (get_size() - read_offset_ < static_cast<std::size_t>(length)) {
             return false;
         }
 
         vec.resize(length);
-        read_data(&vec[0], length);
-        return true;
+        return read_data(vec.data(), length);
     }
 
     template <typename T>
     bool read(T& value)
     {
-        read_data(&value, sizeof(T));
-        return true;
+        return read_data(&value, sizeof(T));
     }
 
     bool read(std::string& str, LengthType length = 0)
@@ -105,13 +105,12 @@ public:
             }
         }
 
-        if (data_.size() < static_cast<std::size_t>(length)) {
+        if (get_size() - read_offset_ < static_cast<std::size_t>(length)) {
             return false;
         }
 
         str.resize(static_cast<std::size_t>(length));
-        read_data(&str[0], static_cast<std::size_t>(length));
-        return true;
+        return read_data(str.data(), static_cast<std::size_t>(length));
     }
 
     template <typename T>
@@ -123,10 +122,22 @@ public:
 
     void skip(const std::size_t size) { read_offset_ += size; }
     [[nodiscard]] std::size_t get_read_offset() const { return read_offset_; }
-    [[nodiscard]] std::size_t get_size() const { return data_.size(); }
-    [[nodiscard]] std::vector<std::byte> get_data() const { return data_; }
+    
+    [[nodiscard]] std::size_t get_size() const { 
+        return data_vec_.empty() ? data_span_.size() : data_vec_.size(); 
+    }
+
+    [[nodiscard]] const std::byte* get_raw_ptr() const {
+        return data_vec_.empty() ? data_span_.data() : data_vec_.data();
+    }
+
+    [[nodiscard]] std::vector<std::byte> get_data() const { 
+        if (!data_vec_.empty()) return data_vec_;
+        return { data_span_.begin(), data_span_.end() };
+    }
 
 private:
-    std::vector<std::byte> data_;
+    std::vector<std::byte> data_vec_;
+    std::span<const std::byte> data_span_;
     std::size_t read_offset_;
 };

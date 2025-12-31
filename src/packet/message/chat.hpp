@@ -1,13 +1,18 @@
 #pragma once
-#include <format>
-
 #include "../packet_types.hpp"
+#include "../packet_helper.hpp"
 
 namespace packet::message {
 struct Log : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     std::string msg;
 
-    void write(ByteStream<std::uint16_t>& byte_stream)
+    bool read(const TextParse& text_parse) override
+    {
+        msg = text_parse.get("msg", 1);
+        return true;
+    }
+
+    void write(ByteStream<>& byte_stream) override
     {
         TextParse text_parse{};
         text_parse.add("action", { "log" });
