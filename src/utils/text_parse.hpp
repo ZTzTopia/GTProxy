@@ -19,7 +19,7 @@ public:
     {
         data_.clear();
         for (const auto& line : tokenize(str, "\n")) {
-            std::vector<std::string_view> tokens{ tokenize(line, delimiter) };
+            std::vector tokens{ tokenize(line, delimiter) };
 
             if (tokens.size() < 2) {
                 continue;
@@ -28,7 +28,7 @@ public:
             std::string key{ tokens.front() };
             std::vector<std::string> values;
             values.reserve(tokens.size() - 1);
-            
+
             for (size_t i = 1; i < tokens.size(); ++i) {
                 values.emplace_back(tokens[i]);
             }
@@ -37,7 +37,7 @@ public:
         }
     }
 
-    static std::vector<std::string_view> tokenize(std::string_view str, std::string_view delimiter = "|", bool keep_empty = false)
+    static std::vector<std::string_view> tokenize(std::string_view str, std::string_view delimiter = "|", bool keep_empty = true)
     {
         std::vector<std::string_view> tokens{};
         for (auto&& token : str | std::views::split(delimiter)) {
@@ -45,6 +45,7 @@ public:
             if (sv.empty() && !keep_empty) {
                 continue;
             }
+
             tokens.push_back(sv);
         }
         return tokens;

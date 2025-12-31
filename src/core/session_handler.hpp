@@ -16,9 +16,12 @@ public:
     ~SessionHandler();
 
 private:
-    Config& config;
+    Config& config_;
     event::Dispatcher& dispatcher_;
     network::Client& client_;
     network::Server& server_;
+
+    std::string pending_address_;
+    uint16_t pending_port_;
 };
 }

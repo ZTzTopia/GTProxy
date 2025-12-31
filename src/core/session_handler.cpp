@@ -7,10 +7,11 @@ SessionHandler::SessionHandler(
     network::Client& client,
     network::Server& server
 )
-    : config{ config }
+    : config_{ config }
     , dispatcher_{ dispatcher }
     , client_{ client }
     , server_{ server }
+    , pending_port_{ 65535 }
 {
     dispatcher_.appendListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
         const auto& raw_packet{ dynamic_cast<const event::RawPacketEvent*>(&event) };
@@ -59,7 +60,27 @@ SessionHandler::SessionHandler(
         spdlog::info("Forced disconnect proxy client from Growtopia server");
     });
 
-    dispatcher_.appendListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
+    dispatcher_.prependListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
+        spdlog::debug("Intercepted OnSendToServer packet, redirecting connection...");
+        const auto& packet{ dynamic_cast<const event::PacketEvent<packet::game::OnSendToServer>*>(&event) };
+        if (!packet) {
+            spdlog::debug("Not an OnSendToServer packet, ignoring...");
+            return;
+        }
+
+        packet::game::OnSendToServer pkt{ *(packet->packet) };
+        pending_address_ = pkt.address;
+        pending_port_ = pkt.port;
+
+        event.cancel();
+
+        pkt.address = "127.0.0.1";
+        pkt.port = config_.get_server_config().port;
+
+        std::ignore = packet::PacketHelper::write(pkt, server_);
+    });
+
+    dispatcher_.appendListener(event::Type::ServerBoundPacket, [this](const event::Event& event) {
         if (const auto& packet{ dynamic_cast<const event::PacketEvent<packet::game::Disconnect>*>(&event) }; !packet) {
             return;
         }
@@ -71,7 +92,25 @@ SessionHandler::SessionHandler(
         spdlog::info("Forced disconnect proxy client from Growtopia server");
     });
 
+    dispatcher_.prependListener(event::Type::ClientConnect, [this](const event::Event& e) {
+        if (pending_port_ == 65535) {
+           return;
+        }
+
+        spdlog::debug("Connecting to Growtopia server at {}:{}", pending_address_, pending_port_);
+
+        client_.connect(pending_address_, pending_port_);
+
+        e.cancel();
+
+        pending_address_.clear();
+        pending_port_ = 65535;
+    });
+
     dispatcher_.appendListener(event::Type::ClientDisconnect, [this](const event::Event& e) {
+        pending_address_.clear();
+        pending_port_ = 65535;
+
         if (!client_.is_connected()) {
            return;
        }

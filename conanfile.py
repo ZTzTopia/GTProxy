@@ -15,6 +15,7 @@ class GTProxyRecipe(ConanFile):
         self.requires('pcg-cpp/cci.20220409')
         self.requires('libressl/3.9.1')
         self.requires('spdlog/[~1.16]')
+        self.requires('gtest/1.14.0')
 
     def layout(self):
         cmake_layout(self)

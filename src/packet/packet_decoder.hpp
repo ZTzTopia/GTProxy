@@ -67,7 +67,7 @@ public:
                     fmt::format("{}", variant)
                 );
 
-                auto packet{ PacketRegistry::instance().create(variant.get(0)) };
+                auto packet{ PacketRegistry::instance().create_variant(variant.get(0)) };
                 if (!packet) {
                     spdlog::warn("No packet structure registered for this variant");
                     return {};

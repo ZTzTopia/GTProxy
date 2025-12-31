@@ -64,7 +64,7 @@ public:
         return nullptr;
     }
 
-    std::shared_ptr<IPacket> create(std::string_view function) const
+    std::shared_ptr<IPacket> create_variant(std::string_view function) const
     {
         if (auto it = variants_.find(std::string(function)); it != variants_.end()) {
             return it->second();

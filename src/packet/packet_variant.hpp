@@ -156,7 +156,7 @@ public:
     template <typename T = std::string>
     [[nodiscard]] T get(const std::size_t index) const
     {
-        if (index > variants_.size()) {
+        if (index >= variants_.size()) {
             return T{};
         }
 
@@ -170,7 +170,7 @@ public:
 
     void set(const std::size_t index, const variant& value)
     {
-        if (index > variants_.size()) {
+        if (index >= variants_.size()) {
             return;
         }
 

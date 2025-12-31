@@ -13,7 +13,7 @@ struct Disconnect : NetPacket<Disconnect, PacketType::PACKET_DISCONNECT> {
         ext_data.clear();
     }
 
-    bool read(const PacketVariant& variant) override
+    bool read(const GameUpdatePacket&, const std::vector<std::byte>&) override
     {
         return true;
     }
@@ -55,7 +55,7 @@ struct OnSendToServer : NetPacket<OnSendToServer, PacketType::PACKET_CALL_FUNCTI
             return false;
         }
 
-        port = variant.get<uint32_t>(1);
+        port = variant.get<int32_t>(1);
         token = variant.get<int32_t>(2);
         user = variant.get<int32_t>(3);
 
@@ -65,9 +65,11 @@ struct OnSendToServer : NetPacket<OnSendToServer, PacketType::PACKET_CALL_FUNCTI
         TextParse text_parse{};
         text_parse.parse(raw_text);
 
-        address = text_parse.get(key, 0);
-        door_id = text_parse.get(key, 1);
-        uuid_token = text_parse.get(key, 2);
+        address = key;
+        door_id = text_parse.get(key, 0);
+        uuid_token = text_parse.get(key, 1);
+
+        spdlog::debug("OnSendToServer parsed address: {}, door_id: {}, uuid_token: {}", address, door_id, uuid_token);
 
         login_mode = variant.get<uint32_t>(5);
         username = variant.get<std::string>(6);

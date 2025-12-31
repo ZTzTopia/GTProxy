@@ -11,3 +11,6 @@ project(GTProxy VERSION 2.0.0)
 
 add_subdirectory(lib)
 add_subdirectory(src)
+
+enable_testing()
+add_subdirectory(tests)
