@@ -6,7 +6,7 @@
 #include "../packet_variant.hpp"
 
 namespace packet::game {
-struct Disconnect : NetPacket<PacketType::PACKET_DISCONNECT> {
+struct Disconnect : NetPacket<Disconnect, PacketType::PACKET_DISCONNECT> {
     void write(GameUpdatePacket& game_update_packet, std::vector<std::byte>& ext_data) override
     {
         game_update_packet.net_id = -1;
@@ -19,7 +19,7 @@ struct Disconnect : NetPacket<PacketType::PACKET_DISCONNECT> {
     }
 };
 
-struct OnSendToServer : NetPacket<PacketType::PACKET_CALL_FUNCTION> {
+struct OnSendToServer : NetPacket<OnSendToServer, PacketType::PACKET_CALL_FUNCTION> {
     uint16_t port;
     int32_t token;
     int32_t user;

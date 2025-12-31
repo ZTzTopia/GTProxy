@@ -48,27 +48,27 @@ SessionHandler::SessionHandler(
         std::ignore = packet::PacketHelper::write(*(packet->packet), client_);
     });
 
-    dispatcher_.appendListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
-        if (const auto& raw_packet{ dynamic_cast<const event::PacketEvent<packet::message::Quit>*>(&event) }; !raw_packet) {
+    dispatcher_.prependListener(event::Type::ServerBoundPacket, [this](const event::Event& event) {
+        if (const auto& packet{ dynamic_cast<const event::PacketEvent<packet::message::Quit>*>(&event) }; !packet) {
             return;
         }
 
         server_.disconnect(); // Umm, I think the Growtopia Server use disconnect now after sending this packet
         client_.disconnect_now(); // Use peer reset instead because the Growtopia Server is use disconnect now after
         // sending this packet
-        spdlog::info("Forced disconnect proxy client from server");
+        spdlog::info("Forced disconnect proxy client from Growtopia server");
     });
 
     dispatcher_.appendListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
-        if (const auto& raw_packet{ dynamic_cast<const event::PacketEvent<packet::game::Disconnect>*>(&event) }; !raw_packet) {
+        if (const auto& packet{ dynamic_cast<const event::PacketEvent<packet::game::Disconnect>*>(&event) }; !packet) {
             return;
         }
 
         server_.disconnect_now();
-        spdlog::info("Forced disconnect proxy server from client");
+        spdlog::info("Forced disconnect proxy server from Growtopia client");
         client_.disconnect_now(); // Use peer reset instead because the Growtopia Server is use disconnect now after
         // receiving this packet
-        spdlog::info("Forced disconnect proxy client from server");
+        spdlog::info("Forced disconnect proxy client from Growtopia server");
     });
 
     dispatcher_.appendListener(event::Type::ClientDisconnect, [this](const event::Event& e) {
@@ -77,7 +77,7 @@ SessionHandler::SessionHandler(
        }
 
        client_.disconnect();
-       spdlog::info("Gracefully disconnect server from proxy client");
+       spdlog::info("Gracefully disconnect Growtopia server from proxy client");
     });
 
     dispatcher_.appendListener(event::Type::ServerDisconnect, [this](const event::Event& e) {
@@ -88,7 +88,7 @@ SessionHandler::SessionHandler(
         // If the server timeout happens, the client will gracefully disconnect and not log the connection timeout message.
         // Can we make the client log the connection timeout message?
         server_.disconnect();
-        spdlog::info("Gracefully disconnect client from proxy server");
+        spdlog::info("Gracefully disconnect Growtopia client from proxy server");
     });
 }
 

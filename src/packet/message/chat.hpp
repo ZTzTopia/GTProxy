@@ -3,7 +3,7 @@
 #include "../packet_helper.hpp"
 
 namespace packet::message {
-struct Log : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct Log : NetMessage<Log, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     std::string msg;
 
     bool read(const TextParse& text_parse) override

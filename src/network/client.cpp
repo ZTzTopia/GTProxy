@@ -89,8 +89,7 @@ void Client::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         return;
     }
 
-    const event::PacketEvent evt{ event::Type::ClientBoundPacket, packet };
-    dispatcher_.dispatch(evt);
+    packet->dispatch(dispatcher_, event::Type::ClientBoundPacket);
 }
 
 void Client::on_disconnect(ENetPeer* peer)

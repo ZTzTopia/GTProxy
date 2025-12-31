@@ -3,7 +3,7 @@
 #include "../packet_helper.hpp"
 
 namespace packet::message {
-struct Quit : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct Quit : NetMessage<Quit, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     bool read(const TextParse& text_parse) override
     {
         return true;
@@ -17,7 +17,7 @@ struct Quit : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     }
 };
 
-struct QuitToExit : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct QuitToExit : NetMessage<QuitToExit, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     bool read(const TextParse& text_parse) override
     {
         return true;
@@ -31,7 +31,7 @@ struct QuitToExit : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     }
 };
 
-struct JoinRequest : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct JoinRequest : NetMessage<JoinRequest, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     std::string world_name;
     bool invited_world;
 
@@ -52,7 +52,7 @@ struct JoinRequest : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     }
 };
 
-struct ValidateWorld : NetMessage<NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct ValidateWorld : NetMessage<ValidateWorld, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
     std::string world_name;
 
     bool read(const TextParse& text_parse) override

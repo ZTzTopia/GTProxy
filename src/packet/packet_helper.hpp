@@ -12,6 +12,9 @@
 #include "../utils/text_parse.hpp"
 
 // What the heck im even doing here
+#include "../event/event.hpp"
+
+// What the heck im even doing here
 namespace packet {
 // WOW this is so cool
 template<typename T>
@@ -20,13 +23,15 @@ concept NetworkSender = requires(T& sender, const std::span<const std::byte>& da
     { sender.is_connected() } -> std::convertible_to<bool>;
 };
 
-class IPacket {
+class IPacket : public std::enable_shared_from_this<IPacket> {
 public:
     virtual ~IPacket() = default;
 
     [[nodiscard]] virtual NetMessageType message_type() const = 0;
     [[nodiscard]] virtual PacketType packet_type() const = 0;
     [[nodiscard]] virtual int channel() const = 0;
+
+    virtual void dispatch(event::Dispatcher& dispatcher, event::Type type) = 0;
 
     // TODO: Return false on failure instead of throwing
     [[nodiscard]] virtual bool read(const TextParse&) { throw std::runtime_error("Not implemented"); }
@@ -39,7 +44,7 @@ public:
     virtual void write(GameUpdatePacket&, std::vector<std::byte>&) { throw std::runtime_error("Not implemented"); }
 };
 
-template <NetMessageType MsgType, int Channel = 0>
+template <typename T, NetMessageType MsgType, int Channel = 0>
 struct NetMessage : IPacket {
     ~NetMessage() override = default;
 
@@ -49,9 +54,15 @@ struct NetMessage : IPacket {
     [[nodiscard]] NetMessageType message_type() const override { return MESSAGE_TYPE; }
     [[nodiscard]] PacketType packet_type() const override { return PACKET_MAX; }
     [[nodiscard]] int channel() const override { return CHANNEL; }
+
+    void dispatch(event::Dispatcher& dispatcher, event::Type type) override
+    {
+        const event::PacketEvent<T> evt{ type, std::static_pointer_cast<T>(shared_from_this()) };
+        dispatcher.dispatch(evt);
+    }
 };
 
-template <PacketType PktType, int Channel = 0>
+template <typename T, PacketType PktType, int Channel = 0>
 struct NetPacket : IPacket {
     ~NetPacket() override = default;
 
@@ -62,18 +73,24 @@ struct NetPacket : IPacket {
     [[nodiscard]] NetMessageType message_type() const override { return MESSAGE_TYPE; }
     [[nodiscard]] PacketType packet_type() const override { return PACKET_TYPE; }
     [[nodiscard]] int channel() const override { return CHANNEL; }
+
+    void dispatch(event::Dispatcher& dispatcher, event::Type type) override
+    {
+        const event::PacketEvent<T> evt{ type, std::static_pointer_cast<T>(shared_from_this()) };
+        dispatcher.dispatch(evt);
+    }
 };
 
 std::false_type is_net_message_impl(...);
-template <NetMessageType MsgType, int Channel>
-std::true_type is_net_message_impl(NetMessage<MsgType, Channel> const volatile&);
+template <typename T, NetMessageType MsgType, int Channel>
+std::true_type is_net_message_impl(NetMessage<T, MsgType, Channel> const volatile&);
 
 template <typename T>
 using is_net_message = decltype(is_net_message_impl(std::declval<T const volatile&>()));
 
 std::false_type is_net_packet_impl(...);
-template <PacketType PktType, int Channel>
-std::true_type is_net_packet_impl(NetPacket<PktType, Channel> const volatile&);
+template <typename T, PacketType PktType, int Channel>
+std::true_type is_net_packet_impl(NetPacket<T, PktType, Channel> const volatile&);
 
 template <typename T>
 using is_net_packet = decltype(is_net_packet_impl(std::declval<T const volatile&>()));
