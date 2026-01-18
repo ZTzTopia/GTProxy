@@ -1,7 +1,11 @@
 #pragma once
 #include <cstdint>
 #include <string_view>
+#include <string>
 #include <unordered_map>
+#include <vector>
+#include <regex>
+#include <spdlog/spdlog.h>
 
 #include "payload.hpp"
 
@@ -23,14 +27,32 @@ enum class PacketId : uint32_t {
     Unknown = std::numeric_limits<uint32_t>::max(),
 };
 
-inline const std::unordered_map<std::string_view, PacketId> TEXT_ACTION_MAP = {
-    { "action|quit", PacketId::Quit },
-    { "action|quit_to_exit", PacketId::QuitToExit },
-    { "action|join_request", PacketId::JoinRequest },
-    { "action|validate_world", PacketId::ValidateWorld },
-    { "action|input", PacketId::Input },
-    { "action|log", PacketId::Log },
+struct TextRegexPattern {
+    std::string pattern;
+    PacketId id;
+    std::regex compiled;
+
+    TextRegexPattern(std::string_view pat, PacketId packet_id)
+        : pattern{ pat }
+        , id{ packet_id }
+        , compiled{ pattern, std::regex::optimize }
+    { }
 };
+
+inline std::vector<TextRegexPattern>& get_text_regex_patterns()
+{
+    static std::vector<TextRegexPattern> patterns = []() {
+        std::vector<TextRegexPattern> p;
+        p.emplace_back(R"(^action\|quit$)", PacketId::Quit);
+        p.emplace_back(R"(^action\|quit_to_exit$)", PacketId::QuitToExit);
+        p.emplace_back(R"(^action\|join_request$)", PacketId::JoinRequest);
+        p.emplace_back(R"(^action\|validate_world$)", PacketId::ValidateWorld);
+        p.emplace_back(R"(^action\|input)", PacketId::Input);
+        p.emplace_back(R"(^action\|log$)", PacketId::Log);
+        return p;
+    }();
+    return patterns;
+}
 
 inline const std::unordered_map<std::string_view, PacketId> VARIANT_FUNCTION_MAP = {
     { "OnSendToServer", PacketId::OnSendToServer },
@@ -47,15 +69,11 @@ inline const std::unordered_map<PacketType, PacketId> GAME_PACKET_MAP = {
     }
 
     const std::string raw{ payload.data.get_raw() };
-    const auto newline_pos{ raw.find('\n') };
-    const std::string_view first_line{
-        (newline_pos != std::string::npos)
-            ? std::string_view(raw).substr(0, newline_pos)
-            : std::string_view(raw)
-    };
 
-    if (const auto it{ TEXT_ACTION_MAP.find(first_line) }; it != TEXT_ACTION_MAP.end()) {
-        return it->second;
+    for (const auto& entry : get_text_regex_patterns()) {
+        if (std::regex_search(raw, entry.compiled)) {
+            return entry.id;
+        }
     }
 
     return PacketId::Unknown;

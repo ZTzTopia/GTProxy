@@ -41,8 +41,6 @@ struct JoinRequest : TextPacket<PacketId::JoinRequest> {
         
         world_name = text->data.get("name", 0);
         invited_world = text->data.get("invitedWorld", 0) == "1";
-
-        spdlog::debug("JoinRequest read: world_name='{}', invited_world={}", world_name, invited_world);
         return true;
     }
 
@@ -52,8 +50,6 @@ struct JoinRequest : TextPacket<PacketId::JoinRequest> {
         text_parse.add("action", { "join_request" });
         text_parse.add("name", { world_name });
         text_parse.add("invitedWorld", { invited_world ? "1" : "0" });
-
-        spdlog::debug("JoinRequest write: world_name='{}', invited_world={}", world_name, invited_world);
         return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };

@@ -2,8 +2,8 @@ project(Proxy)
 
 file(GLOB GTPROXY_INCLUDE_FILES
     *.hpp
-#    command/*.hpp
-#    command/commands/*.hpp
+    command/*.hpp
+    command/commands/*.hpp
     core/*.hpp
     network/*.hpp
     packet/*.hpp
@@ -15,7 +15,7 @@ file(GLOB GTPROXY_INCLUDE_FILES
 
 file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
-#    command/*.cpp
+    command/*.cpp
     core/*.cpp
     network/*.cpp
     packet/*.cpp

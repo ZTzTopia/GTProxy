@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <charconv>
 
 class TextParse {
@@ -130,22 +130,23 @@ public:
     [[nodiscard]] std::vector<std::pair<std::string, std::string>> get_key_values(const std::string& delimiter = "|") const
     {
         std::vector<std::pair<std::string, std::string>> key_values{};
-        for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
+        // for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
+        for (const auto& [fst, snd] : data_) {
             std::string value{};
-            for (size_t i = 0; i < it->second.size(); ++i) {
+            for (size_t i = 0; i < snd.size(); ++i) {
                 if (i > 0) value += delimiter;
-                value += it->second[i];
+                value += snd[i];
             }
 
-            key_values.emplace_back(it->first, value);
+            key_values.emplace_back(fst, value);
         }
 
         return key_values;
     }
 
-    [[nodiscard]] const std::unordered_map<std::string, std::vector<std::string>>& get_data() const { return data_; }
+    [[nodiscard]] const std::map<std::string, std::vector<std::string>>& get_data() const { return data_; }
     [[nodiscard]] bool empty() const { return data_.empty(); }
 
 private:
-    std::unordered_map<std::string, std::vector<std::string>> data_;
+    std::map<std::string, std::vector<std::string>> data_;
 };

@@ -14,12 +14,12 @@ class PacketDecoder {
 public:
     std::optional<std::shared_ptr<IPacket>> decode(std::span<const std::byte> data) const
     {
-        // auto pkt_log = spdlog::get("packet");
-        /*spdlog::debug(
+        auto pkt_log{ spdlog::get("packet") };
+        pkt_log->debug(
             "Decoding packet data ({} bytes):{}",
             data.size(),
             spdlog::to_hex(data.begin(), data.end())
-        );*/
+        );
 
         ByteStream stream{ data };
 

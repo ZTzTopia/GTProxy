@@ -22,10 +22,15 @@ public:
         bool test{ false };
     };
 
+    struct CommandConfig {
+        char prefix{ '/' };
+    };
+
     struct WrapperConfig {
         ServerConfig server;
         ClientConfig client;
         LogConfig log;
+        CommandConfig command;
     };
 
 public:
@@ -36,6 +41,7 @@ public:
     [[nodiscard]] const ServerConfig& get_server_config() const { return config_.server; }
     [[nodiscard]] const ClientConfig& get_client_config() const { return config_.client; }
     [[nodiscard]] const LogConfig& get_log_config() const { return config_.log; }
+    [[nodiscard]] const CommandConfig& get_command_config() const { return config_.command; }
 
 private:
     WrapperConfig config_;

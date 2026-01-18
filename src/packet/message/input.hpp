@@ -10,7 +10,7 @@ struct Input : TextPacket<PacketId::Input, NET_MESSAGE_GENERIC_TEXT> {
         const auto* text_payload = get_payload_if<TextPayload>(payload);
         if (!text_payload) return false;
         
-        text = text_payload->data.get("text", 1);
+        text = text_payload->data.get("text", 0);
         return true;
     }
 

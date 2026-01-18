@@ -1,7 +1,9 @@
 #pragma once
 #include "config.hpp"
+#include "scheduler.hpp"
 #include "session_handler.hpp"
 #include "web_server.hpp"
+#include "../command/command_handler.hpp"
 #include "../network/client.hpp"
 #include "../network/server.hpp"
 #include "../utils/types.hpp"
@@ -22,11 +24,13 @@ private:
     bool running_;
 
     event::Dispatcher dispatcher_;
+    Scheduler scheduler_;
 
     std::unique_ptr<network::Server> server_;
     std::unique_ptr<network::Client> client_;
     std::unique_ptr<WebServer> web_server_;
 
     std::unique_ptr<SessionHandler> session_handler_;
+    std::unique_ptr<command::CommandHandler> command_handler_;
 };
 }

@@ -105,8 +105,6 @@ void SessionHandler::setup_quit_handler() const
         server_.disconnect();
         client_.disconnect_now();
         spdlog::info("Forced disconnect proxy client from Growtopia server");
-
-        evt->cancel();
     });
 }
 

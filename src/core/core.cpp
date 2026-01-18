@@ -22,6 +22,7 @@ Core::Core()
     packet::register_all_packets();
 
     session_handler_ = std::make_unique<SessionHandler>(config_, dispatcher_, *client_, *server_);
+    command_handler_ = std::make_unique<command::CommandHandler>(config_, dispatcher_, scheduler_, *server_, *client_);
 
     spdlog::info("Core initialized successfully");
 }
