@@ -47,8 +47,8 @@ class DnsResolver {
 public:
     explicit DnsResolver(std::unique_ptr<DnsProvider> provider);
 
-    DnsResult resolve_domain(const std::string& domain);
-    std::string resolve_ip(const std::string& host);
+    [[nodiscard]] DnsResult resolve_domain(const std::string& domain) const;
+    [[nodiscard]] std::string resolve_ip(const std::string& host) const;
 
 private:
     std::unique_ptr<DnsProvider> provider_;

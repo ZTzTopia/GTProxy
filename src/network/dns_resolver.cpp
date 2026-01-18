@@ -1,11 +1,11 @@
-#include "dns_resolver.hpp"
-#include "../utils/network.hpp"
-
-#include <glaze/glaze.hpp>
 #include <httplib.h>
+#include <fmt/format.h>
+#include <glaze/glaze.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
-#include <fmt/format.h>
+
+#include "dns_resolver.hpp"
+#include "../utils/network.hpp"
 
 namespace network {
 struct DnsAnswer {
@@ -23,24 +23,31 @@ std::unique_ptr<DnsProvider> create_dns_provider(const std::string& name)
         return std::make_unique<CloudflareDnsProvider>();
     }
 
+    if (name == "google") {
+        return std::make_unique<GoogleDnsProvider>();
+    }
+
+    spdlog::warn("Unknown DNS provider: {}, defaulting to Google DNS", name);
     return std::make_unique<GoogleDnsProvider>();
 }
 
 DnsResolver::DnsResolver(std::unique_ptr<DnsProvider> provider)
     : provider_{ std::move(provider) }
-{}
+{
 
-DnsResult DnsResolver::resolve_domain(const std::string& domain)
+}
+
+DnsResult DnsResolver::resolve_domain(const std::string& domain) const
 {
     httplib::Headers headers{
         {"Accept", "application/dns-json"}
     };
 
     httplib::Client cli{ fmt::format("https://{}", provider_->get_host()) };
-    httplib::Result res = cli.Get(
+    httplib::Result res{ cli.Get(
         fmt::format("{}?name={}&type=A", provider_->get_path(), domain),
         headers
-    );
+    ) };
 
     if (!res) {
         spdlog::error(
@@ -82,7 +89,7 @@ DnsResult DnsResolver::resolve_domain(const std::string& domain)
     return { status, dns_response.answer.back().data };
 }
 
-std::string DnsResolver::resolve_ip(const std::string& host)
+std::string DnsResolver::resolve_ip(const std::string& host) const
 {
     if (classify_host(host) != HostType::Hostname) {
         return host;
@@ -114,6 +121,7 @@ template<> struct glz::meta<network::DnsResponse> {
             return "Answer";
         }
 
+        // ReSharper disable once CppDFALocalValueEscapesFunction
         return key;
     }
 };
