@@ -1,8 +1,7 @@
 #pragma once
-#include <enet/enet.h>
-#include <span>
 #include <cstddef>
-#include <vector>
+#include <span>
+#include <enet/enet.h>
 
 namespace network {
 class ENetWrapper {
@@ -23,6 +22,7 @@ protected:
     virtual void on_receive(ENetPeer* peer, std::span<const std::byte> data) = 0;
     virtual void on_disconnect(ENetPeer* peer) = 0;
 
+protected:
     ENetHost* host_;
 };
 }

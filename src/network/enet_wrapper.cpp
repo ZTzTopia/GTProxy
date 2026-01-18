@@ -3,7 +3,9 @@
 namespace network {
 ENetWrapper::ENetWrapper(ENetHost* host)
     : host_{host}
-{ }
+{
+
+}
 
 ENetWrapper::~ENetWrapper()
 {
@@ -22,7 +24,7 @@ void ENetWrapper::process()
     }
 
     ENetEvent event{};
-    while (enet_host_service(host_, &event, 0) > 0) {
+    while (enet_host_service(host_, &event, 1) > 0) {
         switch (event.type) {
         case ENET_EVENT_TYPE_CONNECT:
             on_connect(event.peer);
