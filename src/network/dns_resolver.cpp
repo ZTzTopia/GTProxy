@@ -1,10 +1,11 @@
+#include "dns_resolver.hpp"
+
 #include <httplib.h>
 #include <fmt/format.h>
 #include <glaze/glaze.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
 
-#include "dns_resolver.hpp"
 #include "../utils/network.hpp"
 
 namespace network {

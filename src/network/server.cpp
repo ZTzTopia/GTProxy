@@ -1,8 +1,9 @@
 #include "server.hpp"
 
-#include <spdlog/spdlog.h>
 #include <stdexcept>
+#include <spdlog/spdlog.h>
 
+#include "../packet/packet_event_registry.hpp"
 #include "../utils/network.hpp"
 
 namespace network {
@@ -29,7 +30,7 @@ ENetHost* Server::create_host(std::uint16_t port)
     address.host = ENET_HOST_ANY;
     address.port = port;
 
-    ENetHost* host = enet_host_create(&address, 1, 2, 0, 0);
+    ENetHost* host{ enet_host_create(&address, 1, 2, 0, 0) };
     if (!host) {
         return nullptr;
     }
@@ -72,19 +73,37 @@ void Server::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         return;
     }
 
-    spdlog::info(
+    auto pkt_log = spdlog::get("packet");
+    pkt_log->info(
         "Received {} bytes from Growtopia client",
         data.size()
     );
 
-    const auto packet{ decoder_.try_decode(data) };
-    if (!packet) {
+    const auto decoded{ decoder_.decode(data) };
+    if (!decoded.has_value()) {
         const event::RawPacketEvent evt{ event::Type::ServerBoundPacket, data };
         dispatcher_.dispatch(evt);
         return;
     }
 
-    packet->dispatch(dispatcher_, event::Type::ServerBoundPacket);
+    const auto& packet{ decoded.value() };
+    if (
+        const auto& registry{ packet::event_registry::PacketEventRegistry::instance() };
+        registry.has_event(packet->id())
+    ) {
+        auto evt = registry.emit(
+            dispatcher_,
+            event::Direction::ServerBound,
+            packet
+        );
+
+        if (evt && evt->canceled) {
+            return;
+        }
+    }
+
+    const event::PacketEvent evt{ event::Type::ServerBoundPacket, packet };
+    dispatcher_.dispatch(evt);
 }
 
 void Server::on_disconnect(ENetPeer* peer)
@@ -107,15 +126,22 @@ void Server::on_disconnect(ENetPeer* peer)
 
 bool Server::write(std::span<const std::byte> data, const int channel) const
 {
-    if (!peer_ || peer_->state != ENET_PEER_STATE_CONNECTED) {
+    if (!is_connected()) {
         return false;
     }
 
-    ENetPacket* packet = enet_packet_create(
+    /*auto pkt_log = spdlog::get("packet");
+    pkt_log->debug(
+        "Sending {} bytes to Growtopia client:{}",
+        data.size(),
+        spdlog::to_hex(data.begin(), data.end())
+    );*/
+
+    ENetPacket* packet{ enet_packet_create(
         data.data(),
         data.size(),
         ENET_PACKET_FLAG_RELIABLE
-    );
+    ) };
 
     if (enet_peer_send(peer_, channel, packet) != 0) {
         enet_packet_destroy(packet);

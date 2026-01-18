@@ -1,46 +1,58 @@
 #pragma once
+#include <optional>
 #include <span>
 
-#include "packet_types.hpp"
 #include "packet_registry.hpp"
-#include "packet_variant.hpp"
+#include "packet_types.hpp"
+#include "payload.hpp"
 #include "../utils/byte_stream.hpp"
-#include "../utils/text_parse.hpp"
-#include "../utils/formatter/text_parse_formatter.hpp"
 #include "../utils/formatter/packet_variant_formatter.hpp"
+#include "../utils/formatter/text_parse_formatter.hpp"
 
 namespace packet {
 class PacketDecoder {
 public:
-    std::shared_ptr<IPacket> try_decode(const std::span<const std::byte> data) const
+    std::optional<std::shared_ptr<IPacket>> decode(std::span<const std::byte> data) const
     {
+        // auto pkt_log = spdlog::get("packet");
+        /*spdlog::debug(
+            "Decoding packet data ({} bytes):{}",
+            data.size(),
+            spdlog::to_hex(data.begin(), data.end())
+        );*/
+
         ByteStream stream{ data };
 
         NetMessageType msg_type{};
         if (!stream.read(msg_type)) {
-            return {};
+            return std::nullopt;
         }
 
         switch (msg_type) {
+        case NET_MESSAGE_SERVER_HELLO: {
+            TextPayload text_payload{ NET_MESSAGE_SERVER_HELLO };
+            Payload payload = text_payload;
+
+            auto packet = PacketRegistry::instance().create(payload);
+            return packet;
+        }
         case NET_MESSAGE_GENERIC_TEXT:
         case NET_MESSAGE_GAME_MESSAGE: {
             std::string message{};
             stream.read(message, static_cast<uint16_t>(stream.get_size() - sizeof(NetMessageType) - 1));
 
             TextParse parser{ message };
+            spdlog::info("Packet decoded to message:\n{}", fmt::format("{}", parser));
 
-            spdlog::info(
-                "Packet decoded to message:\n{}",
-                fmt::format("{}", parser)
-            );
-
-            auto packet{ PacketRegistry::instance().create(message) };
+            TextPayload text_payload{ msg_type, std::move(parser) };
+            Payload payload = text_payload;
+            
+            auto packet = PacketRegistry::instance().create(payload);
             if (!packet) {
-                spdlog::warn("No packet structure registered for this message");
-                return {};
+                // spdlog::debug("No packet structure registered for this message");
+                return std::nullopt;
             }
-
-            std::ignore = packet->read(parser);
+            
             return packet;
         }
         case NET_MESSAGE_GAME_PACKET: {
@@ -54,41 +66,41 @@ public:
                      : stream.get_size() - stream.get_read_offset()
             ));
 
-            // Fucking stupid packet type ever.
             if (game_pkt.type == PACKET_CALL_FUNCTION) {
                 PacketVariant variant{};
                 if (!variant.deserialize(extra)) {
-                    return {};
+                    // spdlog::warn("Failed to deserialize variant data");
+                    return std::nullopt;
                 }
 
+                spdlog::info("Packet decoded to variant:\n{}", fmt::format("{}", variant));
 
-                spdlog::info(
-                    "Packet decoded to variant:\n{}",
-                    fmt::format("{}", variant)
-                );
-
-                auto packet{ PacketRegistry::instance().create_variant(variant.get(0)) };
+                VariantPayload var_payload{ std::move(variant) };
+                Payload payload = var_payload;
+                
+                auto packet = PacketRegistry::instance().create(payload);
                 if (!packet) {
-                    spdlog::warn("No packet structure registered for this variant");
-                    return {};
+                    // spdlog::debug("No packet structure registered for variant: {}", var_payload.function_name());
+                    return std::nullopt;
                 }
-
-                std::ignore = packet->read(variant);
+                
                 return packet;
             }
 
-            auto packet{ PacketRegistry::instance().create(game_pkt.type) };
-
+            GamePayload game_payload{ game_pkt, std::move(extra) };
+            Payload payload = game_payload;
+            
+            auto packet = PacketRegistry::instance().create(payload);
             if (!packet) {
-                spdlog::warn("No packet structure registered for type {}", static_cast<uint16_t>(game_pkt.type));
-                return {};
+                // spdlog::debug("No packet structure registered for type {}", static_cast<uint16_t>(game_pkt.type));
+                return std::nullopt;
             }
 
-            std::ignore = packet->read(game_pkt, extra);
             return packet;
         }
         default:
-            return {};
+            // spdlog::warn("Unknown message type: {}", static_cast<uint32_t>(msg_type));
+            return std::nullopt;
         }
     }
 };

@@ -32,21 +32,21 @@ TEST(ByteStreamTest, WriteAndReadString)
 TEST(ByteStreamTest, WriteAndReadVector)
 {
     ByteStream bs{};
-    const std::vector data{ std::byte{0x01}, std::byte{0x02}, std::byte{0x03} };
+    const std::vector data{ std::byte{ 0x01 }, std::byte{ 0x02 }, std::byte{ 0x03 } };
     bs.write_vector(data);
 
     std::vector<std::byte> result;
     bs.read_vector(result);
 
     EXPECT_EQ(result.size(), 3);
-    EXPECT_EQ(result[0], std::byte{0x01});
-    EXPECT_EQ(result[2], std::byte{0x03});
+    EXPECT_EQ(result[0], std::byte{ 0x01 });
+    EXPECT_EQ(result[2], std::byte{ 0x03 });
 }
 
 TEST(ByteStreamTest, ReadVectorWithExplicitLength)
 {
     ByteStream bs{};
-    const std::vector data{ std::byte{0xA}, std::byte{0xB} };
+    const std::vector data{ std::byte{ 0xA }, std::byte{ 0xB } };
     // Write without length prefix
     bs.write_data(data.data(), data.size());
 
@@ -56,7 +56,7 @@ TEST(ByteStreamTest, ReadVectorWithExplicitLength)
 
     EXPECT_TRUE(success);
     EXPECT_EQ(result.size(), 2);
-    EXPECT_EQ(result[0], std::byte{0xA});
+    EXPECT_EQ(result[0], std::byte{ 0xA });
 }
 
 TEST(ByteStreamTest, StreamOperators)
@@ -75,7 +75,15 @@ TEST(ByteStreamTest, StreamOperators)
 
 TEST(ByteStreamTest, SpanConstructor)
 {
-    std::vector raw{ std::byte{0x05}, std::byte{0x00}, std::byte{0x01}, std::byte{0x02}, std::byte{0x03}, std::byte{0x04}, std::byte{0x05} };
+    std::vector raw{
+        std::byte{ 0x05 },
+        std::byte{ 0x00 },
+        std::byte{ 0x01 },
+        std::byte{ 0x02 },
+        std::byte{ 0x03 },
+        std::byte{ 0x04 },
+        std::byte{ 0x05 }
+    };
     // 0x05, 0x00 is length (5) in little endian uint16_t, followed by 5 bytes
 
     ByteStream bs{ raw };

@@ -1,23 +1,25 @@
 #pragma once
-#include "../packet_types.hpp"
 #include "../packet_helper.hpp"
 
 namespace packet::message {
-struct Log : NetMessage<Log, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct Log : TextPacket<PacketId::Log> {
     std::string msg;
 
-    bool read(const TextParse& text_parse) override
+    bool read(const Payload& payload) override
     {
-        msg = text_parse.get("msg", 1);
+        const auto* text = get_payload_if<TextPayload>(payload);
+        if (!text) return false;
+        
+        msg = text->data.get("msg", 1);
         return true;
     }
 
-    void write(ByteStream<>& byte_stream) override
+    Payload write() const override
     {
         TextParse text_parse{};
         text_parse.add("action", { "log" });
         text_parse.add("msg", { msg });
-        byte_stream.write(text_parse.get_raw(), false);
+        return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
 }

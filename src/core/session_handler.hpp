@@ -23,5 +23,12 @@ private:
 
     std::string pending_address_;
     uint16_t pending_port_;
+
+    void setup_raw_packet_handlers() const;
+    void setup_unknown_packet_forwarders() const;
+    void setup_on_send_to_server_handler();
+    void setup_quit_handler() const;
+    void setup_disconnect_handler() const;
+    void setup_connection_handlers();
 };
 }

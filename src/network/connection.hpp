@@ -14,7 +14,7 @@ public:
 
     template <class Packet>
     bool write(Packet& packet) {
-        return packet::PacketHelper::send(packet, *this);
+        return packet::PacketHelper::write(packet, *this);
     }
 
     [[nodiscard]] virtual bool is_connected() const = 0;

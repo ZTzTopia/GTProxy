@@ -1,72 +1,81 @@
 #pragma once
-#include "../packet_types.hpp"
 #include "../packet_helper.hpp"
 
 namespace packet::message {
-struct Quit : NetMessage<Quit, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
-    bool read(const TextParse& text_parse) override
+struct Quit : TextPacket<PacketId::Quit> {
+    bool read(const Payload& payload) override
     {
-        return true;
+        return is_payload<TextPayload>(payload);
     }
 
-    void write(ByteStream<>& byte_stream) override
+    Payload write() const override
     {
         TextParse text_parse{};
         text_parse.add("action", { "quit" });
-        byte_stream.write(text_parse.get_raw(), false);
+        return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
 
-struct QuitToExit : NetMessage<QuitToExit, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
-    bool read(const TextParse& text_parse) override
+struct QuitToExit : TextPacket<PacketId::QuitToExit> {
+    bool read(const Payload& payload) override
     {
-        return true;
+        return is_payload<TextPayload>(payload);
     }
 
-    void write(ByteStream<>& byte_stream) override
+    Payload write() const override
     {
         TextParse text_parse{};
         text_parse.add("action", { "quit_to_exit" });
-        byte_stream.write(text_parse.get_raw(), false);
+        return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
 
-struct JoinRequest : NetMessage<JoinRequest, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct JoinRequest : TextPacket<PacketId::JoinRequest> {
     std::string world_name;
     bool invited_world;
 
-    bool read(const TextParse& text_parse) override
+    bool read(const Payload& payload) override
     {
-        world_name = text_parse.get("name", 1);
-        invited_world = text_parse.get("invitedWorld", 1) == "1";
+        const auto* text = get_payload_if<TextPayload>(payload);
+        if (!text) return false;
+        
+        world_name = text->data.get("name", 0);
+        invited_world = text->data.get("invitedWorld", 0) == "1";
+
+        spdlog::debug("JoinRequest read: world_name='{}', invited_world={}", world_name, invited_world);
         return true;
     }
 
-    void write(ByteStream<>& byte_stream) override
+    Payload write() const override
     {
         TextParse text_parse{};
         text_parse.add("action", { "join_request" });
         text_parse.add("name", { world_name });
-        text_parse.add("invitedWorld", { "0" });
-        byte_stream.write(text_parse.get_raw(), false);
+        text_parse.add("invitedWorld", { invited_world ? "1" : "0" });
+
+        spdlog::debug("JoinRequest write: world_name='{}', invited_world={}", world_name, invited_world);
+        return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
 
-struct ValidateWorld : NetMessage<ValidateWorld, NetMessageType::NET_MESSAGE_GAME_MESSAGE> {
+struct ValidateWorld : TextPacket<PacketId::ValidateWorld> {
     std::string world_name;
 
-    bool read(const TextParse& text_parse) override
+    bool read(const Payload& payload) override
     {
-        world_name = text_parse.get("name", 1);
+        const auto* text = get_payload_if<TextPayload>(payload);
+        if (!text) return false;
+        
+        world_name = text->data.get("name", 1);
         return true;
     }
 
-    void write(ByteStream<>& byte_stream) override
+    Payload write() const override
     {
         TextParse text_parse{};
         text_parse.add("action", { "validate_world" });
         text_parse.add("name", { world_name });
-        byte_stream.write(text_parse.get_raw(), false);
+        return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
 }

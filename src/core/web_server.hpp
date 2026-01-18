@@ -4,8 +4,8 @@
 
 #include "../core/config.hpp"
 #include "../event/event.hpp"
-#include "../network/dns_resolver.hpp"
 #include "../network/client.hpp"
+#include "../network/dns_resolver.hpp"
 #include "../network/server.hpp"
 
 namespace core {
@@ -25,8 +25,6 @@ private:
 
     void on_client_connect(const event::Event& e);
     void on_client_disconnect(const event::Event& e);
-
-    bool validate_response(const httplib::Result& response);
 
 private:
     Config& config_;

@@ -1,5 +1,5 @@
-#include <spdlog/spdlog.h>
 #include <csignal>
+#include <spdlog/spdlog.h>
 
 #include "core/core.hpp"
 #include "core/logger.hpp"
@@ -18,7 +18,7 @@ void signal_handler(int signal)
 
 int main()
 {
-    try {
+try {
         core::Logger logger{};
 
         std::vector<spdlog::sink_ptr> sinks{
@@ -31,7 +31,9 @@ int main()
 
         spdlog::register_logger(logger.get_logger());
         spdlog::set_default_logger(logger.get_logger());
-        spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [GTProxy] [%^%l%$] %v");
+        spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%t] [%^%l%$] %v");
+
+        core::Logger::setup_packet_logger();
     }
     catch (const spdlog::spdlog_ex& ex) {
         spdlog::error("Log initialization failed: {}", ex.what());

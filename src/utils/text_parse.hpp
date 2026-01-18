@@ -46,6 +46,10 @@ public:
                 continue;
             }
 
+            if (sv.empty() && tokens.size() == 0) {
+                continue;
+            }
+
             tokens.push_back(sv);
         }
         return tokens;

@@ -1,7 +1,7 @@
+#include "config.hpp"
+
 #include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
-
-#include "config.hpp"
 
 namespace core {
 Config::Config()
@@ -30,7 +30,8 @@ Config::Config()
 }
 }
 
-template<> struct glz::meta<core::Config::ServerConfig> : glz::camel_case {};
-template<> struct glz::meta<core::Config::ClientConfig> : glz::camel_case {};
-template<> struct glz::meta<core::Config::LogConfig> : glz::camel_case {};
-template<> struct glz::meta<core::Config::WrapperConfig> : glz::camel_case {};
+// FIXME: Clangd: In template: constexpr variable 'str' must be initialized by a constant expression
+// template<> struct glz::meta<core::Config::ServerConfig> : glz::camel_case {};
+// template<> struct glz::meta<core::Config::ClientConfig> : glz::camel_case {};
+// template<> struct glz::meta<core::Config::LogConfig> : glz::camel_case {};
+// template<> struct glz::meta<core::Config::WrapperConfig> : glz::camel_case {};

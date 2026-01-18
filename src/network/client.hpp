@@ -1,15 +1,13 @@
 #pragma once
-#include <enet/enet.h>
 #include <span>
 #include <string>
-#include <cstdint>
+#include <enet/enet.h>
 
-#include "enet_wrapper.hpp"
 #include "connection.hpp"
+#include "enet_wrapper.hpp"
 #include "../core/config.hpp"
 #include "../event/event.hpp"
 #include "../packet/packet_decoder.hpp"
-#include "../packet/packet_registry.hpp"
 
 namespace network {
 class Client final : public ENetWrapper, public IConnection {

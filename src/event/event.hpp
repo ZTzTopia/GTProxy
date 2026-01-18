@@ -1,9 +1,19 @@
 #pragma once
 #include <eventpp/eventdispatcher.h>
 #include <span>
+#include <memory>
+#include <map>
+#include <vector>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <limits>
+#include <utility>
+#include <algorithm>
 
-#include "../packet/packet_variant.hpp"
-#include "../utils/text_parse.hpp"
+#include "../packet/payload.hpp"
+#include "../packet/packet_id.hpp"
+#include "../packet/packet_helper.hpp"
 
 namespace event {
 struct Priority {
@@ -14,8 +24,8 @@ struct Priority {
     static constexpr int8_t Lowest = std::numeric_limits<int8_t>::max();
 };
 
-enum class Type {
-    ClientConnect,
+enum class Type : uint32_t {
+    ClientConnect = 0,
     ServerConnect,
 
     ClientDisconnect,
@@ -23,17 +33,46 @@ enum class Type {
 
     ClientBoundPacket,
     ServerBoundPacket,
+
+    PacketEventOffset = 0x1000
 };
+
+enum class Direction {
+    ClientBound,
+    ServerBound,
+};
+
+constexpr uint32_t packet_event_offset() {
+    return static_cast<uint32_t>(Type::PacketEventOffset);
+}
+
+constexpr bool is_packet_event(const Type t) {
+    return static_cast<uint32_t>(t) >= packet_event_offset();
+}
+
+constexpr Type packet_event_type(const packet::PacketId id) {
+    return static_cast<Type>(packet_event_offset() + static_cast<uint32_t>(id));
+}
+
+constexpr packet::PacketId packet_id_from_type(const Type t) {
+    return static_cast<packet::PacketId>(static_cast<uint32_t>(t) - packet_event_offset());
+}
 
 struct Event {
     Type type;
-    mutable bool canceled{false};
+    mutable bool canceled;
 
-    explicit Event(const Type t) : type{ t } { }
+    explicit Event(const Type t)
+        : type{ t }
+        , canceled{ false }
+    {
+
+    }
     virtual ~Event() = default;
 
     void cancel() const { canceled = true; }
 };
+
 
 struct ConnectionEvent : Event {
     explicit ConnectionEvent(const Type t) : Event{ t } { }
@@ -48,18 +87,74 @@ struct RawPacketEvent : Event {
     { }
 };
 
-template<typename T>
 struct PacketEvent : Event {
-    std::shared_ptr<T> packet;
+    packet::PacketId packet_id;
+    std::shared_ptr<packet::IPacket> packet;
 
     PacketEvent(
         const Type t,
-        std::shared_ptr<T> pkt
+        std::shared_ptr<packet::IPacket> pkt
     )
         : Event{ t }
+        , packet_id{ pkt->id() }
         , packet{ std::move(pkt) }
     { }
+
+    [[nodiscard]] bool has_packet() const { return packet != nullptr; }
+
+    template<typename T>
+    [[nodiscard]] std::shared_ptr<T> get() const
+    {
+        if (packet && packet->id() == T::ID) {
+            return std::static_pointer_cast<T>(packet);
+        }
+        return nullptr;
+    }
+
+    template<typename T>
+    [[nodiscard]] bool is() const
+    {
+        return packet && packet->id() == T::ID;
+    }
 };
+
+template<packet::PacketId PacketTypeId>
+struct TypedPacketEvent : Event {
+    Direction direction;
+    std::shared_ptr<packet::IPacket> packet;
+
+    TypedPacketEvent(
+        Direction dir,
+        std::shared_ptr<packet::IPacket> pkt
+    )
+        : Event{ packet_event_type(PacketTypeId) }
+        , direction{ dir }
+        , packet{ std::move(pkt) }
+    { }
+
+    [[nodiscard]] Direction get_direction() const { return direction; }
+
+    [[nodiscard]] bool is_client_bound() const { return direction == Direction::ClientBound; }
+    [[nodiscard]] bool is_server_bound() const { return direction == Direction::ServerBound; }
+
+    [[nodiscard]] bool has_packet() const { return packet != nullptr; }
+
+    template<typename T>
+    [[nodiscard]] std::shared_ptr<T> get() const
+    {
+        if (packet && packet->id() == T::ID) {
+            return std::static_pointer_cast<T>(packet);
+        }
+        return nullptr;
+    }
+
+    template<typename T>
+    [[nodiscard]] bool is() const
+    {
+        return packet && packet->id() == T::ID;
+    }
+};
+
 
 struct EventPolicies {
     static Type getEvent(const Event& e) { return e.type; }

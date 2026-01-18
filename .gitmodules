@@ -5,6 +5,6 @@
 [submodule "lib/enet"]
 	path = lib/enet
 	url = https://github.com/ZTzTopia/enet
-[submodule "lib/eventpp"]
-	path = lib/eventpp
-	url = https://github.com/wqking/eventpp
+[submodule "lib/cpp-httplib"]
+	path = lib/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib

@@ -86,3 +86,11 @@ TEST(TextParseTest, IdiotGrowtopiaParse)
     EXPECT_EQ(tp.get("213.179.209.175", 0), "");
     EXPECT_EQ(tp.get("213.179.209.175", 1), "-1");
 }
+
+TEST(TextParseTest, IdiotGrowtopiaParse2)
+{
+    const TextParse tp{ "action|input\n|text|/exit" };
+
+    EXPECT_EQ(tp.get("action", 0), "input");
+    EXPECT_EQ(tp.get("text", 0), "/exit");
+}

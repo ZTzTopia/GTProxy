@@ -1,10 +1,10 @@
 #pragma once
-#include <enet/enet.h>
-#include <span>
 #include <cstdint>
+#include <span>
+#include <enet/enet.h>
 
-#include "enet_wrapper.hpp"
 #include "connection.hpp"
+#include "enet_wrapper.hpp"
 #include "../core/config.hpp"
 #include "../event/event.hpp"
 #include "../packet/packet_decoder.hpp"

@@ -1,10 +1,11 @@
+#include "core.hpp"
+
 #include <chrono>
 #include <thread>
-
-#include <spdlog/spdlog.h>
 #include <enet/enet.h>
+#include <spdlog/spdlog.h>
 
-#include "core.hpp"
+#include "../packet/register_packets.hpp"
 
 namespace core {
 Core::Core()

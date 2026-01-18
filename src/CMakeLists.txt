@@ -2,46 +2,55 @@ project(Proxy)
 
 file(GLOB GTPROXY_INCLUDE_FILES
     *.hpp
+#    command/*.hpp
+#    command/commands/*.hpp
     core/*.hpp
     network/*.hpp
     packet/*.hpp
     packet/game/*.hpp
     packet/message/*.hpp
-    packet/stages/*.hpp
+#    scripting/*.hpp
+#    scripting/bindings/*.hpp
     utils/*.hpp)
 
 file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
+#    command/*.cpp
     core/*.cpp
     network/*.cpp
     packet/*.cpp
-    packet/stages/*.cpp
+#    scripting/*.cpp
     utils/*.cpp)
 
 add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}
     ${GTPROXY_SOURCE_FILES})
 
+find_package(eventpp REQUIRED)
 find_package(fmt REQUIRED)
 find_package(glaze REQUIRED)
 find_package(glm REQUIRED)
-find_package(httplib REQUIRED)
+#find_package(httplib REQUIRED)
 find_package(magic_enum REQUIRED)
 find_package(pcg-cpp REQUIRED)
 find_package(LibreSSL REQUIRED)
+find_package(lua REQUIRED)
+find_package(sol2 REQUIRED)
 find_package(spdlog REQUIRED)
 
 target_link_libraries(${PROJECT_NAME}
     enet
-    eventpp
+    eventpp::eventpp
     fmt::fmt
     glaze::glaze
     glm::glm
     httplib::httplib
     LibreSSL::TLS
     LibreSSL::Crypto
+    lua::lua
     magic_enum::magic_enum
     pcg-cpp::pcg-cpp
+    sol2::sol2
     spdlog::spdlog)
 
 target_include_directories(${PROJECT_NAME} PRIVATE

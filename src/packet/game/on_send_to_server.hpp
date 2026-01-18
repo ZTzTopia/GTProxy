@@ -1,25 +1,25 @@
 #pragma once
 #include <spdlog/spdlog.h>
 
-#include "../packet_types.hpp"
 #include "../packet_helper.hpp"
-#include "../packet_variant.hpp"
 
 namespace packet::game {
-struct Disconnect : NetPacket<Disconnect, PacketType::PACKET_DISCONNECT> {
-    void write(GameUpdatePacket& game_update_packet, std::vector<std::byte>& ext_data) override
+struct Disconnect : GamePacket<PacketId::Disconnect, PacketType::PACKET_DISCONNECT> {
+    bool read(const Payload& payload) override
     {
-        game_update_packet.net_id = -1;
-        ext_data.clear();
+        return is_payload<GamePayload>(payload);
     }
 
-    bool read(const GameUpdatePacket&, const std::vector<std::byte>&) override
+    Payload write() const override
     {
-        return true;
+        GamePayload game_payload{};
+        game_payload.packet.type = PACKET_TYPE;
+        game_payload.packet.net_id = static_cast<uint32_t>(-1);
+        return game_payload;
     }
 };
 
-struct OnSendToServer : NetPacket<OnSendToServer, PacketType::PACKET_CALL_FUNCTION> {
+struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
     uint16_t port;
     int32_t token;
     int32_t user;
@@ -29,28 +29,12 @@ struct OnSendToServer : NetPacket<OnSendToServer, PacketType::PACKET_CALL_FUNCTI
     uint8_t login_mode;
     std::string username;
 
-    void write(GameUpdatePacket& game_update_packet, std::vector<std::byte>& ext_data) override
+    bool read(const Payload& payload) override
     {
-        game_update_packet.net_id = -1;
-
-        TextParse text_parse{};
-        text_parse.add(address, { door_id, uuid_token });
-
-        const PacketVariant variant{
-            "OnSendToServer",
-            port,
-            token,
-            user,
-            text_parse.get_raw(),
-            login_mode,
-            username
-        };
-
-        ext_data = variant.serialize();
-    }
-
-    bool read(const PacketVariant& variant) override
-    {
+        const auto* var = get_payload_if<VariantPayload>(payload);
+        if (!var) return false;
+        
+        const auto& variant = var->variant;
         if (variant.size() < 5) {
             return false;
         }
@@ -69,11 +53,27 @@ struct OnSendToServer : NetPacket<OnSendToServer, PacketType::PACKET_CALL_FUNCTI
         door_id = text_parse.get(key, 0);
         uuid_token = text_parse.get(key, 1);
 
-        spdlog::debug("OnSendToServer parsed address: {}, door_id: {}, uuid_token: {}", address, door_id, uuid_token);
-
         login_mode = variant.get<uint32_t>(5);
         username = variant.get<std::string>(6);
         return true;
+    }
+
+    Payload write() const override
+    {
+        TextParse text_parse{};
+        text_parse.add(address, { door_id, uuid_token });
+
+        PacketVariant variant{
+            "OnSendToServer",
+            static_cast<int32_t>(port),
+            token,
+            user,
+            text_parse.get_raw(),
+            static_cast<uint32_t>(login_mode),
+            username
+        };
+
+        return VariantPayload{ std::move(variant) };
     }
 };
 }

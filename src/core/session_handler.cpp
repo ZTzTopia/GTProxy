@@ -1,5 +1,9 @@
 #include "session_handler.hpp"
 
+#include "../packet/packet_event_registry.hpp"
+#include "../packet/packet_helper.hpp"
+#include "../packet/game/on_send_to_server.hpp"
+
 namespace core {
 SessionHandler::SessionHandler(
     Config& config,
@@ -13,8 +17,18 @@ SessionHandler::SessionHandler(
     , server_{ server }
     , pending_port_{ 65535 }
 {
+    setup_raw_packet_handlers();
+    setup_unknown_packet_forwarders();
+    setup_disconnect_handler();
+    setup_connection_handlers();
+    setup_on_send_to_server_handler();
+    setup_quit_handler();
+}
+
+void SessionHandler::setup_raw_packet_handlers() const
+{
     dispatcher_.appendListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
-        const auto& raw_packet{ dynamic_cast<const event::RawPacketEvent*>(&event) };
+        const auto* raw_packet = dynamic_cast<const event::RawPacketEvent*>(&event);
         if (!raw_packet) {
             return;
         }
@@ -23,76 +37,98 @@ SessionHandler::SessionHandler(
     });
 
     dispatcher_.appendListener(event::Type::ServerBoundPacket, [this](const event::Event& event) {
-        const auto& raw_packet{ dynamic_cast<const event::RawPacketEvent*>(&event) };
+        const auto* raw_packet = dynamic_cast<const event::RawPacketEvent*>(&event);
         if (!raw_packet) {
             return;
         }
 
         std::ignore = client_.write(raw_packet->data);
     });
+}
 
+void SessionHandler::setup_unknown_packet_forwarders() const
+{
     dispatcher_.appendListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
-        const auto& packet{ dynamic_cast<const event::PacketEvent<packet::IPacket>*>(&event) };
-        if (!packet) {
+        const auto* pkt_event = dynamic_cast<const event::PacketEvent*>(&event);
+        if (!pkt_event || !pkt_event->has_packet()) {
             return;
         }
 
-        std::ignore = packet::PacketHelper::write(*(packet->packet), server_);
+        std::ignore = packet::PacketHelper::write(*(pkt_event->packet), server_);
     });
 
     dispatcher_.appendListener(event::Type::ServerBoundPacket, [this](const event::Event& event) {
-        const auto& packet{ dynamic_cast<const event::PacketEvent<packet::IPacket>*>(&event) };
-        if (!packet) {
+        const auto* pkt_event = dynamic_cast<const event::PacketEvent*>(&event);
+        if (!pkt_event || !pkt_event->has_packet()) {
             return;
         }
 
-        std::ignore = packet::PacketHelper::write(*(packet->packet), client_);
+        std::ignore = packet::PacketHelper::write(*(pkt_event->packet), client_);
     });
+}
 
-    dispatcher_.prependListener(event::Type::ServerBoundPacket, [this](const event::Event& event) {
-        if (const auto& packet{ dynamic_cast<const event::PacketEvent<packet::message::Quit>*>(&event) }; !packet) {
+void SessionHandler::setup_on_send_to_server_handler()
+{
+    constexpr auto on_send_to_server_type = event::packet_event_type(packet::PacketId::OnSendToServer);
+    dispatcher_.appendListener(on_send_to_server_type, [this](const event::Event& event) {
+        const auto* evt = dynamic_cast<const event::TypedPacketEvent<packet::PacketId::OnSendToServer>*>(&event);
+        if (!evt) {
             return;
         }
 
-        server_.disconnect(); // Umm, I think the Growtopia Server use disconnect now after sending this packet
-        client_.disconnect_now(); // Use peer reset instead because the Growtopia Server is use disconnect now after
-        // sending this packet
+        auto pkt = evt->template get<packet::game::OnSendToServer>();
+        if (!pkt) {
+            return;
+        }
+
+        pending_address_ = pkt->address;
+        pending_port_ = pkt->port;
+
+        const auto modified_pkt = std::make_shared<packet::game::OnSendToServer>(*pkt);
+        modified_pkt->address = "127.0.0.1";
+        modified_pkt->port = config_.get_server_config().port;
+
+        std::ignore = packet::PacketHelper::write(*modified_pkt, server_);
+        evt->cancel();
+    });
+}
+
+void SessionHandler::setup_quit_handler() const
+{
+    constexpr auto quit_type = event::packet_event_type(packet::PacketId::Quit);
+    dispatcher_.appendListener(quit_type, [this](const event::Event& event) {
+        const auto* evt = dynamic_cast<const event::TypedPacketEvent<packet::PacketId::Quit>*>(&event);
+        if (!evt || evt->direction != event::Direction::ServerBound) {
+            return;
+        }
+
+        server_.disconnect();
+        client_.disconnect_now();
         spdlog::info("Forced disconnect proxy client from Growtopia server");
+
+        evt->cancel();
     });
+}
 
-    dispatcher_.prependListener(event::Type::ClientBoundPacket, [this](const event::Event& event) {
-        spdlog::debug("Intercepted OnSendToServer packet, redirecting connection...");
-        const auto& packet{ dynamic_cast<const event::PacketEvent<packet::game::OnSendToServer>*>(&event) };
-        if (!packet) {
-            spdlog::debug("Not an OnSendToServer packet, ignoring...");
-            return;
-        }
-
-        packet::game::OnSendToServer pkt{ *(packet->packet) };
-        pending_address_ = pkt.address;
-        pending_port_ = pkt.port;
-
-        event.cancel();
-
-        pkt.address = "127.0.0.1";
-        pkt.port = config_.get_server_config().port;
-
-        std::ignore = packet::PacketHelper::write(pkt, server_);
-    });
-
-    dispatcher_.appendListener(event::Type::ServerBoundPacket, [this](const event::Event& event) {
-        if (const auto& packet{ dynamic_cast<const event::PacketEvent<packet::game::Disconnect>*>(&event) }; !packet) {
+void SessionHandler::setup_disconnect_handler() const
+{
+    constexpr auto disconnect_type = event::packet_event_type(packet::PacketId::Disconnect);
+    dispatcher_.appendListener(disconnect_type, [this](const event::Event& event) {
+        const auto* evt = dynamic_cast<const event::TypedPacketEvent<packet::PacketId::Disconnect>*>(&event);
+        if (!evt || evt->direction != event::Direction::ServerBound) {
             return;
         }
 
         server_.disconnect_now();
         spdlog::info("Forced disconnect proxy server from Growtopia client");
-        client_.disconnect_now(); // Use peer reset instead because the Growtopia Server is use disconnect now after
-        // receiving this packet
+        client_.disconnect_now();
         spdlog::info("Forced disconnect proxy client from Growtopia server");
     });
+}
 
-    dispatcher_.prependListener(event::Type::ClientConnect, [this](const event::Event& e) {
+void SessionHandler::setup_connection_handlers()
+{
+    dispatcher_.appendListener(event::Type::ClientConnect, [this](const event::Event& e) {
         if (pending_port_ == 65535) {
            return;
         }
@@ -100,8 +136,6 @@ SessionHandler::SessionHandler(
         spdlog::debug("Connecting to Growtopia server at {}:{}", pending_address_, pending_port_);
 
         client_.connect(pending_address_, pending_port_);
-
-        e.cancel();
 
         pending_address_.clear();
         pending_port_ = 65535;
@@ -124,8 +158,6 @@ SessionHandler::SessionHandler(
             return;
         }
 
-        // If the server timeout happens, the client will gracefully disconnect and not log the connection timeout message.
-        // Can we make the client log the connection timeout message?
         server_.disconnect();
         spdlog::info("Gracefully disconnect Growtopia client from proxy server");
     });

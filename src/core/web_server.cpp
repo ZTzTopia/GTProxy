@@ -1,9 +1,10 @@
 #include "web_server.hpp"
-#include "../utils/text_parse.hpp"
 
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
-#include <fmt/format.h>
+
+#include "../utils/text_parse.hpp"
 // ReSharper disable once CppUnusedIncludeDirective
 #include "../utils/formatter/text_parse_formatter.hpp"
 
@@ -60,9 +61,11 @@ void WebServer::setup_server()
         res.status = 500;
         try {
             std::rethrow_exception(ep);
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             res.set_content(fmt::format("{}", e.what()), "text/plain");
-        } catch (...) { // This should never happen, but just in case
+        }
+        catch (...) { // This should never happen, but just in case
             res.set_content("Unknown Exception", "text/plain");
         }
     });
@@ -108,20 +111,38 @@ void WebServer::listen_internal()
             { "Host", server_address }
         };
 
-        httplib::Result result = cli.Post("/growtopia/server_data.php", headers, req.params);
-        if (!validate_response(result)) {
+        httplib::Result response{ cli.Post("/growtopia/server_data.php", headers, req.params) };
+        if (!response) {
+            spdlog::error(
+                "Response is null: httplib::Error::{}",
+                magic_enum::enum_name(response.error())
+            );
+
             res.status = 502;
             res.set_content("Failed to get response from server", "text/plain");
             return true;
         }
 
-        if (result->body.empty()) {
+        if (response.error() != httplib::Error::Success || response->status != 200) {
+            spdlog::error(
+                "Failed to get response: {}",
+                response.error() == httplib::Error::Success
+                    ? fmt::format("HTTP status: {}", response->status)
+                    : fmt::format("HTTP error: {}", httplib::to_string(response.error()))
+            );
+
+            res.status = 502;
+            res.set_content("Failed to get response from server", "text/plain");
+            return true;
+        }
+
+        if (response->body.empty()) {
             res.status = 502;
             res.set_content("Empty response from server", "text/plain");
             return true;
         }
 
-        TextParse text_parse{ result->body };
+        TextParse text_parse{ response->body };
         if (text_parse.empty()) {
             spdlog::error("Failed to parse server_data.php response");
             res.status = 500;
@@ -152,6 +173,8 @@ void WebServer::on_client_connect(const event::Event& e)
         return;
     }
 
+    spdlog::debug("Connecting to Growtopia server at {}:{}", pending_address_, pending_port_);
+
     client_.connect(pending_address_, pending_port_);
 
     pending_address_.clear();
@@ -162,28 +185,5 @@ void WebServer::on_client_disconnect(const event::Event& e)
 {
     pending_address_.clear();
     pending_port_ = 65535;
-}
-
-bool WebServer::validate_response(const httplib::Result& response)
-{
-    if (!response) {
-        spdlog::error(
-            "Response is null: httplib::Error::{}",
-            magic_enum::enum_name(response.error())
-        );
-        return false;
-    }
-
-    if (response.error() != httplib::Error::Success || response->status != 200) {
-        spdlog::error(
-            "Failed to get response: {}",
-            response.error() == httplib::Error::Success
-                ? fmt::format("HTTP status: {}", response->status)
-                : fmt::format("HTTP error: {}", httplib::to_string(response.error()))
-        );
-        return false;
-    }
-
-    return true;
 }
 }

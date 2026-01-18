@@ -1,11 +1,16 @@
 #pragma once
 #include "../packet_helper.hpp"
-#include "../packet_types.hpp"
-#include "../../utils/byte_stream.hpp"
 
 namespace packet::message {
-struct ServerHello : NetMessage<ServerHello, NetMessageType::NET_MESSAGE_SERVER_HELLO> {
-    bool read(const TextParse& text_parse) override { return true; }
-    void write(ByteStream<>& byte_stream) override { }
+struct ServerHello : TextPacket<PacketId::ServerHello, NET_MESSAGE_SERVER_HELLO> {
+    bool read(const Payload& payload) override
+    {
+        return is_payload<TextPayload>(payload);
+    }
+    
+    Payload write() const override
+    {
+        return TextPayload{ MESSAGE_TYPE };
+    }
 };
 }
