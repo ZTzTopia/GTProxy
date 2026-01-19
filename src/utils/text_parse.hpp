@@ -3,21 +3,24 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <map>
 #include <charconv>
+#include <algorithm>
+#include <type_traits>
 
 class TextParse {
 public:
     TextParse() = default;
-
     explicit TextParse(const std::string& str, const std::string& delimiter = "|")
     {
         parse(str, delimiter);
     }
 
-    void parse(std::string_view str, std::string_view delimiter = "|")
+    void parse(const std::string_view str, const std::string_view delimiter = "|")
     {
-        data_.clear();
+        if (!data_.empty()) {
+            data_.clear();
+        }
+
         for (const auto& line : tokenize(str, "\n")) {
             std::vector tokens{ tokenize(line, delimiter) };
 
@@ -26,14 +29,14 @@ public:
             }
 
             std::string key{ tokens.front() };
-            std::vector<std::string> values;
+            std::vector<std::string> values{};
             values.reserve(tokens.size() - 1);
 
-            for (size_t i = 1; i < tokens.size(); ++i) {
+            for (size_t i{ 1 }; i < tokens.size(); ++i) {
                 values.emplace_back(tokens[i]);
             }
 
-            data_.emplace(std::move(key), std::move(values));
+            data_.emplace_back(key, values);
         }
     }
 
@@ -52,12 +55,15 @@ public:
 
             tokens.push_back(sv);
         }
+
         return tokens;
     }
 
     [[nodiscard]] std::string get(const std::string& key, const int index = 0) const
     {
-        const auto it{ data_.find(key) };
+        const auto it{ std::ranges::find_if(data_, [&key](const auto& pair) {
+            return pair.first == key;
+        }) };
         if (it == data_.end()) {
             return {};
         }
@@ -77,8 +83,7 @@ public:
 
         T result{};
         auto [ptr, ec] = std::from_chars(val.data(), val.data() + val.size(), result);
-        if (ec == std::errc{})
- {
+        if (ec == std::errc{}) {
             return result;
         }
 
@@ -97,23 +102,36 @@ public:
 
     void add(const std::string& key, const std::vector<std::string>& value)
     {
-        data_.emplace(key, value);
+        data_.emplace_back(key, value);
     }
 
     void set(const std::string& key, const std::vector<std::string>& value)
     {
-        data_[key] = value;
+        const auto it{ std::ranges::find_if(data_, [&key](const auto& pair) {
+            return pair.first == key;
+        }) };
+        if (it != data_.end()) {
+            it->second = value;
+            return;
+        }
+
+        data_.emplace_back(key, value);
     }
 
     void remove(const std::string& key)
     {
-        data_.erase(key);
+        const auto it{ std::ranges::find_if(data_, [&key](const auto& pair) {
+            return pair.first == key;
+        }) };
+        if (it != data_.end()) {
+            data_.erase(it);
+        }
     }
 
     [[nodiscard]] std::string get_raw(const std::string& delimiter = "|", const std::string& prepend_text = "") const
     {
         std::string raw_data{};
-        for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
+        for (auto it{ data_.cbegin() }; it != data_.cend(); ++it) {
             raw_data += prepend_text + it->first;
             for (const auto& token : it->second) {
                 raw_data += delimiter + token;
@@ -130,7 +148,8 @@ public:
     [[nodiscard]] std::vector<std::pair<std::string, std::string>> get_key_values(const std::string& delimiter = "|") const
     {
         std::vector<std::pair<std::string, std::string>> key_values{};
-        // for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
+        key_values.reserve(data_.size());
+
         for (const auto& [fst, snd] : data_) {
             std::string value{};
             for (size_t i = 0; i < snd.size(); ++i) {
@@ -144,9 +163,17 @@ public:
         return key_values;
     }
 
-    [[nodiscard]] const std::map<std::string, std::vector<std::string>>& get_data() const { return data_; }
+public:
+    [[nodiscard]] const std::vector<std::pair<std::string, std::vector<std::string>>>& get_data() const { return data_; }
     [[nodiscard]] bool empty() const { return data_.empty(); }
 
+    [[nodiscard]] bool contains(const std::string& key) const
+    {
+        return std::ranges::find_if(data_, [&key](const auto& pair) {
+            return pair.first == key;
+        }) != data_.end();
+    }
+
 private:
-    std::map<std::string, std::vector<std::string>> data_;
+    std::vector<std::pair<std::string, std::vector<std::string>>> data_;
 };
