@@ -23,8 +23,9 @@ struct Context {
     network::Server& server;
     network::Client& client;
     event::Dispatcher& dispatcher;
-    core::Scheduler& scheduler;
+    std::shared_ptr<core::Scheduler> scheduler;
 };
+
 
 class ICommand {
 public:

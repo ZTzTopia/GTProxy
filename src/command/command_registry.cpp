@@ -29,8 +29,9 @@ bool CommandRegistry::execute(
     network::Server& server,
     network::Client& client,
     event::Dispatcher& dispatcher,
-    core::Scheduler& scheduler)
+    std::shared_ptr<core::Scheduler> scheduler)
 {
+
     if (!is_command(input)) {
         return false;
     }
@@ -51,8 +52,9 @@ bool CommandRegistry::execute(
         server,
         client,
         dispatcher,
-        scheduler
+        std::move(scheduler)
     };
+
 
     const auto result = cmd->execute(ctx);
     if (result != Result::Success) {
