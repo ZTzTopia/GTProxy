@@ -6,10 +6,14 @@
 #include <spdlog/spdlog.h>
 
 #include "../packet/register_packets.hpp"
+#include "../scripting/bindings/command_bindings.hpp"
+#include "../scripting/bindings/logger_bindings.hpp"
+#include "../scripting/bindings/packet_bindings.hpp"
 
 namespace core {
 Core::Core()
     : running_{ true }
+    , scheduler_{ std::make_shared<Scheduler>() }
 {
     if (enet_initialize() != 0) {
         throw std::runtime_error{ "Failed to initialize ENet" };
@@ -23,6 +27,14 @@ Core::Core()
 
     session_handler_ = std::make_unique<SessionHandler>(config_, dispatcher_, *client_, *server_);
     command_handler_ = std::make_unique<command::CommandHandler>(config_, dispatcher_, scheduler_, *server_, *client_);
+
+    script_engine_ = std::make_unique<scripting::LuaEngine>();
+
+    script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
+    script_engine_->register_binding(std::make_unique<scripting::bindings::CommandBindings>(*command_handler_));
+
+    script_loader_ = std::make_unique<scripting::ScriptLoader>(*script_engine_, "scripts");
+    script_loader_->load_all();
 
     spdlog::info("Core initialized successfully");
 }

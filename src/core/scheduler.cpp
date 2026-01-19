@@ -73,7 +73,8 @@ TaskId Scheduler::schedule(std::function<void()> callback, const TaskOptions& op
             .priority = options.priority,
             .execute_at = std::chrono::steady_clock::now() + options.delay,
             .interval = options.interval,
-            .callback = std::move(callback)
+            .callback = std::move(callback),
+            .should_continue = nullptr
         };
         std::lock_guard lock(mutex_);
 
@@ -114,14 +115,42 @@ TaskId Scheduler::schedule_periodic(
     std::chrono::milliseconds interval,
     const std::string& tag,
     TaskPriority priority,
-    std::chrono::milliseconds initial_delay
+    std::chrono::milliseconds initial_delay,
+    std::shared_ptr<std::atomic<bool>> should_continue
 ) {
-    return schedule(std::move(callback), TaskOptions{
-        .tag = tag,
-        .priority = priority,
-        .delay = initial_delay,
-        .interval = interval
-    });
+    if (!callback) {
+        return INVALID_TASK_ID;
+    }
+
+    const TaskId id = generate_id();
+    {
+        Task task{
+            .id = id,
+            .tag = tag,
+            .priority = priority,
+            .execute_at = std::chrono::steady_clock::now() + initial_delay,
+            .interval = interval,
+            .callback = std::move(callback),
+            .should_continue = std::move(should_continue)
+        };
+        std::lock_guard lock(mutex_);
+
+        if (!running_) {
+            return INVALID_TASK_ID;
+        }
+
+        pending_tasks_.insert(id);
+
+        if (!tag.empty()) {
+            tasks_by_tag_[tag].insert(id);
+        }
+
+        task_queue_.push(std::move(task));
+    }
+
+    timer_cv_.notify_one();
+
+    return id;
 }
 
 TaskId Scheduler::schedule_immediate(
@@ -370,7 +399,13 @@ void Scheduler::worker_thread()
                 }
             }
 
-            if (task.interval.count() > 0 && !cancelled_tasks_.contains(task.id)) {
+            const bool should_reschedule{
+                task.interval.count() > 0 &&
+                !cancelled_tasks_.contains(task.id) &&
+                (!task.should_continue || *task.should_continue)
+            };
+
+            if (should_reschedule) {
                 TaskId new_id = generate_id();
 
                 Task new_task{
@@ -379,7 +414,8 @@ void Scheduler::worker_thread()
                     .priority = task.priority,
                     .execute_at = std::chrono::steady_clock::now() + task.interval,
                     .interval = task.interval,
-                    .callback = std::move(task.callback)
+                    .callback = std::move(task.callback),
+                    .should_continue = std::move(task.should_continue)
                 };
 
                 pending_tasks_.insert(new_id);

@@ -6,6 +6,8 @@
 #include "../command/command_handler.hpp"
 #include "../network/client.hpp"
 #include "../network/server.hpp"
+#include "../scripting/lua_engine.hpp"
+#include "../scripting/script_loader.hpp"
 #include "../utils/types.hpp"
 
 namespace core {
@@ -24,7 +26,7 @@ private:
     bool running_;
 
     event::Dispatcher dispatcher_;
-    Scheduler scheduler_;
+    std::shared_ptr<Scheduler> scheduler_;
 
     std::unique_ptr<network::Server> server_;
     std::unique_ptr<network::Client> client_;
@@ -32,5 +34,8 @@ private:
 
     std::unique_ptr<SessionHandler> session_handler_;
     std::unique_ptr<command::CommandHandler> command_handler_;
+
+    std::unique_ptr<scripting::LuaEngine> script_engine_;
+    std::unique_ptr<scripting::ScriptLoader> script_loader_;
 };
 }
