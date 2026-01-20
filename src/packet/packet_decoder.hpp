@@ -75,7 +75,7 @@ public:
 
                 spdlog::info("Packet decoded to variant:\n{}", fmt::format("{}", variant));
 
-                VariantPayload var_payload{ std::move(variant) };
+                VariantPayload var_payload{ game_pkt, std::move(variant) };
                 Payload payload = var_payload;
                 
                 auto packet = PacketRegistry::instance().create(payload);

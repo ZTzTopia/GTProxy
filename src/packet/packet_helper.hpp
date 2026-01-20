@@ -99,15 +99,14 @@ struct PacketHelper {
         else if (const auto* var = get_payload_if<VariantPayload>(payload)) {
             byte_stream.write(magic_enum::enum_underlying(NET_MESSAGE_GAME_PACKET));
 
-            GameUpdatePacket header{};
-            header.type = PACKET_CALL_FUNCTION;
-            header.net_id = static_cast<uint32_t>(-1);
+            GameUpdatePacket game_packet{ var->game_packet };
+            game_packet.type = PACKET_CALL_FUNCTION;
 
             const auto ext_data = var->variant.serialize();
-            header.flags.extended = 1;
-            header.data_size = static_cast<uint32_t>(ext_data.size());
+            game_packet.flags.extended = 1;
+            game_packet.data_size = static_cast<uint32_t>(ext_data.size());
 
-            byte_stream.write(header);
+            byte_stream.write(game_packet);
             byte_stream.write_data(ext_data.data(), ext_data.size());
         }
         

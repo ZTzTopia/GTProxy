@@ -42,10 +42,19 @@ struct GamePayload {
 };
 
 struct VariantPayload {
+    GameUpdatePacket game_packet;
     PacketVariant variant;
 
     explicit VariantPayload(const PacketVariant& var)
-        : variant{ var }
+        : game_packet{}
+        , variant{ var }
+    {
+        game_packet.net_id = -1; // Default to -1 if not specified
+    }
+
+    VariantPayload(const GameUpdatePacket& pkt, const PacketVariant& var)
+        : game_packet{ pkt }
+        , variant{ var }
     { }
 
     [[nodiscard]] std::string function_name() const
