@@ -8,7 +8,7 @@ struct Quit : TextPacket<PacketId::Quit> {
         return is_payload<TextPayload>(payload);
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
         text_parse.add("action", "quit");
@@ -22,7 +22,7 @@ struct QuitToExit : TextPacket<PacketId::QuitToExit> {
         return is_payload<TextPayload>(payload);
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
         text_parse.add("action", "quit_to_exit");
@@ -44,7 +44,7 @@ struct JoinRequest : TextPacket<PacketId::JoinRequest> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
         text_parse.add("action", "join_request");
@@ -66,7 +66,7 @@ struct ValidateWorld : TextPacket<PacketId::ValidateWorld> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
         text_parse.add("action", "validate_world");

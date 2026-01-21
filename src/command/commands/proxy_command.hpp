@@ -7,6 +7,7 @@ namespace command {
 class ProxyCommand final : public ICommand {
 public:
     [[nodiscard]] std::string_view name() const override { return "proxy"; }
+    [[nodiscard]] std::string description() const override { return "A simple command to test the proxy."; }
 
     Result execute(const Context& ctx) override
     {

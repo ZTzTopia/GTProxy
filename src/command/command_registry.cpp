@@ -19,6 +19,16 @@ ICommand* CommandRegistry::get(std::string_view name) const
     return nullptr;
 }
 
+std::vector<std::pair<std::string, std::string>> CommandRegistry::get_all_commands() const
+{
+    std::vector<std::pair<std::string, std::string>> result;
+    result.reserve(commands_.size());
+    for (const auto& [name, cmd] : commands_) {
+        result.emplace_back(name, cmd->description());
+    }
+    return result;
+}
+
 bool CommandRegistry::is_command(std::string_view input) const
 {
     return !input.empty() && input[0] == prefix_;
@@ -51,7 +61,8 @@ bool CommandRegistry::execute(
         server,
         client,
         dispatcher,
-        scheduler
+        scheduler,
+        *this
     };
 
     const auto result = cmd->execute(ctx);

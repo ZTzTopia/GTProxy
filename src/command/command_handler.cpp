@@ -8,6 +8,9 @@
 #include "commands/exit_command.hpp"
 #include "commands/proxy_command.hpp"
 #include "commands/warp_command.hpp"
+#include "commands/nick_command.hpp"
+#include "commands/skin_command.hpp"
+#include "commands/help_command.hpp"
 
 namespace command {
 namespace {
@@ -48,6 +51,9 @@ void CommandHandler::register_default_commands()
     registry_.add(std::make_unique<ProxyCommand>());
     registry_.add(std::make_unique<WarpCommand>());
     registry_.add(std::make_unique<ExitCommand>());
+    registry_.add(std::make_unique<NickCommand>());
+    registry_.add(std::make_unique<SkinCommand>());
+    registry_.add(std::make_unique<HelpCommand>());
 }
 
 void CommandHandler::on_text_packet(const event::Event& e)

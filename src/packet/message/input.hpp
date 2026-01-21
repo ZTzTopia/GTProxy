@@ -14,7 +14,7 @@ struct Input : TextPacket<PacketId::Input, NET_MESSAGE_GENERIC_TEXT> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
         text_parse.add("action", "input");

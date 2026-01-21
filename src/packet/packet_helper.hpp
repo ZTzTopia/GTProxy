@@ -25,7 +25,7 @@ public:
     [[nodiscard]] virtual PacketId id() const = 0;
     [[nodiscard]] virtual int channel() const { return 0; }
     [[nodiscard]] virtual bool read(const Payload& payload) = 0;
-    [[nodiscard]] virtual Payload write() const = 0;
+    [[nodiscard]] virtual Payload write() = 0;
 };
 
 template <PacketId Id, NetMessageType MsgType = NET_MESSAGE_GAME_MESSAGE, int Channel = 0>

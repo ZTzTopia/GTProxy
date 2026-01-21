@@ -20,6 +20,8 @@ enum class PacketId : uint32_t {
     ValidateWorld,
     Input,
     Log,
+    OnNameChanged,
+    OnChangeSkin,
     Padding2 = 0x2000,
     Disconnect,
     Padding3 = 0x3000,
@@ -60,6 +62,8 @@ inline const std::unordered_map<std::string_view, PacketId> VARIANT_FUNCTION_MAP
     { "OnSendToServer", PacketId::OnSendToServer },
     { "OnSpawn", PacketId::OnSpawn },
     { "OnRemove", PacketId::OnRemove },
+    { "OnNameChanged", PacketId::OnNameChanged },
+    { "OnChangeSkin", PacketId::OnChangeSkin },
 };
 
 inline const std::unordered_map<PacketType, PacketId> GAME_PACKET_MAP = {

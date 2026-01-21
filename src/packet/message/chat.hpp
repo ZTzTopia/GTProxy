@@ -14,7 +14,7 @@ struct Log : TextPacket<PacketId::Log> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
         text_parse.add("action", "log");

@@ -19,12 +19,14 @@ public:
     void add(std::unique_ptr<ICommand> cmd);
 
     template <typename Func>
-    void add(const std::string& name, Func&& func)
+    void add(const std::string& name, const std::string& description, Func&& func)
     {
-        add(make_command(name, std::forward<Func>(func)));
+        add(make_command(name, description, std::forward<Func>(func)));
     }
 
     [[nodiscard]] ICommand* get(std::string_view name) const;
+
+    [[nodiscard]] std::vector<std::pair<std::string, std::string>> get_all_commands() const;
 
     [[nodiscard]] bool is_command(std::string_view input) const;
 

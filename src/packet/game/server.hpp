@@ -1,6 +1,4 @@
 #pragma once
-#include <spdlog/spdlog.h>
-
 #include "../packet_helper.hpp"
 
 namespace packet::game {
@@ -10,7 +8,7 @@ struct Disconnect : GamePacket<PacketId::Disconnect, PACKET_DISCONNECT> {
         return is_payload<GamePayload>(payload);
     }
 
-    Payload write() const override
+    Payload write() override
     {
         GamePayload game_payload{};
         game_payload.packet.type = PACKET_TYPE;
@@ -58,7 +56,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
         text_parse.add(address, door_id, uuid_token);

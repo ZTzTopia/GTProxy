@@ -8,7 +8,7 @@ struct ServerHello : TextPacket<PacketId::ServerHello, NET_MESSAGE_SERVER_HELLO>
         return is_payload<TextPayload>(payload);
     }
     
-    Payload write() const override
+    Payload write() override
     {
         return TextPayload{ MESSAGE_TYPE };
     }

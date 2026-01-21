@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+#include <fmt/format.h>
 #include "../packet_helper.hpp"
 #include "../../utils/text_parse.hpp"
 
@@ -83,7 +85,7 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse parser{};
         parser.add("spawn", spawn);
@@ -156,14 +158,13 @@ struct OnRemove : VariantPacket<PacketId::OnRemove> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         const PacketVariant variant{
             "OnRemove",
             fmt::format("netID|{}", net_id),
             fmt::format("pId|{}", player_id)
         };
-
         return VariantPayload{ game_packet, variant };
     }
 };
