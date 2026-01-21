@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -21,9 +22,9 @@ struct TextPayload {
         : message_type{ type }
     { }
 
-    TextPayload(const NetMessageType type, const TextParse& parser)
+    TextPayload(const NetMessageType type, TextParse  parser)
         : message_type{ type }
-        , data{ parser }
+        , data{ std::move(parser) }
     { }
 };
 
@@ -45,16 +46,19 @@ struct VariantPayload {
     GameUpdatePacket game_packet;
     PacketVariant variant;
 
-    explicit VariantPayload(const PacketVariant& var)
+    explicit VariantPayload(PacketVariant var)
         : game_packet{}
-        , variant{ var }
+        , variant{ std::move(var) }
     {
-        game_packet.net_id = -1; // Default to -1 if not specified
+        // Default to -1 if not specified
+        game_packet.net_id = -1;
+        game_packet.decompressed_data_size = -1; // Why Growtopia server default it to -1? what is the other name
+        // for this field?
     }
 
-    VariantPayload(const GameUpdatePacket& pkt, const PacketVariant& var)
+    VariantPayload(const GameUpdatePacket& pkt, PacketVariant  var)
         : game_packet{ pkt }
-        , variant{ var }
+        , variant{ std::move(var) }
     { }
 
     [[nodiscard]] std::string function_name() const

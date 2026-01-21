@@ -1,7 +1,8 @@
 #pragma once
 #include "packet_registry.hpp"
 #include "register_packet_events.hpp"
-#include "game/on_send_to_server.hpp"
+#include "game/server.hpp"
+#include "game/world.hpp"
 #include "message/chat.hpp"
 #include "message/exit.hpp"
 #include "message/input.hpp"
@@ -31,6 +32,9 @@ inline bool register_all_packets()
     registry.register_packet<game::Disconnect>();
 
     registry.register_packet<game::OnSendToServer>();
+
+    registry.register_packet<game::OnSpawn>();
+    registry.register_packet<game::OnRemove>();
 
     event_registry::register_packet_events();
     return true;

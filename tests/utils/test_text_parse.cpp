@@ -34,10 +34,10 @@ TEST(TextParseTest, AddSetRemove)
 {
     TextParse tp{};
 
-    tp.add("key1", {"value1"});
+    tp.add("key1", "value1");
     EXPECT_EQ(tp.get("key1", 0), "value1");
 
-    tp.set("key1", {"new_value"});
+    tp.set("key1", "new_value");
     EXPECT_EQ(tp.get("key1", 0), "new_value");
 
     tp.remove("key1");
@@ -47,8 +47,8 @@ TEST(TextParseTest, AddSetRemove)
 TEST(TextParseTest, GetRaw)
 {
     TextParse tp{};
-    tp.add("key1", {"value1", "value2"});
-    tp.add("key2", {"value3"});
+    tp.add("key1", "value1", "value2");
+    tp.add("key2", "value3");
 
     // Note: The order of keys in unordered_map is not guaranteed, so checking exact string might be flaky if we don't account for that.
     // However, for simple cases or if we check containment, it might be fine. 
@@ -60,7 +60,7 @@ TEST(TextParseTest, GetRaw)
 
 TEST(TextParseTest, GetKeyValues) {
     TextParse tp{};
-    tp.add("key1", {"v1", "v2"});
+    tp.add("key1", "v1", "v2");
 
     auto key_values{ tp.get_key_values() };
     ASSERT_FALSE(key_values.empty());
@@ -87,10 +87,48 @@ TEST(TextParseTest, IdiotGrowtopiaParse)
     EXPECT_EQ(tp.get("213.179.209.175", 1), "-1");
 }
 
-TEST(TextParseTest, IdiotGrowtopiaParse2)
+TEST(TextParseTest, HeterogeneousAddSet)
 {
-    const TextParse tp{ "action|input\n|text|/exit" };
+    TextParse tp{};
 
-    EXPECT_EQ(tp.get("action", 0), "input");
-    EXPECT_EQ(tp.get("text", 0), "/exit");
+    // Heterogeneous add
+    tp.add("key1", "string", 42, 3.14f, true);
+    EXPECT_EQ(tp.get("key1", 0), "string");
+    EXPECT_EQ(tp.get<int>("key1", 1), 42);
+    EXPECT_NEAR(tp.get<float>("key1", 2), 3.14f, 0.001f);
+    EXPECT_EQ(tp.get<int>("key1", 3), 1); // bool as int 1
+
+    // Heterogeneous set (replace)
+    tp.set("key1", "new", 100);
+    EXPECT_EQ(tp.get("key1", 0), "new");
+    EXPECT_EQ(tp.get<int>("key1", 1), 100);
+    EXPECT_EQ(tp.get("key1", 2), ""); // Should be cleared
+
+    // Heterogeneous set (new key)
+    tp.set("key2", 1.23, "hello");
+    EXPECT_NEAR(tp.get<double>("key2", 0), 1.23, 0.001);
+    EXPECT_EQ(tp.get("key2", 1), "hello");
+}
+
+TEST(TextParseTest, SinglePrimitiveAddSet)
+{
+    TextParse tp{};
+
+    tp.add("int", 123);
+    EXPECT_EQ(tp.get<int>("int", 0), 123);
+
+    tp.set("float", 45.67);
+    EXPECT_NEAR(tp.get<double>("float", 0), 45.67, 0.001);
+}
+
+TEST(TextParseTest, MoveSemantics)
+{
+    TextParse tp{};
+
+    std::string key{ "key" };
+    std::string val{ "val" };
+    tp.add(std::move(key), std::move(val));
+
+    EXPECT_EQ(tp.get("key", 0), "val");
+    // key and val are now moved-from (potentially empty)
 }

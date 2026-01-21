@@ -91,11 +91,11 @@ void Server::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         const auto& registry{ packet::event_registry::PacketEventRegistry::instance() };
         registry.has_event(packet->id())
     ) {
-        auto evt = registry.emit(
+        const auto evt{ registry.emit(
             dispatcher_,
             event::Direction::ServerBound,
             packet
-        );
+        ) };
 
         if (evt && evt->canceled) {
             return;

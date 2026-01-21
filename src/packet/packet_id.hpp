@@ -24,6 +24,8 @@ enum class PacketId : uint32_t {
     Disconnect,
     Padding3 = 0x3000,
     OnSendToServer,
+    OnSpawn,
+    OnRemove,
     Unknown = std::numeric_limits<uint32_t>::max(),
 };
 
@@ -56,6 +58,8 @@ inline std::vector<TextRegexPattern>& get_text_regex_patterns()
 
 inline const std::unordered_map<std::string_view, PacketId> VARIANT_FUNCTION_MAP = {
     { "OnSendToServer", PacketId::OnSendToServer },
+    { "OnSpawn", PacketId::OnSpawn },
+    { "OnRemove", PacketId::OnRemove },
 };
 
 inline const std::unordered_map<PacketType, PacketId> GAME_PACKET_MAP = {

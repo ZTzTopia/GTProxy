@@ -2,7 +2,9 @@
 
 #include "../packet/packet_event_registry.hpp"
 #include "../packet/packet_helper.hpp"
-#include "../packet/game/on_send_to_server.hpp"
+#include "../packet/game/server.hpp"
+#include "../packet/game/world.hpp"
+#include "../world/world.hpp"
 
 namespace core {
 SessionHandler::SessionHandler(
@@ -23,6 +25,9 @@ SessionHandler::SessionHandler(
     setup_connection_handlers();
     setup_on_send_to_server_handler();
     setup_quit_handler();
+    setup_join_request_handler();
+    setup_on_spawn_handler();
+    setup_on_remove_handler();
 }
 
 void SessionHandler::setup_raw_packet_handlers() const
@@ -108,6 +113,19 @@ void SessionHandler::setup_quit_handler() const
     });
 }
 
+void SessionHandler::setup_join_request_handler() const
+{
+    constexpr auto join_request_type = event::packet_event_type(packet::PacketId::JoinRequest);
+    dispatcher_.appendListener(join_request_type, [](const event::Event& event) {
+        const auto* evt = dynamic_cast<const event::TypedPacketEvent<packet::PacketId::JoinRequest>*>(&event);
+        if (!evt || evt->direction != event::Direction::ServerBound) {
+            return;
+        }
+
+        world::World::instance().clear();
+    });
+}
+
 void SessionHandler::setup_disconnect_handler() const
 {
     constexpr auto disconnect_type = event::packet_event_type(packet::PacketId::Disconnect);
@@ -158,6 +176,43 @@ void SessionHandler::setup_connection_handlers()
 
         server_.disconnect();
         spdlog::info("Gracefully disconnect Growtopia client from proxy server");
+    });
+}
+
+void SessionHandler::setup_on_spawn_handler() const
+{
+    constexpr auto on_spawn_type = event::packet_event_type(packet::PacketId::OnSpawn);
+    dispatcher_.appendListener(on_spawn_type, [](const event::Event& event) {
+        const auto* evt = dynamic_cast<const event::TypedPacketEvent<packet::PacketId::OnSpawn>*>(&event);
+        if (!evt || evt->direction != event::Direction::ClientBound) {
+            return;
+        }
+
+        auto pkt = evt->template get<packet::game::OnSpawn>();
+        if (!pkt) {
+            return;
+        }
+
+        const auto player{ player::Player::from_on_spawn(*pkt) };
+        world::World::instance().add_player(player);
+    });
+}
+
+void SessionHandler::setup_on_remove_handler() const
+{
+    constexpr auto on_remove_type = event::packet_event_type(packet::PacketId::OnRemove);
+    dispatcher_.appendListener(on_remove_type, [](const event::Event& event) {
+        const auto* evt = dynamic_cast<const event::TypedPacketEvent<packet::PacketId::OnRemove>*>(&event);
+        if (!evt || evt->direction != event::Direction::ClientBound) {
+            return;
+        }
+
+        auto pkt = evt->template get<packet::game::OnRemove>();
+        if (!pkt) {
+            return;
+        }
+
+        world::World::instance().remove_player(pkt->net_id);
     });
 }
 

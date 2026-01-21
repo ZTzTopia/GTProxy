@@ -1,6 +1,7 @@
 #pragma once
 #include "packet_event_registry.hpp"
-#include "game/on_send_to_server.hpp"
+#include "game/server.hpp"
+#include "game/world.hpp"
 #include "message/chat.hpp"
 #include "message/exit.hpp"
 #include "message/input.hpp"
@@ -48,6 +49,15 @@ inline void register_packet_events() {
     registry.register_event(
         PacketId::OnSendToServer,
         make_event_builder<game::OnSendToServer, PacketId::OnSendToServer>()
+    );
+
+    registry.register_event(
+        PacketId::OnSpawn,
+        make_event_builder<game::OnSpawn, PacketId::OnSpawn>()
+    );
+    registry.register_event(
+        PacketId::OnRemove,
+        make_event_builder<game::OnRemove, PacketId::OnRemove>()
     );
 }
 }
