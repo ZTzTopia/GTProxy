@@ -15,6 +15,9 @@ public:
 
 protected:
     Singleton() = default;
+
+private:
     ~Singleton() = default;
+    friend T;
 };
 }

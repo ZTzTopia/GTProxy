@@ -3,6 +3,7 @@
 #include <variant>
 #include <vector>
 #include <glm/glm.hpp>
+#include <spdlog/spdlog.h>
 
 #include "../utils/byte_stream.hpp"
 
@@ -157,14 +158,16 @@ public:
     [[nodiscard]] T get(const std::size_t index) const
     {
         if (index >= variants_.size()) {
+            spdlog::warn("PacketVariant::get() called with out-of-bounds index {} (size {})", index, variants_.size());
             return T{};
         }
 
         try {
             return std::get<T>(variants_[index]);
         }
-        catch (const std::exception&) {
-            return T{}; // or some other default value
+        catch (const std::bad_variant_access& e) {
+            spdlog::warn("PacketVariant::get() type mismatch at index {}: {}", index, e.what());
+            return T{};
         }
     }
 
