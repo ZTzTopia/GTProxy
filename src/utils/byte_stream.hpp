@@ -120,19 +120,26 @@ public:
         return *this;
     }
 
+    void backtrack(const std::size_t size) { read_offset_ -= size; }
     void skip(const std::size_t size) { read_offset_ += size; }
     [[nodiscard]] std::size_t get_read_offset() const { return read_offset_; }
     
-    [[nodiscard]] std::size_t get_size() const { 
+    [[nodiscard]] std::size_t get_size() const
+    {
         return data_vec_.empty() ? data_span_.size() : data_vec_.size(); 
     }
 
-    [[nodiscard]] const std::byte* get_raw_ptr() const {
+    [[nodiscard]] const std::byte* get_raw_ptr() const
+    {
         return data_vec_.empty() ? data_span_.data() : data_vec_.data();
     }
 
-    [[nodiscard]] std::vector<std::byte> get_data() const { 
-        if (!data_vec_.empty()) return data_vec_;
+    [[nodiscard]] std::vector<std::byte> get_data() const
+    {
+        if (!data_vec_.empty()) {
+            return data_vec_;
+        }
+
         return { data_span_.begin(), data_span_.end() };
     }
 

@@ -78,13 +78,7 @@ void Client::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         return;
     }
 
-    auto pkt_log = spdlog::get("packet");
-    pkt_log->info(
-        "Received {} bytes from Growtopia server",
-        data.size()
-    );
-
-    const auto decoded{ decoder_.decode(data) };
+    const auto decoded{ decoder_.decode(data, config_.get_log_config(), "ClientBound") };
     if (!decoded.has_value()) {
         const event::RawPacketEvent evt{ event::Type::ClientBoundPacket, data };
         dispatcher_.dispatch(evt);
@@ -116,12 +110,6 @@ void Client::on_disconnect(ENetPeer* peer)
     if (peer != peer_) {
         return;
     }
-
-    spdlog::info(
-        "Proxy client disconnected from Growtopia server at {}:{}",
-        network::format_ip_address(peer->address.host),
-        peer->address.port
-    );
 
     peer_ = nullptr;
 

@@ -19,7 +19,7 @@ public:
         bool print_message{ true };
         bool print_game_update_packet{ false };
         bool print_variant{ true };
-        bool test{ false };
+        bool print_extra{ true };
     };
 
     struct CommandConfig {

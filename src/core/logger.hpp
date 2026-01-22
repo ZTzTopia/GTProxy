@@ -30,27 +30,6 @@ public:
         );
     }
 
-    [[nodiscard]] static std::shared_ptr<spdlog::sinks::rotating_file_sink_mt> create_packet_file_sink()
-    {
-        return std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            "packets.log",
-            1024 * 1024 * 5,
-            3
-        );
-    }
-
-    static void setup_packet_logger()
-    {
-        auto packet_sink{ create_packet_file_sink() };
-        packet_sink->set_level(spdlog::level::trace);
-
-        const auto packet_logger{ std::make_shared<spdlog::logger>("packet", packet_sink) };
-        packet_logger->set_level(spdlog::level::trace);
-        packet_logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%t] [%^%l%$] %v");
-
-        spdlog::register_logger(packet_logger);
-    }
-
     [[nodiscard]] std::shared_ptr<spdlog::logger> get_logger() const { return logger_; }
     void set_logger(std::shared_ptr<spdlog::logger> logger) { logger_ = std::move(logger); }
 

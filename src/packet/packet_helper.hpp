@@ -126,13 +126,6 @@ struct PacketHelper {
         }
 
         data.push_back(static_cast<std::byte>(0x00));
-
-        spdlog::get("packet")->debug(
-            "Sending packet {} on channel {}: {:p}",
-            magic_enum::enum_name(packet.id()),
-            packet.channel(),
-            spdlog::to_hex(data)
-        );
         return sender.write(data, packet.channel());
     }
 
@@ -146,13 +139,6 @@ struct PacketHelper {
         }
 
         data.push_back(static_cast<std::byte>(0x00));
-
-        spdlog::get("packet")->debug(
-            "Sending {} on channel {}: {:p}",
-            magic_enum::enum_name(Packet::ID),
-            Packet::CHANNEL,
-            spdlog::to_hex(data)
-        );
         return sender.write(data, Packet::CHANNEL);
     }
 };
