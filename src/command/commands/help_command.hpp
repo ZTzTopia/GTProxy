@@ -25,7 +25,7 @@ public:
 
             for (const auto& [name, desc] : commands) {
                 packet::message::Log log_item{};
-                log_item.msg = fmt::format("{}{}: ``{}", ctx.registry.prefix(), name, desc);
+                log_item.msg = fmt::format("``{}{}: {}", ctx.registry.prefix(), name, desc);
                 packet::PacketHelper::write(log_item, ctx.server);
             }
 
@@ -33,9 +33,9 @@ public:
         }
 
         std::string cmd_name{ ctx.args[0] };
-        if (auto* cmd = ctx.registry.get(cmd_name)) {
+        if (auto cmd{ ctx.registry.get(cmd_name) }) {
             packet::message::Log log_info{};
-            log_info.msg = fmt::format("{}{}: ``{}", ctx.registry.prefix(), cmd_name, cmd->description());
+            log_info.msg = fmt::format("``{}{}: {}", ctx.registry.prefix(), cmd_name, cmd->description());
             packet::PacketHelper::write(log_info, ctx.server);
             return Result::Success;
         }
