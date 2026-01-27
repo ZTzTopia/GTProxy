@@ -228,4 +228,61 @@ private:
 };
 
 using Dispatcher = PriorityEventDispatcher;
+
+class ScopedHandle {
+public:
+    ScopedHandle() = default;
+
+    ScopedHandle(Dispatcher& d, const Type t, const Dispatcher::Handle h)
+        : dispatcher_{ &d }
+        , type_{ t }
+        , handle_{ h }
+    {
+
+    }
+
+    ~ScopedHandle()
+    {
+        reset();
+    }
+
+    void reset()
+    {
+        if (!dispatcher_) {
+            return;
+        }
+
+        dispatcher_->removeListener(type_, handle_);
+        dispatcher_ = nullptr;
+    }
+
+    ScopedHandle(ScopedHandle&& other) noexcept
+        : dispatcher_{ other.dispatcher_ }
+        , type_{ other.type_ }
+        , handle_{ other.handle_ }
+    {
+        other.dispatcher_ = nullptr;
+    }
+
+    ScopedHandle& operator=(ScopedHandle&& other) noexcept
+    {
+        if (this != &other) {
+            reset();
+            dispatcher_ = other.dispatcher_;
+            type_ = other.type_;
+            handle_ = other.handle_;
+            other.dispatcher_ = nullptr;
+        }
+
+        return *this;
+    }
+
+    ScopedHandle(const ScopedHandle&) = delete;
+    ScopedHandle& operator=(const ScopedHandle&) = delete;
+
+private:
+    Dispatcher* dispatcher_;
+    Type type_;
+    Dispatcher::Handle handle_;
+};
 }

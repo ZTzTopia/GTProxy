@@ -7,7 +7,6 @@ namespace command {
 class ExitCommand final : public ICommand {
 public:
     [[nodiscard]] std::string_view name() const override { return "exit"; }
-
     [[nodiscard]] std::string description() const override { return "Exit the current world."; }
 
     Result execute(const Context& ctx) override
