@@ -7,7 +7,7 @@
 #include "../../packet/message/exit.hpp"
 #include "../../packet/message/input.hpp"
 #include "../../packet/message/server_hello.hpp"
-#include "../../packet/game/on_send_to_server.hpp"
+#include "../../packet/game/server.hpp"
 #include "../../packet/game/player.hpp"
 #include "../../utils/text_parse.hpp"
 
@@ -160,7 +160,7 @@ private:
         lua.new_usertype<packet::game::OnChangeSkin>("OnChangeSkinPacket",
             sol::constructors<packet::game::OnChangeSkin()>(),
             sol::base_classes, sol::bases<packet::IPacket>(),
-            "skin", &packet::game::OnChangeSkin::skin,
+            "skin", &packet::game::OnChangeSkin::skin_code,
             "net_id", &packet::game::OnChangeSkin::net_id
         );
     }

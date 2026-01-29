@@ -27,9 +27,10 @@ public:
 
         cmd_table.set_function("register", [this, &lua](
             const std::string& name,
+            const std::string& description,
             sol::protected_function callback
         ) {
-            handler_.registry().add(name, [callback, &lua, name](const command::Context& ctx) -> command::Result {
+            handler_.registry().add(name, description, [callback, &lua, name](const command::Context& ctx) -> command::Result {
                 sol::table args_table{ lua.create_table() };
                 for (size_t i{ 0 }; i < ctx.args.size(); ++i) {
                     args_table[i + 1] = ctx.args[i];

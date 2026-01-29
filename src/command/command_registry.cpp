@@ -62,6 +62,7 @@ bool CommandRegistry::execute(
         client,
         dispatcher,
         std::move(scheduler),
+        *this
     };
 
     const auto result = cmd->execute(ctx);
