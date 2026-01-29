@@ -8,10 +8,10 @@ struct Quit : TextPacket<PacketId::Quit> {
         return is_payload<TextPayload>(payload);
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
-        text_parse.add("action", { "quit" });
+        text_parse.add("action", "quit");
         return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
@@ -22,10 +22,10 @@ struct QuitToExit : TextPacket<PacketId::QuitToExit> {
         return is_payload<TextPayload>(payload);
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
-        text_parse.add("action", { "quit_to_exit" });
+        text_parse.add("action", "quit_to_exit");
         return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
@@ -44,12 +44,12 @@ struct JoinRequest : TextPacket<PacketId::JoinRequest> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
-        text_parse.add("action", { "join_request" });
-        text_parse.add("name", { world_name });
-        text_parse.add("invitedWorld", { invited_world ? "1" : "0" });
+        text_parse.add("action", "join_request");
+        text_parse.add("name", world_name);
+        text_parse.add("invitedWorld", invited_world ? "1" : "0");
         return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };
@@ -66,11 +66,11 @@ struct ValidateWorld : TextPacket<PacketId::ValidateWorld> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
-        text_parse.add("action", { "validate_world" });
-        text_parse.add("name", { world_name });
+        text_parse.add("action", "validate_world");
+        text_parse.add("name", world_name);
         return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };

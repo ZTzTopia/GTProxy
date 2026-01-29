@@ -25,7 +25,7 @@ public:
     [[nodiscard]] virtual PacketId id() const = 0;
     [[nodiscard]] virtual int channel() const { return 0; }
     [[nodiscard]] virtual bool read(const Payload& payload) = 0;
-    [[nodiscard]] virtual Payload write() const = 0;
+    [[nodiscard]] virtual Payload write() = 0;
 };
 
 template <PacketId Id, NetMessageType MsgType = NET_MESSAGE_GAME_MESSAGE, int Channel = 0>
@@ -99,15 +99,14 @@ struct PacketHelper {
         else if (const auto* var = get_payload_if<VariantPayload>(payload)) {
             byte_stream.write(magic_enum::enum_underlying(NET_MESSAGE_GAME_PACKET));
 
-            GameUpdatePacket header{};
-            header.type = PACKET_CALL_FUNCTION;
-            header.net_id = static_cast<uint32_t>(-1);
+            GameUpdatePacket game_packet{ var->game_packet };
+            game_packet.type = PACKET_CALL_FUNCTION;
 
             const auto ext_data = var->variant.serialize();
-            header.flags.extended = 1;
-            header.data_size = static_cast<uint32_t>(ext_data.size());
+            game_packet.flags.extended = 1;
+            game_packet.data_size = static_cast<uint32_t>(ext_data.size());
 
-            byte_stream.write(header);
+            byte_stream.write(game_packet);
             byte_stream.write_data(ext_data.data(), ext_data.size());
         }
         
@@ -127,13 +126,6 @@ struct PacketHelper {
         }
 
         data.push_back(static_cast<std::byte>(0x00));
-
-        spdlog::get("packet")->debug(
-            "Sending packet {} on channel {}: {:p}",
-            magic_enum::enum_name(packet.id()),
-            packet.channel(),
-            spdlog::to_hex(data)
-        );
         return sender.write(data, packet.channel());
     }
 
@@ -147,13 +139,6 @@ struct PacketHelper {
         }
 
         data.push_back(static_cast<std::byte>(0x00));
-
-        spdlog::get("packet")->debug(
-            "Sending {} on channel {}: {:p}",
-            magic_enum::enum_name(Packet::ID),
-            Packet::CHANNEL,
-            spdlog::to_hex(data)
-        );
         return sender.write(data, Packet::CHANNEL);
     }
 };

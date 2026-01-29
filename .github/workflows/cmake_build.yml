@@ -2,7 +2,6 @@ name: Build
 
 on:
   workflow_dispatch:
-    branches: [main]
     inputs:
       buildType:
         description: "Build Type"

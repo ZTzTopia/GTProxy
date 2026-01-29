@@ -32,8 +32,6 @@ try {
         spdlog::register_logger(logger.get_logger());
         spdlog::set_default_logger(logger.get_logger());
         spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%t] [%^%l%$] %v");
-
-        core::Logger::setup_packet_logger();
     }
     catch (const spdlog::spdlog_ex& ex) {
         spdlog::error("Log initialization failed: {}", ex.what());
@@ -42,10 +40,15 @@ try {
 
     try {
         spdlog::info(
-            "Starting GTProxy (v{}.{}.{})",
+            "Starting GTProxy (v{}.{}.{}{})",
             GTPROXY_VERSION_MAJOR,
             GTPROXY_VERSION_MINOR,
-            GTPROXY_VERSION_PATCH
+            GTPROXY_VERSION_PATCH,
+#ifdef GTPROXY_BUILD_VERSION
+            fmt::format!("-{}", GTPROXY_BUILD_VERSION)
+#else
+            ""
+#endif
         );
 
         g_core = std::make_unique<core::Core>();

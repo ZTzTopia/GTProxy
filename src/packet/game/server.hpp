@@ -1,20 +1,18 @@
 #pragma once
-#include <spdlog/spdlog.h>
-
 #include "../packet_helper.hpp"
 
 namespace packet::game {
-struct Disconnect : GamePacket<PacketId::Disconnect, PacketType::PACKET_DISCONNECT> {
+struct Disconnect : GamePacket<PacketId::Disconnect, PACKET_DISCONNECT> {
     bool read(const Payload& payload) override
     {
         return is_payload<GamePayload>(payload);
     }
 
-    Payload write() const override
+    Payload write() override
     {
         GamePayload game_payload{};
         game_payload.packet.type = PACKET_TYPE;
-        game_payload.packet.net_id = static_cast<uint32_t>(-1);
+        game_payload.packet.net_id = -1;
         return game_payload;
     }
 };
@@ -58,10 +56,10 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
-        text_parse.add(address, { door_id, uuid_token });
+        text_parse.add(address, door_id, uuid_token);
 
         PacketVariant variant{
             "OnSendToServer",

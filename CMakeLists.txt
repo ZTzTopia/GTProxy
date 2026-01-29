@@ -7,7 +7,7 @@ set(CMAKE_PROJECT_TOP_LEVEL_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake-conan/conan_provider.cmake)
 
 cmake_minimum_required(VERSION 3.24)
-project(GTProxy VERSION 2.0.0)
+project(GTProxy VERSION 3.0.0)
 
 add_subdirectory(lib)
 add_subdirectory(src)

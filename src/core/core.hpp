@@ -1,8 +1,10 @@
 #pragma once
 #include "config.hpp"
 #include "scheduler.hpp"
-#include "session_handler.hpp"
 #include "web_server.hpp"
+#include "handlers/connection_handler.hpp"
+#include "handlers/forwarding_handler.hpp"
+#include "handlers/world_handler.hpp"
 #include "../command/command_handler.hpp"
 #include "../network/client.hpp"
 #include "../network/server.hpp"
@@ -32,7 +34,9 @@ private:
     std::unique_ptr<network::Client> client_;
     std::unique_ptr<WebServer> web_server_;
 
-    std::unique_ptr<SessionHandler> session_handler_;
+    std::unique_ptr<ConnectionHandler> connection_handler_;
+    std::unique_ptr<ForwardingHandler> forwarding_handler_;
+    std::unique_ptr<WorldHandler> world_handler_;
     std::unique_ptr<command::CommandHandler> command_handler_;
 
     std::unique_ptr<scripting::LuaEngine> script_engine_;

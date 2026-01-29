@@ -14,11 +14,11 @@ struct Log : TextPacket<PacketId::Log> {
         return true;
     }
 
-    Payload write() const override
+    Payload write() override
     {
         TextParse text_parse{};
-        text_parse.add("action", { "log" });
-        text_parse.add("msg", { msg });
+        text_parse.add("action", "log");
+        text_parse.add("msg", msg);
         return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
     }
 };

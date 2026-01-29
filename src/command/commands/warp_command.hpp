@@ -8,12 +8,13 @@ namespace command {
 class WarpCommand final : public ICommand {
 public:
     [[nodiscard]] std::string_view name() const override { return "warp"; }
+    [[nodiscard]] std::string description() const override { return "Warp to a world."; }
 
     Result execute(const Context& ctx) override
     {
         if (ctx.args.empty()) {
             packet::message::Log pkt{};
-            pkt.msg = "`4Usage: ``/warp <world name>";
+            pkt.msg = fmt::format("`4Usage: ``{}warp <world name>", ctx.registry.prefix());
             packet::PacketHelper::write(pkt, ctx.server);
             return Result::InvalidArguments;
         }
@@ -56,7 +57,7 @@ public:
                 join_pkt.invited_world = false;
                 packet::PacketHelper::write(join_pkt, *client);
             },
-            std::chrono::milliseconds{ 750 },
+            std::chrono::milliseconds{ 1750 },
             "warp",
             core::TaskPriority::Normal
         );

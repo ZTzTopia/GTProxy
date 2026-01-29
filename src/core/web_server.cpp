@@ -35,7 +35,7 @@ WebServer::WebServer(
 
     spdlog::info("HTTPS server listening on port 443");
     server_thread_ = std::thread{ &WebServer::listen_internal, this };
-    server_thread_.detach();
+    // server_thread_.detach();
 }
 
 WebServer::~WebServer()
@@ -152,7 +152,16 @@ void WebServer::listen_internal()
         spdlog::info("Original server_data.php response:\n{}", text_parse);
 
         pending_address_ = text_parse.get("server", 0);
-        pending_port_ = static_cast<uint16_t>(std::stoi(text_parse.get("port", 0)));
+
+        std::string port{ text_parse.get("port", 0) };
+        if (
+            auto [ptr, ec] = std::from_chars(port.data(), port.data() + port.size(), pending_port_);
+            ec != std::errc{}
+        ) {
+            spdlog::error("Failed to parse port from server_data.php response");
+            res.status = 500;
+            return true;
+        }
 
         text_parse.set("server", { "127.0.0.1" });
         text_parse.set("port", { std::to_string(config_.get_server_config().port) });

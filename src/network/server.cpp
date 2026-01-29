@@ -73,13 +73,7 @@ void Server::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         return;
     }
 
-    auto pkt_log = spdlog::get("packet");
-    pkt_log->info(
-        "Received {} bytes from Growtopia client",
-        data.size()
-    );
-
-    const auto decoded{ decoder_.decode(data) };
+    const auto decoded{ decoder_.decode(data, config_.get_log_config(), "ServerBound") };
     if (!decoded.has_value()) {
         const event::RawPacketEvent evt{ event::Type::ServerBoundPacket, data };
         dispatcher_.dispatch(evt);
@@ -91,11 +85,11 @@ void Server::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         const auto& registry{ packet::event_registry::PacketEventRegistry::instance() };
         registry.has_event(packet->id())
     ) {
-        auto evt = registry.emit(
+        const auto evt{ registry.emit(
             dispatcher_,
             event::Direction::ServerBound,
             packet
-        );
+        ) };
 
         if (evt && evt->canceled) {
             return;
@@ -112,12 +106,6 @@ void Server::on_disconnect(ENetPeer* peer)
         return;
     }
 
-    spdlog::info(
-        "Client {}:{} disconnected from proxy server",
-        network::format_ip_address(peer->address.host),
-        peer->address.port
-    );
-
     peer_ = nullptr;
 
     const event::ConnectionEvent evt{ event::Type::ClientDisconnect };
@@ -129,13 +117,6 @@ bool Server::write(std::span<const std::byte> data, const int channel) const
     if (!is_connected()) {
         return false;
     }
-
-    /*auto pkt_log = spdlog::get("packet");
-    pkt_log->debug(
-        "Sending {} bytes to Growtopia client:{}",
-        data.size(),
-        spdlog::to_hex(data.begin(), data.end())
-    );*/
 
     ENetPacket* packet{ enet_packet_create(
         data.data(),
