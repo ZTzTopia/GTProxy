@@ -25,7 +25,7 @@ public:
     {
         auto cmd_table{ lua.create_table() };
 
-        cmd_table.set_function("register", [this, &lua](
+        auto register_impl = [this, &lua](
             const std::string& name,
             const std::string& description,
             sol::protected_function callback
@@ -67,7 +67,14 @@ public:
 
             spdlog::info("[Lua] Registered command: /{}", name);
             return true;
-        });
+        };
+
+        cmd_table.set_function("register", sol::overload(
+            register_impl,
+            [register_impl](const std::string& name, sol::protected_function callback) {
+                return register_impl(name, "Script command", callback);
+            }
+        ));
 
         cmd_table.set_function("prefix", [this]() {
             return std::string{ 1, handler_.registry().prefix() };

@@ -7,6 +7,7 @@
 
 #include "../packet/register_packets.hpp"
 #include "../scripting/bindings/command_bindings.hpp"
+#include "../scripting/bindings/event_bindings.hpp"
 #include "../scripting/bindings/logger_bindings.hpp"
 #include "../scripting/bindings/packet_bindings.hpp"
 
@@ -32,8 +33,8 @@ Core::Core()
 
     script_engine_ = std::make_unique<scripting::LuaEngine>();
 
-    script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
     script_engine_->register_binding(std::make_unique<scripting::bindings::CommandBindings>(*command_handler_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
     script_engine_->register_binding(std::make_unique<scripting::bindings::PacketBindings>(*client_, *server_));
 
     script_loader_ = std::make_unique<scripting::ScriptLoader>(*script_engine_, "scripts");

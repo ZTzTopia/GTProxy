@@ -5,13 +5,18 @@ file(GLOB GTPROXY_INCLUDE_FILES
     command/*.hpp
     command/commands/*.hpp
     core/*.hpp
+    core/handlers/*.hpp
+    event/*.hpp
     network/*.hpp
     packet/*.hpp
     packet/game/*.hpp
     packet/message/*.hpp
+    player/*.hpp
     scripting/*.hpp
     scripting/bindings/*.hpp
-    utils/*.hpp)
+    utils/*.hpp
+    utils/formatter/*.hpp
+    world/*.hpp)
 
 file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
