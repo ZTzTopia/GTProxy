@@ -8,7 +8,6 @@ namespace command {
 class WarpCommand final : public ICommand {
 public:
     [[nodiscard]] std::string_view name() const override { return "warp"; }
-
     [[nodiscard]] std::string description() const override { return "Warp to a world."; }
 
     Result execute(const Context& ctx) override
@@ -58,7 +57,7 @@ public:
                 join_pkt.invited_world = false;
                 packet::PacketHelper::write(join_pkt, *client);
             },
-            std::chrono::milliseconds{ 750 },
+            std::chrono::milliseconds{ 1750 },
             "warp",
             core::TaskPriority::Normal
         );
