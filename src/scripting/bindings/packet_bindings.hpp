@@ -128,9 +128,6 @@ private:
             sol::no_constructor,
             "id", &packet::IPacket::id,
             "channel", &packet::IPacket::channel,
-            "modified", &packet::IPacket::modified,
-            "mark_modified", &packet::IPacket::mark_modified,
-            "is_modified", &packet::IPacket::is_modified,
             "has_raw_data", &packet::IPacket::has_raw_data,
             "raw", sol::property([](const packet::IPacket& p, sol::this_state s) {
                 sol::state_view lua{ s };
