@@ -15,6 +15,7 @@ The scripting engine uses sol2 for C++/Lua bindings.
 | `packet`  | Packet types, enums, and raw send helpers |
 | `command` | Register custom proxy commands            |
 | `scheduler`| Schedule timed tasks and callbacks        |
+| `world`   | Access world and player state             |
 
 ## Logger
 
@@ -208,5 +209,76 @@ event.on("server:Connect", function()
     logger.info("Connected!")
     sleep(1000)  -- Non-blocking delay
     logger.info("1 second later!")
+end)
+```
+
+## World & Player
+
+The `world` global provides access to the current world state and player information.
+
+### Accessing Players
+
+```lua
+-- Get the local player (your character)
+local local_player = world:get_local_player()
+if local_player then
+    logger.info("My name: {}", local_player.name)
+    logger.info("My position: ({}, {})", local_player.position.x, local_player.position.y)
+end
+
+-- Get all players in the world
+local all_players = world:get_players()
+for net_id, player in pairs(all_players) do
+    logger.info("Player {}: {} at ({}, {})", net_id, player.name, player.position.x, player.position.y)
+end
+
+-- Get a specific player by net_id
+local player = world:get_player(12345)
+if player then
+    logger.info("Found player: {}", player.name)
+end
+
+-- Get the local player's net ID
+local my_net_id = world:get_local_net_id()
+```
+
+### Player Properties
+
+| Property        | Type          | Description                             |
+|-----------------|---------------|-----------------------------------------|
+| `net_id`       | number        | Network ID of the player                |
+| `user_id`       | number        | User ID (unique ID)                   |
+| `name`          | string        | Player name                            |
+| `country_code`   | string        | Two-letter country code (e.g., "US")     |
+| `position`       | Vec2          | {x, y} coordinates in world           |
+| `collision`      | Vec4          | {x, y, z, w} collision dimensions      |
+| `invisible`      | number        | Invisibility level                       |
+| `mod_state`      | number        | Moderator state                        |
+| `supermod_state`  | number        | Super moderator state                  |
+| `is_local`       | boolean       | True if this is the local player        |
+
+### Example: Track Player Position
+
+```lua
+local last_positions = {}
+
+event.on("server:OnSpawn", function(ctx)
+    if ctx:has_packet() then
+        local pkt = ctx:get_packet()
+        local player = world:get_player(pkt.net_id)
+        if player then
+            last_positions[pkt.net_id] = player.position
+            logger.info("Player {} spawned at ({}, {})", player.name, player.position.x, player.position.y)
+        end
+    end
+end)
+
+scheduler.schedule_periodic(1000, function()
+    for net_id, player in pairs(world:get_players()) do
+        if player.is_local then
+            logger.info("I am at ({}, {})", player.position.x, player.position.y)
+        end
+    end
+    return true
 end)
 ```

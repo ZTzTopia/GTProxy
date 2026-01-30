@@ -11,6 +11,8 @@
 #include "../scripting/bindings/logger_bindings.hpp"
 #include "../scripting/bindings/packet_bindings.hpp"
 #include "../scripting/bindings/scheduler_bindings.hpp"
+#include "../scripting/bindings/player_bindings.hpp"
+#include "../scripting/bindings/world_bindings.hpp"
 
 namespace core {
 Core::Core()
@@ -48,6 +50,8 @@ Core::Core()
     script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
     script_engine_->register_binding(std::make_unique<scripting::bindings::PacketBindings>(*client_, *server_));
     script_engine_->register_binding(std::make_unique<scripting::bindings::SchedulerBindings>(*script_scheduler_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::PlayerBindings>());
+    script_engine_->register_binding(std::make_unique<scripting::bindings::WorldBindings>());
 
     script_loader_ = std::make_unique<scripting::ScriptLoader>(*script_engine_, "scripts");
     script_loader_->load_all();
