@@ -8,7 +8,6 @@ namespace command {
 class WarpCommand final : public ICommand {
 public:
     [[nodiscard]] std::string_view name() const override { return "warp"; }
-
     [[nodiscard]] std::string description() const override { return "Warp to a world."; }
 
     Result execute(const Context& ctx) override
@@ -36,7 +35,7 @@ public:
             return Result::InvalidArguments;
         }
 
-        ctx.scheduler.cancel_by_tag("warp");
+        ctx.scheduler->cancel_by_tag("warp");
 
         packet::message::QuitToExit quit_pkt{};
         packet::PacketHelper::write(quit_pkt, ctx.client);
@@ -46,7 +45,7 @@ public:
         packet::PacketHelper::write(log, ctx.server);
 
         const auto client{ &ctx.client };
-        ctx.scheduler.schedule_delayed(
+        ctx.scheduler->schedule_delayed(
             [client, &world_name] {
                 if (!client->is_connected()) {
                     spdlog::warn("Client disconnected before warp could complete.");
@@ -58,7 +57,7 @@ public:
                 join_pkt.invited_world = false;
                 packet::PacketHelper::write(join_pkt, *client);
             },
-            std::chrono::milliseconds{ 750 },
+            std::chrono::milliseconds{ 1750 },
             "warp",
             core::TaskPriority::Normal
         );

@@ -11,26 +11,35 @@ namespace packet {
 enum class PayloadType : uint8_t {
     Text,
     Game,
-    Variant
+    Variant,
+    Raw
 };
 
 struct TextPayload {
     NetMessageType message_type;
     TextParse data;
+    std::vector<std::byte> raw_data; // Original raw bytes for pass-through
 
     explicit TextPayload(NetMessageType type = NET_MESSAGE_GAME_MESSAGE)
         : message_type{ type }
     { }
 
-    TextPayload(const NetMessageType type, TextParse  parser)
+    TextPayload(const NetMessageType type, TextParse parser)
         : message_type{ type }
         , data{ std::move(parser) }
+    { }
+
+    TextPayload(const NetMessageType type, TextParse parser, std::vector<std::byte> raw)
+        : message_type{ type }
+        , data{ std::move(parser) }
+        , raw_data{ std::move(raw) }
     { }
 };
 
 struct GamePayload {
     GameUpdatePacket packet;
     std::vector<std::byte> extra;
+    std::vector<std::byte> raw_data;
 
     GamePayload()
         : packet{}
@@ -40,11 +49,18 @@ struct GamePayload {
         : packet{ pkt }
         , extra{ ext }
     { }
+
+    GamePayload(const GameUpdatePacket& pkt, std::vector<std::byte> ext, std::vector<std::byte> raw)
+        : packet{ pkt }
+        , extra{ std::move(ext) }
+        , raw_data{ std::move(raw) }
+    { }
 };
 
 struct VariantPayload {
     GameUpdatePacket game_packet;
     PacketVariant variant;
+    std::vector<std::byte> raw_data;
 
     explicit VariantPayload(PacketVariant var)
         : game_packet{}
@@ -56,9 +72,15 @@ struct VariantPayload {
         // for this field?
     }
 
-    VariantPayload(const GameUpdatePacket& pkt, PacketVariant  var)
+    VariantPayload(const GameUpdatePacket& pkt, PacketVariant var)
         : game_packet{ pkt }
         , variant{ std::move(var) }
+    { }
+
+    VariantPayload(const GameUpdatePacket& pkt, PacketVariant var, std::vector<std::byte> raw)
+        : game_packet{ pkt }
+        , variant{ std::move(var) }
+        , raw_data{ std::move(raw) }
     { }
 
     [[nodiscard]] std::string function_name() const
@@ -67,7 +89,14 @@ struct VariantPayload {
     }
 };
 
-using Payload = std::variant<TextPayload, GamePayload, VariantPayload>;
+struct RawPayload {
+    std::vector<std::byte> data;
+
+    RawPayload() = default;
+    explicit RawPayload(std::vector<std::byte> raw) : data{ std::move(raw) } { }
+};
+
+using Payload = std::variant<TextPayload, GamePayload, VariantPayload, RawPayload>;
 
 [[nodiscard]] inline PayloadType get_payload_type(const Payload& payload)
 {

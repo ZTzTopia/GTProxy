@@ -9,6 +9,7 @@
 
 #include "packet_helper.hpp"
 #include "packet_id.hpp"
+#include "generic_packets.hpp"
 #include "../utils/singleton.hpp"
 
 namespace packet {
@@ -48,17 +49,35 @@ public:
     [[nodiscard]] std::shared_ptr<IPacket> create(const Payload& payload) const
     {
         const PacketId id{ derive_packet_id(payload) };
-        if (id == PacketId::Unknown) {
-            return nullptr;
+
+        if (id != PacketId::Unknown) {
+            if (auto packet{ create(id) }) {
+                if (!packet->read(payload)) {
+                    spdlog::warn("Failed to read packet {}", packet_name(id));
+                    return nullptr;
+                }
+                return packet;
+            }
         }
 
-        auto packet{ create(id) };
-        if (packet && !packet->read(payload)) {
-            spdlog::warn("Failed to read packet {}", packet_name(id));
-            return nullptr;
+        if (const auto* text = get_payload_if<TextPayload>(payload)) {
+            auto generic = std::make_shared<GenericTextPacket>();
+            if (generic->read(payload)) {
+                return generic;
+            }
         }
-        
-        return packet;
+        else if (const auto* var = get_payload_if<VariantPayload>(payload)) {
+            if (auto generic = std::make_shared<GenericVariantPacket>(); generic->read(payload)) {
+                return generic;
+            }
+        }
+        else if (const auto* game = get_payload_if<GamePayload>(payload)) {
+            if (auto generic = std::make_shared<GenericGamePacket>(); generic->read(payload)) {
+                return generic;
+            }
+        }
+
+        return nullptr;
     }
 
     [[nodiscard]] bool is_registered(const PacketId id) const

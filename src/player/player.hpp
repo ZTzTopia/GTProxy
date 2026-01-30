@@ -40,6 +40,14 @@ public:
 public:
     [[nodiscard]] int32_t net_id() const noexcept { return net_id_; }
     [[nodiscard]] bool is_local() const noexcept { return is_local_; }
+    [[nodiscard]] int32_t user_id() const noexcept { return user_id_; }
+    [[nodiscard]] const std::string& name() const noexcept { return name_; }
+    [[nodiscard]] const std::string& country_code() const noexcept { return country_code_; }
+    [[nodiscard]] const glm::i32vec2& position() const noexcept { return position_; }
+    [[nodiscard]] const glm::i32vec4& collision() const noexcept { return collision_; }
+    [[nodiscard]] int32_t invisible() const noexcept { return invisible_; }
+    [[nodiscard]] int32_t mod_state() const noexcept { return mod_state_; }
+    [[nodiscard]] int32_t supermod_state() const noexcept { return supermod_state_; }
 
 private:
     int32_t net_id_;

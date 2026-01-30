@@ -34,7 +34,8 @@ enum class Type : uint32_t {
     ClientBoundPacket,
     ServerBoundPacket,
 
-    PacketEventOffset = 0x1000
+    PacketEventOffset = 0x1000,
+    Max
 };
 
 enum class Direction {

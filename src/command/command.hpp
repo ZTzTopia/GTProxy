@@ -25,7 +25,7 @@ struct Context {
     network::Server& server;
     network::Client& client;
     event::Dispatcher& dispatcher;
-    core::Scheduler& scheduler;
+    std::shared_ptr<core::Scheduler> scheduler;
     const CommandRegistry& registry;
 };
 
@@ -50,7 +50,6 @@ public:
     { }
 
     [[nodiscard]] std::string_view name() const override { return name_; }
-
     [[nodiscard]] std::string description() const override { return description_; }
 
     Result execute(const Context& ctx) override

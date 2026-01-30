@@ -12,7 +12,7 @@ public:
     CommandHandler(
         core::Config& config,
         event::Dispatcher& dispatcher,
-        core::Scheduler& scheduler,
+        std::shared_ptr<core::Scheduler> scheduler,
         network::Server& server,
         network::Client& client
     );
@@ -29,7 +29,7 @@ private:
 private:
     core::Config& config_;
     event::Dispatcher& dispatcher_;
-    core::Scheduler& scheduler_;
+    std::shared_ptr<core::Scheduler> scheduler_;
     network::Server& server_;
     network::Client& client_;
 

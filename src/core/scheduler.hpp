@@ -3,6 +3,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <string>
@@ -52,7 +53,8 @@ public:
         std::chrono::milliseconds interval,
         const std::string& tag = "",
         TaskPriority priority = TaskPriority::Normal,
-        std::chrono::milliseconds initial_delay = std::chrono::milliseconds{ 0 }
+        std::chrono::milliseconds initial_delay = std::chrono::milliseconds{ 0 },
+        std::shared_ptr<std::atomic<bool>> should_continue = nullptr
     );
     TaskId schedule_immediate(
         std::function<void()> callback,
@@ -83,8 +85,8 @@ private:
         std::chrono::steady_clock::time_point execute_at;
         std::chrono::milliseconds interval;
         std::function<void()> callback;
+        std::shared_ptr<std::atomic<bool>> should_continue;
 
-        // For priority queue comparison (min-heap by time, then by priority)
         bool operator>(const Task& other) const
         {
             if (execute_at != other.execute_at) {

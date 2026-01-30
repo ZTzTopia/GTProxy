@@ -182,6 +182,14 @@ If a required packet is not defined, follow these steps:
 
 See [scripts/AGENTS.md](scripts/AGENTS.md) for Lua scripting guidelines. Scripts in `scripts/` are loaded automatically at startup.
 
+### Adding or Updating Bindings
+
+When creating new Lua bindings or modifying existing ones:
+
+1.  **Create Test Script:** Add a new test script in `scripts/test_{feature_name}.lua` to verify the functionality.
+2.  **Document API:** Update [scripts/AGENTS.md](scripts/AGENTS.md) with the new Lua API.
+3.  **Example Usage:** Include example usage in the test script demonstrating common use cases.
+
 ## Dependencies
 
 Managed by Conan 2.0+:

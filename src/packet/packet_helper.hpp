@@ -26,6 +26,10 @@ public:
     [[nodiscard]] virtual int channel() const { return 0; }
     [[nodiscard]] virtual bool read(const Payload& payload) = 0;
     [[nodiscard]] virtual Payload write() = 0;
+
+    std::vector<std::byte> raw_data;
+
+    [[nodiscard]] bool has_raw_data() const { return !raw_data.empty(); }
 };
 
 template <PacketId Id, NetMessageType MsgType = NET_MESSAGE_GAME_MESSAGE, int Channel = 0>
@@ -34,6 +38,8 @@ struct TextPacket : IPacket {
     static constexpr NetMessageType MESSAGE_TYPE = MsgType;
     static constexpr int CHANNEL = Channel;
     using IsTextPacket = std::true_type;
+
+    TextParse text_parse;
 
     [[nodiscard]] PacketId id() const override { return ID; }
     [[nodiscard]] int channel() const override { return CHANNEL; }
@@ -51,6 +57,9 @@ struct GamePacket : IPacket {
     static constexpr int CHANNEL = Channel;
     using IsGamePacket = std::true_type;
 
+    GameUpdatePacket game_packet{};
+    std::vector<std::byte> extra;
+
     [[nodiscard]] PacketId id() const override { return ID; }
     [[nodiscard]] int channel() const override { return CHANNEL; }
 
@@ -67,6 +76,9 @@ struct VariantPacket : IPacket {
     static constexpr int CHANNEL = Channel;
     using IsVariantPacket = std::true_type;
 
+    PacketVariant variant;
+    GameUpdatePacket game_packet{};
+
     [[nodiscard]] PacketId id() const override { return ID; }
     [[nodiscard]] int channel() const override { return CHANNEL; }
 
@@ -78,6 +90,10 @@ struct VariantPacket : IPacket {
 struct PacketHelper {
     static std::vector<std::byte> serialize(const Payload& payload)
     {
+        if (const auto* raw = get_payload_if<RawPayload>(payload)) {
+            return raw->data;
+        }
+
         ByteStream byte_stream{};
 
         if (const auto* text = get_payload_if<TextPayload>(payload)) {
@@ -115,6 +131,10 @@ struct PacketHelper {
 
     static std::vector<std::byte> serialize(IPacket& packet)
     {
+        if (packet.has_raw_data()) {
+            return packet.raw_data;
+        }
+
         return serialize(packet.write());
     }
 

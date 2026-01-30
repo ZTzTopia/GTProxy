@@ -6,7 +6,6 @@
 
 namespace packet::game {
 struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
-    GameUpdatePacket game_packet;
     std::string spawn;
     int32_t net_id;
     int32_t user_id;
@@ -22,8 +21,7 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
     std::string title_icon;
 
     OnSpawn()
-        : game_packet{}
-        , net_id{ -1 }
+        : net_id{ -1 }
         , user_id{ 0 }
         , position{ 0, 0 }
         , collision{ 0, 0, 0, 0 }
@@ -42,12 +40,12 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
             return false;
         }
 
-        const auto& variant{ var->variant };
+        variant = var->variant;
+        game_packet = var->game_packet;
+
         if (variant.size() < 2) {
             return false;
         }
-
-        game_packet = var->game_packet;
 
         TextParse parser{};
         const std::string data{ variant.get<std::string>(1) };
@@ -103,23 +101,21 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
         parser.add("type", type);
 
         spdlog::debug("Raw OnSpawn data: {}", parser.get_raw());
-        const PacketVariant variant{
+        const PacketVariant write_variant{
             "OnSpawn",
             parser.get_raw()
         };
 
-        return VariantPayload{ game_packet, variant };
+        return VariantPayload{ game_packet, write_variant };
     }
 };
 
 struct OnRemove : VariantPacket<PacketId::OnRemove> {
-    GameUpdatePacket game_packet;
     int32_t net_id;
     int32_t player_id;
 
     OnRemove()
-        : game_packet{}
-        , net_id{ -1 }
+        : net_id{ -1 }
         , player_id{ 0 }
     {
 
@@ -132,12 +128,12 @@ struct OnRemove : VariantPacket<PacketId::OnRemove> {
             return false;
         }
 
-        const auto& variant{ var->variant };
+        variant = var->variant;
+        game_packet = var->game_packet;
+
         if (variant.size() < 3) {
             return false;
         }
-
-        game_packet = var->game_packet;
 
         TextParse parser{};
 
