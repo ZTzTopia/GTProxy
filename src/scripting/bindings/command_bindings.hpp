@@ -44,7 +44,7 @@ public:
                     const sol::protected_function_result result{ callback(lua_ctx) };
 
                     if (!result.valid()) {
-                        const sol::error err{ result };
+                        const sol::error err = result; // okay...
                         spdlog::error("[Lua Command] Error in '{}': {}", name, err.what());
                         return command::Result::Failed;
                     }
