@@ -115,7 +115,7 @@ void ScriptScheduler::update(std::chrono::microseconds elapsed)
         sol::protected_function_result result{ task->callback() };
 
         if (!result.valid()) {
-            sol::error err{ result };
+            sol::error err = result;
             spdlog::error("Scheduler callback error (task {}): {}", task->id, err.what());
         }
         else if (result.get_type() == sol::type::boolean) {
