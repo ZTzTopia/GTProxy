@@ -10,6 +10,7 @@
 #include "../scripting/bindings/event_bindings.hpp"
 #include "../scripting/bindings/logger_bindings.hpp"
 #include "../scripting/bindings/packet_bindings.hpp"
+#include "../scripting/bindings/scheduler_bindings.hpp"
 
 namespace core {
 Core::Core()
@@ -33,6 +34,8 @@ Core::Core()
 
     script_engine_ = std::make_unique<scripting::LuaEngine>();
 
+    script_scheduler_ = std::make_unique<scripting::ScriptScheduler>(*script_engine_);
+
     script_event_bridge_ = std::make_unique<scripting::ScriptEventBridge>(
         dispatcher_,
         *script_engine_,
@@ -44,6 +47,7 @@ Core::Core()
     script_engine_->register_binding(std::make_unique<scripting::bindings::EventBindings>(*script_event_bridge_));
     script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
     script_engine_->register_binding(std::make_unique<scripting::bindings::PacketBindings>(*client_, *server_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::SchedulerBindings>(*script_scheduler_));
 
     script_loader_ = std::make_unique<scripting::ScriptLoader>(*script_engine_, "scripts");
     script_loader_->load_all();
@@ -71,6 +75,7 @@ void Core::run() const
 
         server_->process();
         client_->process();
+        script_scheduler_->update(elapsed);
 
         if (sleep_duration > std::chrono::microseconds::zero()) {
             std::this_thread::sleep_for(sleep_duration);

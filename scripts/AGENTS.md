@@ -14,6 +14,7 @@ The scripting engine uses sol2 for C++/Lua bindings.
 | `send`    | Send packet structs to client or server   |
 | `packet`  | Packet types, enums, and raw send helpers |
 | `command` | Register custom proxy commands            |
+| `scheduler`| Schedule timed tasks and callbacks        |
 
 ## Logger
 
@@ -130,4 +131,82 @@ packet.send_text_parse(tp, true)
 packet.NET_MESSAGE_GENERIC_TEXT  -- Generic text message
 packet.NET_MESSAGE_GAME_MESSAGE  -- Game message (default)
 packet.NET_MESSAGE_GAME_PACKET   -- Game packet
+```
+
+## Scheduler
+
+The scheduler allows you to schedule tasks to run after a delay or at regular intervals. All times are in milliseconds.
+
+### One-Shot Tasks
+
+Schedule a callback to run once after a specified delay:
+
+```lua
+local task_id = scheduler.schedule(1000, function()
+    logger.info("This runs once after 1 second")
+end)
+```
+
+### Periodic Tasks
+
+Schedule a callback to run repeatedly:
+
+```lua
+local task_id = scheduler.schedule_periodic(500, function()
+    logger.info("This runs every 500ms")
+    return true  -- Return false to stop the periodic task
+end)
+```
+
+### Periodic with Initial Delay
+
+Schedule a periodic task with a different initial delay:
+
+```lua
+local task_id = scheduler.schedule_periodic(1000, function()
+    logger.info("Runs every 1s, starts after 2s")
+    return true
+end, 2000)  -- 2000ms initial delay
+```
+
+### Cancellation
+
+Cancel individual tasks or all tasks:
+
+```lua
+scheduler.cancel(task_id)        -- Cancel specific task
+scheduler.cancel_all()           -- Cancel all pending tasks
+```
+
+### Task Information
+
+Check task status:
+
+```lua
+if scheduler.is_pending(task_id) then
+    logger.info("Task is still pending")
+end
+
+local count = scheduler.pending_count()
+logger.info("There are {} pending tasks", count)
+```
+
+### Coroutine Integration
+
+Use coroutines for clean async code:
+
+```lua
+function sleep(ms)
+    local co = coroutine.running()
+    scheduler.schedule(ms, function()
+        coroutine.resume(co)
+    end)
+    coroutine.yield()
+end
+
+event.on("server:Connect", function()
+    logger.info("Connected!")
+    sleep(1000)  -- Non-blocking delay
+    logger.info("1 second later!")
+end)
 ```
