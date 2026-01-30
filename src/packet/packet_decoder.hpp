@@ -21,6 +21,8 @@ public:
     ) const {
         spdlog::info("[{}] Decoding packet of size {} bytes", direction, data.size());
 
+        std::vector<std::byte> raw_data{ data.begin(), data.end() };
+
         auto pkt_log{ spdlog::get("packet") };
         ByteStream stream{ data };
 
@@ -31,7 +33,7 @@ public:
 
         switch (msg_type) {
         case NET_MESSAGE_SERVER_HELLO: {
-            TextPayload text_payload{ NET_MESSAGE_SERVER_HELLO };
+            TextPayload text_payload{ NET_MESSAGE_SERVER_HELLO, TextParse{}, std::move(raw_data) };
             Payload payload = text_payload;
 
             spdlog::info("Received server hello packet");
@@ -52,7 +54,7 @@ public:
                 );
             }
 
-            TextPayload text_payload{ msg_type, std::move(parser) };
+            TextPayload text_payload{ msg_type, std::move(parser), raw_data };
             auto packet = PacketRegistry::instance().create(text_payload);
             if (!packet) {
                 return std::nullopt;
@@ -101,7 +103,7 @@ public:
                     spdlog::info("{}", variant);
                 }
 
-                VariantPayload var_payload{ game_pkt, std::move(variant) };
+                VariantPayload var_payload{ game_pkt, std::move(variant), raw_data };
                 Payload payload = var_payload;
 
                 auto packet = PacketRegistry::instance().create(payload);
@@ -116,7 +118,7 @@ public:
                 spdlog::info("Extra data: {}", spdlog::to_hex(extra.begin(), extra.end()));
             }
 
-            GamePayload game_payload{ game_pkt, std::move(extra) };
+            GamePayload game_payload{ game_pkt, std::move(extra), std::move(raw_data) };
             auto packet = PacketRegistry::instance().create(game_payload);
             if (!packet) {
                 return std::nullopt;

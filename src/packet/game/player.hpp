@@ -3,13 +3,11 @@
 
 namespace packet::game {
 struct OnNameChanged : VariantPacket<PacketId::OnNameChanged> {
-    GameUpdatePacket game_packet;
     int32_t net_id;
     std::string name;
 
     OnNameChanged()
-        : game_packet{}
-        , net_id{ - 1}
+        : net_id{ - 1}
     {
 
     }
@@ -21,12 +19,12 @@ struct OnNameChanged : VariantPacket<PacketId::OnNameChanged> {
             return false;
         }
 
-        const auto& variant{ var->variant };
+        variant = var->variant;
+        game_packet = var->game_packet;
+
         if (variant.size() < 2) {
             return false;
         }
-
-        game_packet = var->game_packet;
 
         name = variant.get<std::string>(1);
         return true;
@@ -44,13 +42,11 @@ struct OnNameChanged : VariantPacket<PacketId::OnNameChanged> {
 };
 
 struct OnChangeSkin : VariantPacket<PacketId::OnChangeSkin> {
-    GameUpdatePacket game_packet;
     int32_t net_id;
     uint32_t skin_code;
 
     OnChangeSkin()
-        : game_packet{}
-        , net_id{ -1 }
+        : net_id{ -1 }
         , skin_code{ 0 }
     {
 
@@ -63,12 +59,12 @@ struct OnChangeSkin : VariantPacket<PacketId::OnChangeSkin> {
             return false;
         }
 
-        const auto& variant{ var->variant };
+        variant = var->variant;
+        game_packet = var->game_packet;
+
         if (variant.size() < 2) {
             return false;
         }
-
-        game_packet = var->game_packet;
 
         skin_code = variant.get<uint32_t>(1);
         return true;

@@ -33,7 +33,15 @@ Core::Core()
 
     script_engine_ = std::make_unique<scripting::LuaEngine>();
 
+    script_event_bridge_ = std::make_unique<scripting::ScriptEventBridge>(
+        dispatcher_,
+        *script_engine_,
+        *client_,
+        *server_
+    );
+
     script_engine_->register_binding(std::make_unique<scripting::bindings::CommandBindings>(*command_handler_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::EventBindings>(*script_event_bridge_));
     script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
     script_engine_->register_binding(std::make_unique<scripting::bindings::PacketBindings>(*client_, *server_));
 

@@ -9,6 +9,7 @@
 #include "../network/client.hpp"
 #include "../network/server.hpp"
 #include "../scripting/lua_engine.hpp"
+#include "../scripting/script_event_bridge.hpp"
 #include "../scripting/script_loader.hpp"
 #include "../utils/types.hpp"
 
@@ -40,6 +41,7 @@ private:
     std::unique_ptr<command::CommandHandler> command_handler_;
 
     std::unique_ptr<scripting::LuaEngine> script_engine_;
+    std::unique_ptr<scripting::ScriptEventBridge> script_event_bridge_;
     std::unique_ptr<scripting::ScriptLoader> script_loader_;
 };
 }

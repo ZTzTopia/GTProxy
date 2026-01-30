@@ -29,10 +29,14 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
 
     bool read(const Payload& payload) override
     {
-        const auto* var = get_payload_if<VariantPayload>(payload);
-        if (!var) return false;
-        
-        const auto& variant = var->variant;
+        const auto var{ get_payload_if<VariantPayload>(payload) };
+        if (!var) {
+            return false;
+        }
+
+        variant = var->variant;
+        game_packet = var->game_packet;
+
         if (variant.size() < 5) {
             return false;
         }
@@ -61,7 +65,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
         TextParse text_parse{};
         text_parse.add(address, door_id, uuid_token);
 
-        PacketVariant variant{
+        const PacketVariant variant{
             "OnSendToServer",
             static_cast<int32_t>(port),
             token,
@@ -70,8 +74,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
             static_cast<uint32_t>(login_mode),
             username
         };
-
-        return VariantPayload{ std::move(variant) };
+        return VariantPayload{ game_packet, variant };
     }
 };
 }

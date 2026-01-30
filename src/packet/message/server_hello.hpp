@@ -5,7 +5,13 @@ namespace packet::message {
 struct ServerHello : TextPacket<PacketId::ServerHello, NET_MESSAGE_SERVER_HELLO> {
     bool read(const Payload& payload) override
     {
-        return is_payload<TextPayload>(payload);
+        const auto* text{ get_payload_if<TextPayload>(payload) };
+        if (!text) {
+            return false;
+        }
+
+        text_parse = text->data;
+        return true;
     }
     
     Payload write() override
