@@ -25,6 +25,7 @@ file(GLOB GTPROXY_SOURCE_FILES
     network/*.cpp
     packet/*.cpp
     scripting/*.cpp
+    scripting/bindings/*.cpp
     utils/*.cpp)
 
 add_executable(${PROJECT_NAME}

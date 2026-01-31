@@ -36,7 +36,7 @@ void LuaEngine::setup_error_handler()
     });
 }
 
-bool LuaEngine::execute(std::string_view script)
+bool LuaEngine::execute(const std::string_view script)
 {
     const sol::protected_function_result result{ lua_.safe_script(
         script,
