@@ -67,7 +67,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE 
-        /EHsc)
+        /EHsc
+        /bigobj)
 else ()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fexceptions)
