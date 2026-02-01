@@ -7,19 +7,23 @@ struct Log : TextPacket<PacketId::Log> {
 
     bool read(const Payload& payload) override
     {
-        const auto* text = get_payload_if<TextPayload>(payload);
-        if (!text) return false;
+        const auto text{ get_payload_if<TextPayload>(payload) };
+        if (!text) {
+            return false;
+        };
+
+        text_parse = text->data;
         
-        msg = text->data.get("msg", 1);
+        msg = text_parse.get("msg", 1);
         return true;
     }
 
     Payload write() override
     {
-        TextParse text_parse{};
-        text_parse.add("action", "log");
-        text_parse.add("msg", msg);
-        return TextPayload{ MESSAGE_TYPE, std::move(text_parse) };
+        TextParse parse{};
+        parse.add("action", "log");
+        parse.add("msg", msg);
+        return TextPayload{ MESSAGE_TYPE, parse };
     }
 };
 }

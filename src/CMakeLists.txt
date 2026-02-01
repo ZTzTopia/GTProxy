@@ -5,13 +5,18 @@ file(GLOB GTPROXY_INCLUDE_FILES
     command/*.hpp
     command/commands/*.hpp
     core/*.hpp
+    core/handlers/*.hpp
+    event/*.hpp
     network/*.hpp
     packet/*.hpp
     packet/game/*.hpp
     packet/message/*.hpp
-#    scripting/*.hpp
-#    scripting/bindings/*.hpp
-    utils/*.hpp)
+    player/*.hpp
+    scripting/*.hpp
+    scripting/bindings/*.hpp
+    utils/*.hpp
+    utils/formatter/*.hpp
+    world/*.hpp)
 
 file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
@@ -19,7 +24,8 @@ file(GLOB GTPROXY_SOURCE_FILES
     core/*.cpp
     network/*.cpp
     packet/*.cpp
-#    scripting/*.cpp
+    scripting/*.cpp
+    scripting/bindings/*.cpp
     utils/*.cpp)
 
 add_executable(${PROJECT_NAME}
@@ -61,7 +67,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE 
-        /EHsc)
+        /EHsc
+        /bigobj)
 else ()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fexceptions)

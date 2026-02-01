@@ -6,10 +6,18 @@
 #include <spdlog/spdlog.h>
 
 #include "../packet/register_packets.hpp"
+#include "../scripting/bindings/command_bindings.hpp"
+#include "../scripting/bindings/event_bindings.hpp"
+#include "../scripting/bindings/logger_bindings.hpp"
+#include "../scripting/bindings/packet_bindings.hpp"
+#include "../scripting/bindings/scheduler_bindings.hpp"
+#include "../scripting/bindings/player_bindings.hpp"
+#include "../scripting/bindings/world_bindings.hpp"
 
 namespace core {
 Core::Core()
     : running_{ true }
+    , scheduler_{ std::make_shared<Scheduler>() }
 {
     if (enet_initialize() != 0) {
         throw std::runtime_error{ "Failed to initialize ENet" };
@@ -25,6 +33,28 @@ Core::Core()
     forwarding_handler_ = std::make_unique<ForwardingHandler>(dispatcher_, *client_, *server_);
     world_handler_ = std::make_unique<WorldHandler>(dispatcher_);
     command_handler_ = std::make_unique<command::CommandHandler>(config_, dispatcher_, scheduler_, *server_, *client_);
+
+    script_engine_ = std::make_unique<scripting::LuaEngine>();
+
+    script_scheduler_ = std::make_unique<scripting::ScriptScheduler>(*script_engine_);
+
+    script_event_bridge_ = std::make_unique<scripting::ScriptEventBridge>(
+        dispatcher_,
+        *script_engine_,
+        *client_,
+        *server_
+    );
+
+    script_engine_->register_binding(std::make_unique<scripting::bindings::CommandBindings>(*command_handler_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::EventBindings>(*script_event_bridge_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
+    script_engine_->register_binding(std::make_unique<scripting::bindings::PacketBindings>(*client_, *server_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::SchedulerBindings>(*script_scheduler_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::PlayerBindings>());
+    script_engine_->register_binding(std::make_unique<scripting::bindings::WorldBindings>());
+
+    script_loader_ = std::make_unique<scripting::ScriptLoader>(*script_engine_, "scripts");
+    script_loader_->load_all();
 
     spdlog::info("Core initialized successfully");
 }
@@ -49,6 +79,7 @@ void Core::run() const
 
         server_->process();
         client_->process();
+        script_scheduler_->update(elapsed);
 
         if (sleep_duration > std::chrono::microseconds::zero()) {
             std::this_thread::sleep_for(sleep_duration);

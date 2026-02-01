@@ -20,13 +20,13 @@ namespace {
 CommandHandler::CommandHandler(
     core::Config& config,
     event::Dispatcher& dispatcher,
-    core::Scheduler& scheduler,
+    std::shared_ptr<core::Scheduler> scheduler,
     network::Server& server,
     network::Client& client
 )
     : config_{ config }
     , dispatcher_{ dispatcher }
-    , scheduler_{ scheduler }
+    , scheduler_{ std::move(scheduler) }
     , server_{ server }
     , client_{ client }
 {
@@ -62,14 +62,15 @@ void CommandHandler::on_text_packet(const event::Event& e)
     if (!evt) {
         return;
     }
-    
-    auto input_pkt = evt->get<packet::message::Input>();
+
+    const auto input_pkt{ evt->get<packet::message::Input>() };
     if (!input_pkt) {
         return;
     }
 
     const std::string& text = input_pkt->text;
     if (registry_.execute(text, server_, client_, dispatcher_, scheduler_)) {
+        spdlog::info("Command handler executed successfully");
         evt->cancel();
     }
 }
