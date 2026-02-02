@@ -5,12 +5,13 @@
 
 #include "../packet/packet_helper.hpp"
 #include "../packet/message/input.hpp"
+#include "commands/debug_command.hpp"
 #include "commands/exit_command.hpp"
-#include "commands/proxy_command.hpp"
-#include "commands/warp_command.hpp"
-#include "commands/nick_command.hpp"
-#include "commands/skin_command.hpp"
 #include "commands/help_command.hpp"
+#include "commands/nick_command.hpp"
+#include "commands/proxy_command.hpp"
+#include "commands/skin_command.hpp"
+#include "commands/warp_command.hpp"
 
 namespace command {
 namespace {
@@ -54,6 +55,7 @@ void CommandHandler::register_default_commands()
     registry_.add(std::make_unique<NickCommand>());
     registry_.add(std::make_unique<SkinCommand>());
     registry_.add(std::make_unique<HelpCommand>());
+    registry_.add(std::make_unique<DebugCommand>());
 }
 
 void CommandHandler::on_text_packet(const event::Event& e)
