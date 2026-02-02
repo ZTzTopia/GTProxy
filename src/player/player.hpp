@@ -28,8 +28,8 @@ public:
         player->user_id_ = pkt.user_id;
         player->name_ = pkt.name;
         player->country_code_ = pkt.country_code;
-        player->position_ = pkt.position;
-        player->collision_ = pkt.collision;
+        player->position_ = glm::vec2{ pkt.position.x, pkt.position.y };
+        player->collision_ = glm::vec4{ pkt.collision.x, pkt.collision.y, pkt.collision.z, pkt.collision.w };
         player->invisible_ = pkt.invisible;
         player->mod_state_ = pkt.mod_state;
         player->supermod_state_ = pkt.supermod_state;

@@ -24,6 +24,12 @@ enum class PacketId : uint32_t {
     OnChangeSkin,
     Padding2 = 0x2000,
     Disconnect,
+    TileChangeRequest,
+    SendMapData,
+    SendTileUpdateData,
+    SendInventoryState,
+    ModifyItemInventory,
+    ItemChangeObject,
     Padding3 = 0x3000,
     OnSendToServer,
     OnSpawn,
@@ -68,6 +74,12 @@ inline const std::unordered_map<std::string_view, PacketId> VARIANT_FUNCTION_MAP
 
 inline const std::unordered_map<PacketType, PacketId> GAME_PACKET_MAP = {
     { PACKET_DISCONNECT, PacketId::Disconnect },
+    { PACKET_TILE_CHANGE_REQUEST, PacketId::TileChangeRequest },
+    { PACKET_SEND_MAP_DATA, PacketId::SendMapData },
+    { PACKET_SEND_TILE_UPDATE_DATA, PacketId::SendTileUpdateData },
+    { PACKET_SEND_INVENTORY_STATE, PacketId::SendInventoryState },
+    { PACKET_MODIFY_ITEM_INVENTORY, PacketId::ModifyItemInventory },
+    { PACKET_ITEM_CHANGE_OBJECT, PacketId::ItemChangeObject },
 };
 
 [[nodiscard]] inline PacketId derive_packet_id(const TextPayload& payload)

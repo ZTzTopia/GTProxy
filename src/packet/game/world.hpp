@@ -1,6 +1,8 @@
 #pragma once
-#include <string>
-#include <fmt/format.h>
+
+#include <cstdint>
+#include "../packet_types.hpp"
+#include "../packet_id.hpp"
 #include "../packet_helper.hpp"
 #include "../../utils/text_parse.hpp"
 
@@ -162,6 +164,76 @@ struct OnRemove : VariantPacket<PacketId::OnRemove> {
             fmt::format("pId|{}", player_id)
         };
         return VariantPayload{ game_packet, variant };
+    }
+};
+
+struct SendMapData : GamePacket<PacketId::SendMapData, PACKET_SEND_MAP_DATA> {
+    bool read(const Payload& payload) override
+    {
+        const auto* game = get_payload_if<GamePayload>(payload);
+        if (!game) {
+            return false;
+        }
+
+        extra = game->extra;
+        return true;
+    }
+};
+
+struct SendTileUpdateData : GamePacket<PacketId::SendTileUpdateData, PACKET_SEND_TILE_UPDATE_DATA> {
+    bool read(const Payload& payload) override
+    {
+        const auto* game = get_payload_if<GamePayload>(payload);
+        if (!game) {
+            return false;
+        }
+
+        extra = game->extra;
+        return true;
+    }
+};
+
+struct TileChangeRequest : GamePacket<PacketId::TileChangeRequest, PACKET_TILE_CHANGE_REQUEST> {
+    int32_t int_x;
+    int32_t int_y;
+    int32_t item_id;
+
+    bool read(const Payload& payload) override
+    {
+        const auto* game = get_payload_if<GamePayload>(payload);
+        if (!game) {
+            return false;
+        }
+
+        int_x = game->packet.int_x;
+        int_y = game->packet.int_y;
+        item_id = game->packet.int_data;
+        return true;
+    }
+};
+
+struct ItemChangeObject : GamePacket<PacketId::ItemChangeObject, PACKET_ITEM_CHANGE_OBJECT> {
+    float pos_x;
+    float pos_y;
+    int32_t item_id;
+    uint8_t amount;
+    int32_t object_change_type;
+    int32_t item_net_id;
+
+    bool read(const Payload& payload) override
+    {
+        const auto* game = get_payload_if<GamePayload>(payload);
+        if (!game) {
+            return false;
+        }
+
+        pos_x = game->packet.pos_x;
+        pos_y = game->packet.pos_y;
+        item_id = game->packet.int_data;
+        amount = static_cast<uint8_t>(game->packet.float_var);
+        object_change_type = static_cast<int32_t>(game->packet.object_change_type);
+        item_net_id = game->packet.item_net_id;
+        return true;
     }
 };
 }
