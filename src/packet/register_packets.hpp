@@ -30,6 +30,10 @@ inline bool register_all_packets()
     registry.register_packet<message::Log>();
 
     registry.register_packet<game::Disconnect>();
+    registry.register_packet<game::SendMapData>();
+    registry.register_packet<game::SendTileUpdateData>();
+    registry.register_packet<game::TileChangeRequest>();
+    registry.register_packet<game::ItemChangeObject>();
 
     registry.register_packet<game::OnSendToServer>();
 

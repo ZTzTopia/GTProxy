@@ -178,6 +178,11 @@ struct SendMapData : GamePacket<PacketId::SendMapData, PACKET_SEND_MAP_DATA> {
         extra = game->extra;
         return true;
     }
+
+    Payload write() override
+    {
+        return {};
+    }
 };
 
 struct SendTileUpdateData : GamePacket<PacketId::SendTileUpdateData, PACKET_SEND_TILE_UPDATE_DATA> {
@@ -190,6 +195,11 @@ struct SendTileUpdateData : GamePacket<PacketId::SendTileUpdateData, PACKET_SEND
 
         extra = game->extra;
         return true;
+    }
+
+    Payload write() override
+    {
+        return {};
     }
 };
 
@@ -209,6 +219,11 @@ struct TileChangeRequest : GamePacket<PacketId::TileChangeRequest, PACKET_TILE_C
         int_y = game->packet.int_y;
         item_id = game->packet.int_data;
         return true;
+    }
+
+    Payload write() override
+    {
+        return {};
     }
 };
 
@@ -234,6 +249,11 @@ struct ItemChangeObject : GamePacket<PacketId::ItemChangeObject, PACKET_ITEM_CHA
         object_change_type = static_cast<int32_t>(game->packet.object_change_type);
         item_net_id = game->packet.item_net_id;
         return true;
+    }
+
+    Payload write() override
+    {
+        return {};
     }
 };
 }
