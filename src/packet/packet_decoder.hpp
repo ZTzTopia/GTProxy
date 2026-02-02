@@ -24,7 +24,7 @@ public:
         std::vector<std::byte> raw_data{ data.begin(), data.end() };
 
         auto pkt_log{ spdlog::get("packet") };
-        ByteStream stream{ data };
+        utils::ByteStream stream{ data };
 
         NetMessageType msg_type{};
         if (!stream.read(msg_type)) {
@@ -33,7 +33,7 @@ public:
 
         switch (msg_type) {
         case NET_MESSAGE_SERVER_HELLO: {
-            TextPayload text_payload{ NET_MESSAGE_SERVER_HELLO, TextParse{}, std::move(raw_data) };
+            TextPayload text_payload{ NET_MESSAGE_SERVER_HELLO, utils::TextParse{}, std::move(raw_data) };
             Payload payload = text_payload;
 
             spdlog::info("Received server hello packet");
@@ -44,7 +44,7 @@ public:
             std::string message{};
             stream.read(message, static_cast<uint16_t>(stream.get_size() - sizeof(NetMessageType) - 1));
 
-            TextParse parser{ message };
+            utils::TextParse parser{ message };
             if (log_config.print_message) {
                 spdlog::info(
                     "{} ({} bytes):\n{}",

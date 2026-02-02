@@ -48,7 +48,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
         const std::string raw_text{ variant.get<std::string>(4) };
         const std::string key{ raw_text.substr(0, raw_text.find_first_of('|')) };
 
-        TextParse text_parse{};
+        utils::TextParse text_parse{};
         text_parse.parse(raw_text);
 
         address = key;
@@ -62,7 +62,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
 
     Payload write() override
     {
-        TextParse text_parse{};
+        utils::TextParse text_parse{};
         text_parse.add(address, door_id, uuid_token);
 
         const PacketVariant variant{

@@ -142,7 +142,7 @@ void WebServer::listen_internal()
             return true;
         }
 
-        TextParse text_parse{ response->body };
+        utils::TextParse text_parse{ response->body };
         if (text_parse.empty()) {
             spdlog::error("Failed to parse server_data.php response");
             res.status = 500;

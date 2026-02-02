@@ -50,7 +50,7 @@ void Server::on_connect(ENetPeer* peer)
 {
     spdlog::info(
         "Client {}:{} connected to proxy server",
-        network::format_ip_address(peer->address.host),
+        utils::network::format_ip_address(peer->address.host),
         peer->address.port
     );
 

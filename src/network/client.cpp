@@ -56,7 +56,7 @@ void Client::on_connect(ENetPeer* peer)
 {
     spdlog::info(
         "Proxy client connected to Growtopia server at {}:{}",
-        network::format_ip_address(peer->address.host),
+        utils::network::format_ip_address(peer->address.host),
         peer->address.port
     );
 

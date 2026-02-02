@@ -39,7 +39,7 @@ struct TextPacket : IPacket {
     static constexpr int CHANNEL = Channel;
     using IsTextPacket = std::true_type;
 
-    TextParse text_parse;
+    utils::TextParse text_parse;
 
     [[nodiscard]] PacketId id() const override { return ID; }
     [[nodiscard]] int channel() const override { return CHANNEL; }
@@ -94,7 +94,7 @@ struct PacketHelper {
             return raw->data;
         }
 
-        ByteStream byte_stream{};
+        utils::ByteStream byte_stream{};
 
         if (const auto* text = get_payload_if<TextPayload>(payload)) {
             byte_stream.write(magic_enum::enum_underlying(text->message_type));

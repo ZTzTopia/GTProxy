@@ -1,12 +1,13 @@
 #pragma once
+
 #include <string_view>
 
-namespace hash {
-[[nodiscard]] constexpr uint32_t fnv1a_32(std::string_view str, uint32_t hash = 0x811c9dc5 /* FNV basis 2166136261 */)
+namespace utils::hash {
+[[nodiscard]] constexpr uint32_t fnv1a_32(std::string_view str, uint32_t hash = 0x811c9dc5)
 {
     for (auto& c : str) {
         hash ^= static_cast<uint32_t>(c);
-        hash *= 0x01000193; // FNV prime (16777619)
+        hash *= 0x01000193;
     }
 
     return hash;

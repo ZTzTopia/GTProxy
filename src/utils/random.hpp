@@ -7,7 +7,7 @@ namespace randutils {
 using pcg32_rng = random_generator<pcg32>;
 }
 
-namespace random {
+namespace utils::random {
 inline randutils::pcg32_rng static_generator()
 {
     static randutils::pcg32_rng pcg_rng{};

@@ -55,7 +55,7 @@ public:
     {
         const size_t size{ variants_.size() };
 
-        ByteStream<uint32_t> stream{};
+        utils::ByteStream<uint32_t> stream{};
         stream.write<uint8_t>(size);
 
         for (size_t i{ 0 }; i < size; i++) {
@@ -94,7 +94,7 @@ public:
 
     [[nodiscard]] bool deserialize(const std::vector<std::byte>& data)
     {
-        ByteStream<uint32_t> byte_stream{ const_cast<std::byte*>(data.data()), data.size() };
+        utils::ByteStream<uint32_t> byte_stream{ const_cast<std::byte*>(data.data()), data.size() };
 
         uint8_t size{ 0 };
         byte_stream.read(size);

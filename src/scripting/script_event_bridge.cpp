@@ -43,7 +43,7 @@ sol::object LuaEventContext::parse_packet(sol::this_state s)
         return sol::make_object(s, sol::lua_nil);
     }
 
-    ByteStream stream{ raw_data.data(), raw_data.size() };
+    utils::ByteStream stream{ raw_data.data(), raw_data.size() };
     std::uint32_t type_val{ 0 };
     if (!stream.read(type_val)) {
         spdlog::debug("[parse_packet] Failed to read type_val, returning nil");
@@ -63,8 +63,8 @@ sol::object LuaEventContext::parse_packet(sol::this_state s)
             if (!content.empty() && content.back() == '\0') {
                 content.pop_back();
             }
-            spdlog::debug("[parse_packet] Returning TextParse with {} bytes", content.size());
-            return sol::make_object(s, TextParse{ content });
+            spdlog::debug("[parse_packet] Returning utils::TextParse with {} bytes", content.size());
+            return sol::make_object(s, utils::TextParse{ content });
         }
     }
     else if (msg_type == packet::NET_MESSAGE_GAME_PACKET) {

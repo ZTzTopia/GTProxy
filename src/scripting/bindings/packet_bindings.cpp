@@ -55,25 +55,25 @@ void PacketBindings::bind_enums(sol::state& lua)
 
 void PacketBindings::bind_text_parse(sol::state& lua)
 {
-    lua.new_usertype<TextParse>("TextParse",
-        sol::constructors<TextParse(), TextParse(const std::string&, const std::string&)>(),
+    lua.new_usertype<utils::TextParse>("utils::TextParse",
+        sol::constructors<utils::TextParse(), utils::TextParse(const std::string&, const std::string&)>(),
         "get", sol::overload(
-            [](const TextParse& tp, const std::string& key) {
+            [](const utils::TextParse& tp, const std::string& key) {
                 return tp.get(key, 0);
             },
-            [](const TextParse& tp, const std::string& key, int index) {
+            [](const utils::TextParse& tp, const std::string& key, int index) {
                 return tp.get(key, index);
             }
         ),
-        "add", [](TextParse& tp, const std::string& key, const std::string& value) {
+        "add", [](utils::TextParse& tp, const std::string& key, const std::string& value) {
             tp.add(key, { value });
         },
-        "set", [](TextParse& tp, const std::string& key, const std::string& value) {
+        "set", [](utils::TextParse& tp, const std::string& key, const std::string& value) {
             tp.set(key, { value });
         },
-        "remove", &TextParse::remove,
-        "contains", &TextParse::contains,
-        "keys", [](const TextParse& tp, sol::this_state s) {
+        "remove", &utils::TextParse::remove,
+        "contains", &utils::TextParse::contains,
+        "keys", [](const utils::TextParse& tp, sol::this_state s) {
             sol::state_view lua{ s };
             sol::table keys = lua.create_table();
             int index = 1;
@@ -82,12 +82,12 @@ void PacketBindings::bind_text_parse(sol::state& lua)
             }
             return keys;
         },
-        "empty", &TextParse::empty,
+        "empty", &utils::TextParse::empty,
         "get_raw", sol::overload(
-            [](const TextParse& tp) {
+            [](const utils::TextParse& tp) {
                 return tp.get_raw();
             },
-            [](const TextParse& tp, const std::string& delimiter) {
+            [](const utils::TextParse& tp, const std::string& delimiter) {
                 return tp.get_raw(delimiter);
             }
         )
@@ -455,7 +455,7 @@ void PacketBindings::bind_send_functions(sol::state& lua)
     });
 
     packet_table.set_function("send_text_parse", [this](
-        const TextParse& text_parse,
+        const utils::TextParse& text_parse,
         const bool to_server,
         const sol::optional<int> msg_type_opt
     ) {
@@ -488,7 +488,7 @@ bool PacketBindings::send_text_packet(
         ? static_cast<packet::NetMessageType>(*msg_type_opt)
         : packet::NetMessageType::NET_MESSAGE_GAME_MESSAGE;
 
-    ByteStream stream;
+    utils::ByteStream stream;
     stream.write(magic_enum::enum_underlying(msg_type));
     stream.write(text, false);
 

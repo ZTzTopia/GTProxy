@@ -47,7 +47,7 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
             return false;
         }
 
-        TextParse parser{};
+        utils::TextParse parser{};
         const std::string data{ variant.get<std::string>(1) };
         parser.parse(data);
 
@@ -85,7 +85,7 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
 
     Payload write() override
     {
-        TextParse parser{};
+        utils::TextParse parser{};
         parser.add("spawn", spawn);
         parser.add("netID", net_id);
         parser.add("userID", user_id);
@@ -135,7 +135,7 @@ struct OnRemove : VariantPacket<PacketId::OnRemove> {
             return false;
         }
 
-        TextParse parser{};
+        utils::TextParse parser{};
 
         const std::string net_id_data{ variant.get<std::string>(1) };
         parser.parse(net_id_data);

@@ -17,19 +17,19 @@ enum class PayloadType : uint8_t {
 
 struct TextPayload {
     NetMessageType message_type;
-    TextParse data;
+    utils::TextParse data;
     std::vector<std::byte> raw_data; // Original raw bytes for pass-through
 
     explicit TextPayload(NetMessageType type = NET_MESSAGE_GAME_MESSAGE)
         : message_type{ type }
     { }
 
-    TextPayload(const NetMessageType type, TextParse parser)
+    TextPayload(const NetMessageType type, utils::TextParse parser)
         : message_type{ type }
         , data{ std::move(parser) }
     { }
 
-    TextPayload(const NetMessageType type, TextParse parser, std::vector<std::byte> raw)
+    TextPayload(const NetMessageType type, utils::TextParse parser, std::vector<std::byte> raw)
         : message_type{ type }
         , data{ std::move(parser) }
         , raw_data{ std::move(raw) }

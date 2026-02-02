@@ -10,6 +10,7 @@
 #include <sstream>
 #include <utility>
 
+namespace utils {
 class TextParse {
 public:
     TextParse() = default;
@@ -314,6 +315,8 @@ private:
         }
     }
 
-private:
+ private:
     std::vector<std::pair<std::string, std::vector<std::string>>> data_;
 };
+}
+

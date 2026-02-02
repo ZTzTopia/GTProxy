@@ -4,6 +4,7 @@
 #include <span>
 #include <cstring>
 
+namespace utils {
 template <typename LengthType = std::uint16_t>
 class ByteStream {
 public:
@@ -13,12 +14,12 @@ public:
 
     ByteStream(const std::byte* data, const std::size_t length)
         : data_span_{ data, length }
-        , read_offset_{ 0 }
+    , read_offset_{ 0 }
     { }
 
     ByteStream(std::span<const std::byte> span)
         : data_span_{ span }
-        , read_offset_{ 0 }
+    , read_offset_{ 0 }
     { }
 
     void write_data(const void* ptr, const std::size_t size)
@@ -148,3 +149,4 @@ private:
     std::span<const std::byte> data_span_;
     std::size_t read_offset_;
 };
+}
