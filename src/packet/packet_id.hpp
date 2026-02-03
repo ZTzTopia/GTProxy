@@ -13,7 +13,6 @@ namespace packet {
 
 enum class PacketId : uint32_t {
     ServerHello,
-    Padding = 0x1000,
     Quit,
     QuitToExit,
     JoinRequest,
@@ -22,9 +21,7 @@ enum class PacketId : uint32_t {
     Log,
     OnNameChanged,
     OnChangeSkin,
-    Padding2 = 0x2000,
     Disconnect,
-    Padding3 = 0x3000,
     OnSendToServer,
     OnSpawn,
     OnRemove,
