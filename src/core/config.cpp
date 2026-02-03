@@ -29,9 +29,3 @@ Config::Config()
     spdlog::info("Config file \"config.json\" is all loaded up and ready to go!");
 }
 }
-
-// FIXME: Clangd: In template: constexpr variable 'str' must be initialized by a constant expression
-// template<> struct glz::meta<core::Config::ServerConfig> : glz::camel_case {};
-// template<> struct glz::meta<core::Config::ClientConfig> : glz::camel_case {};
-// template<> struct glz::meta<core::Config::LogConfig> : glz::camel_case {};
-// template<> struct glz::meta<core::Config::WrapperConfig> : glz::camel_case {};

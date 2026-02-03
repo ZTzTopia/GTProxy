@@ -35,7 +35,6 @@ WebServer::WebServer(
 
     spdlog::info("HTTPS server listening on port 443");
     server_thread_ = std::thread{ &WebServer::listen_internal, this };
-    // server_thread_.detach();
 }
 
 WebServer::~WebServer()
