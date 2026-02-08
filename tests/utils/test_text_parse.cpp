@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
 #include "utils/text_parse.hpp"
 
+using namespace utils;
+
 TEST(TextParseTest, ParseStringWithDefaultDelimiter)
 {
-    const utils::TextParse tp{ "key1|value1|value2\nkey2|value3" };
+    const TextParse tp{ "key1|value1|value2\nkey2|value3" };
 
     EXPECT_EQ(tp.get("key1", 0), "value1");
     EXPECT_EQ(tp.get("key1", 1), "value2");
@@ -13,7 +15,7 @@ TEST(TextParseTest, ParseStringWithDefaultDelimiter)
 
 TEST(TextParseTest, ParseStringWithCustomDelimiter)
 {
-    const utils::TextParse tp{ "key1,value1,value2\nkey2,value3", "," };
+    const TextParse tp{ "key1,value1,value2\nkey2,value3", "," };
 
     EXPECT_EQ(tp.get("key1", 0), "value1");
     EXPECT_EQ(tp.get("key1", 1), "value2");
@@ -22,7 +24,7 @@ TEST(TextParseTest, ParseStringWithCustomDelimiter)
 
 TEST(TextParseTest, GetTypedValues)
 {
-    const utils::TextParse tp{ "int|123\nfloat|123.456\nstring|hello" };
+    const TextParse tp{ "int|123\nfloat|123.456\nstring|hello" };
 
     EXPECT_EQ(tp.get<int>("int", 0), 123);
     EXPECT_NEAR(tp.get<float>("float", 0), 123.456f, 0.001f);
@@ -32,7 +34,7 @@ TEST(TextParseTest, GetTypedValues)
 
 TEST(TextParseTest, AddSetRemove)
 {
-    utils::TextParse tp{};
+    TextParse tp{};
 
     tp.add("key1", "value1");
     EXPECT_EQ(tp.get("key1", 0), "value1");
@@ -46,7 +48,7 @@ TEST(TextParseTest, AddSetRemove)
 
 TEST(TextParseTest, GetRaw)
 {
-    utils::TextParse tp{};
+    TextParse tp{};
     tp.add("key1", "value1", "value2");
     tp.add("key2", "value3");
 
@@ -59,7 +61,7 @@ TEST(TextParseTest, GetRaw)
 }
 
 TEST(TextParseTest, GetKeyValues) {
-    utils::TextParse tp{};
+    TextParse tp{};
     tp.add("key1", "v1", "v2");
 
     auto key_values{ tp.get_key_values() };
@@ -79,9 +81,9 @@ TEST(TextParseTest, GetKeyValues) {
     EXPECT_TRUE(found);
 }
 
-TEST(TextParseTest, IdiotGrowtopiaParse)
+TEST(TextParseTest, ParseIpPortString)
 {
-    const utils::TextParse tp{ "213.179.209.175||-1" };
+    const TextParse tp{ "213.179.209.175||-1" };
 
     EXPECT_EQ(tp.get("213.179.209.175", 0), "");
     EXPECT_EQ(tp.get("213.179.209.175", 1), "-1");
@@ -89,7 +91,7 @@ TEST(TextParseTest, IdiotGrowtopiaParse)
 
 TEST(TextParseTest, HeterogeneousAddSet)
 {
-    utils::TextParse tp{};
+    TextParse tp{};
 
     // Heterogeneous add
     tp.add("key1", "string", 42, 3.14f, true);
@@ -112,7 +114,7 @@ TEST(TextParseTest, HeterogeneousAddSet)
 
 TEST(TextParseTest, SinglePrimitiveAddSet)
 {
-    utils::TextParse tp{};
+    TextParse tp{};
 
     tp.add("int", 123);
     EXPECT_EQ(tp.get<int>("int", 0), 123);
@@ -123,7 +125,7 @@ TEST(TextParseTest, SinglePrimitiveAddSet)
 
 TEST(TextParseTest, MoveSemantics)
 {
-    utils::TextParse tp{};
+    TextParse tp{};
 
     std::string key{ "key" };
     std::string val{ "val" };

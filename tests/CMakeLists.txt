@@ -4,12 +4,10 @@ find_package(GTest REQUIRED)
 
 add_executable(GTProxy_tests
     utils/test_text_parse.cpp
-    utils/test_byte_stream.cpp
-)
+    utils/test_byte_stream.cpp)
 
-target_include_directories(GTProxy_tests PRIVATE 
-    ${CMAKE_SOURCE_DIR}/src
-)
+target_include_directories(GTProxy_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src)
 
 target_link_libraries(GTProxy_tests PRIVATE GTest::gtest_main)
 
