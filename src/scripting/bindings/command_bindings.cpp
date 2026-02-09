@@ -1,4 +1,5 @@
 #include "command_bindings.hpp"
+#include "../../packet/message/chat.hpp"
 
 namespace scripting::bindings {
 void CommandBindings::bind(sol::state& lua)
@@ -19,6 +20,11 @@ void CommandBindings::bind(sol::state& lua)
             sol::table lua_ctx{ lua.create_table() };
             lua_ctx["args"] = args_table;
             lua_ctx["raw"] = ctx.raw_input;
+            lua_ctx["reply"] = [&ctx](const std::string& msg) -> bool {
+                auto log_pkt = std::make_shared<packet::message::Log>();
+                log_pkt->msg = msg;
+                return packet::PacketHelper::write(*log_pkt, ctx.server);
+            };
 
             try {
                 const sol::protected_function_result result{ callback(lua_ctx) };
@@ -56,8 +62,31 @@ void CommandBindings::bind(sol::state& lua)
         }
     ));
 
-    cmd_table.set_function("prefix", [this]() {
+    cmd_table.set_function("list", [this, &lua]() {
+        sol::table commands{ lua.create_table() };
+
+        const auto& registry{ handler_.registry() };
+
+        for (
+            const auto command_list{ registry.get_all_commands() };
+            const auto& [name, description] : command_list
+        ) {
+            commands[name] = description;
+        }
+
+        return commands;
+    });
+
+    cmd_table.set_function("execute", [this](const std::string& input) -> bool {
+        return handler_.registry().execute(input, server_, client_, dispatcher_, scheduler_);
+    });
+
+    cmd_table.set_function("get_prefix", [this]() {
         return std::string{ 1, handler_.registry().prefix() };
+    });
+
+    cmd_table.set_function("set_prefix", [this](char prefix) {
+        handler_.registry().set_prefix(prefix);
     });
 
     lua["command"] = cmd_table;
