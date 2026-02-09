@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "utils/text_parse.hpp"
 
+using namespace utils;
+
 TEST(TextParseTest, ParseStringWithDefaultDelimiter)
 {
     const TextParse tp{ "key1|value1|value2\nkey2|value3" };
@@ -79,7 +81,7 @@ TEST(TextParseTest, GetKeyValues) {
     EXPECT_TRUE(found);
 }
 
-TEST(TextParseTest, IdiotGrowtopiaParse)
+TEST(TextParseTest, ParseIpPortString)
 {
     const TextParse tp{ "213.179.209.175||-1" };
 

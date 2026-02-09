@@ -2,6 +2,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <span>
 
 #include "packet_types.hpp"
 #include "packet_variant.hpp"
@@ -17,22 +18,28 @@ enum class PayloadType : uint8_t {
 
 struct TextPayload {
     NetMessageType message_type;
-    TextParse data;
+    utils::TextParse data;
     std::vector<std::byte> raw_data; // Original raw bytes for pass-through
 
     explicit TextPayload(NetMessageType type = NET_MESSAGE_GAME_MESSAGE)
         : message_type{ type }
     { }
 
-    TextPayload(const NetMessageType type, TextParse parser)
+    TextPayload(const NetMessageType type, utils::TextParse parser)
         : message_type{ type }
         , data{ std::move(parser) }
     { }
 
-    TextPayload(const NetMessageType type, TextParse parser, std::vector<std::byte> raw)
+    TextPayload(const NetMessageType type, utils::TextParse parser, std::vector<std::byte> raw)
         : message_type{ type }
         , data{ std::move(parser) }
         , raw_data{ std::move(raw) }
+    { }
+
+    TextPayload(const NetMessageType type, utils::TextParse parser, std::span<const std::byte> raw)
+        : message_type{ type }
+        , data{ std::move(parser) }
+        , raw_data{ raw.begin(), raw.end() }
     { }
 };
 
@@ -55,6 +62,12 @@ struct GamePayload {
         , extra{ std::move(ext) }
         , raw_data{ std::move(raw) }
     { }
+
+    GamePayload(const GameUpdatePacket& pkt, std::span<const std::byte> ext, std::span<const std::byte> raw)
+        : packet{ pkt }
+        , extra{ ext.begin(), ext.end() }
+        , raw_data{ raw.begin(), raw.end() }
+    { }
 };
 
 struct VariantPayload {
@@ -68,8 +81,7 @@ struct VariantPayload {
     {
         // Default to -1 if not specified
         game_packet.net_id = -1;
-        game_packet.decompressed_data_size = -1; // Why Growtopia server default it to -1? what is the other name
-        // for this field?
+        game_packet.decompressed_data_size = -1;
     }
 
     VariantPayload(const GameUpdatePacket& pkt, PacketVariant var)
@@ -83,6 +95,12 @@ struct VariantPayload {
         , raw_data{ std::move(raw) }
     { }
 
+    VariantPayload(const GameUpdatePacket& pkt, PacketVariant var, std::span<const std::byte> raw)
+        : game_packet{ pkt }
+        , variant{ std::move(var) }
+        , raw_data{ raw.begin(), raw.end() }
+    { }
+
     [[nodiscard]] std::string function_name() const
     {
         return variant.get<std::string>(0);
@@ -94,6 +112,7 @@ struct RawPayload {
 
     RawPayload() = default;
     explicit RawPayload(std::vector<std::byte> raw) : data{ std::move(raw) } { }
+    explicit RawPayload(std::span<const std::byte> raw) : data{ raw.begin(), raw.end() } { }
 };
 
 using Payload = std::variant<TextPayload, GamePayload, VariantPayload, RawPayload>;

@@ -97,7 +97,7 @@ DnsResult DnsResolver::resolve_domain(const std::string& domain) const
 
 std::string DnsResolver::resolve_ip(const std::string& host) const
 {
-    if (classify_host(host) != HostType::Hostname) {
+    if (utils::network::classify_host(host) != utils::network::HostType::Hostname) {
         return host;
     }
 

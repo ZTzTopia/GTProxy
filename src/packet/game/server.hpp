@@ -48,7 +48,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
         const std::string raw_text{ variant.get<std::string>(4) };
         const std::string key{ raw_text.substr(0, raw_text.find_first_of('|')) };
 
-        TextParse text_parse{};
+        utils::TextParse text_parse{};
         text_parse.parse(raw_text);
 
         address = key;
@@ -62,7 +62,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
 
     Payload write() override
     {
-        TextParse text_parse{};
+        utils::TextParse text_parse{};
         text_parse.add(address, door_id, uuid_token);
 
         const PacketVariant variant{
@@ -73,6 +73,50 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
             text_parse.get_raw(),
             static_cast<uint32_t>(login_mode),
             username
+        };
+        return VariantPayload{ game_packet, variant };
+    }
+};
+
+struct OnSuperMainStartAcceptLogonHrdxs47254722215a : VariantPacket<PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a> {
+    int32_t item_hash;
+    std::string u;
+    std::string uu;
+    std::string uuu;
+    uint32_t player_tribute_hash;
+
+    bool read(const Payload& payload) override
+    {
+        const auto var{ get_payload_if<VariantPayload>(payload) };
+        if (!var) {
+            return false;
+        }
+
+        variant = var->variant;
+        game_packet = var->game_packet;
+
+        if (variant.size() < 4) {
+            return false;
+        }
+
+        item_hash = variant.get<int32_t>(1);
+        u = variant.get<std::string>(2);
+        uu = variant.get<std::string>(3);
+        uuu = variant.get<std::string>(4);
+        player_tribute_hash = variant.get<uint32_t>(5);
+
+        return true;
+    }
+
+    Payload write() override
+    {
+        const PacketVariant variant{
+            "OnSuperMainStartAcceptLogonHrdxs47254722215a",
+            item_hash,
+            u,
+            uu,
+            uuu,
+            player_tribute_hash
         };
         return VariantPayload{ game_packet, variant };
     }

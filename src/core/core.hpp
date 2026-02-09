@@ -36,9 +36,9 @@ private:
     std::unique_ptr<network::Client> client_;
     std::unique_ptr<WebServer> web_server_;
 
-    std::unique_ptr<ConnectionHandler> connection_handler_;
-    std::unique_ptr<ForwardingHandler> forwarding_handler_;
-    std::unique_ptr<WorldHandler> world_handler_;
+    std::unique_ptr<handlers::ConnectionHandler> connection_handler_;
+    std::unique_ptr<handlers::ForwardingHandler> forwarding_handler_;
+    std::unique_ptr<handlers::WorldHandler> world_handler_;
     std::unique_ptr<command::CommandHandler> command_handler_;
 
     std::unique_ptr<scripting::LuaEngine> script_engine_;

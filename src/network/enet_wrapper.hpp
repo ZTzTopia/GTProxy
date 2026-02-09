@@ -3,8 +3,10 @@
 #include <span>
 #include <enet/enet.h>
 
+#include "../utils/types.hpp"
+
 namespace network {
-class ENetWrapper {
+class ENetWrapper : utils::types::Immobile {
 public:
     virtual ~ENetWrapper();
 
@@ -14,9 +16,6 @@ public:
 
 protected:
     explicit ENetWrapper(ENetHost* host);
-
-    ENetWrapper(const ENetWrapper&) = delete;
-    ENetWrapper& operator=(const ENetWrapper&) = delete;
 
     virtual void on_connect(ENetPeer* peer) = 0;
     virtual void on_receive(ENetPeer* peer, std::span<const std::byte> data) = 0;

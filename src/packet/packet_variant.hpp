@@ -4,6 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <spdlog/spdlog.h>
+#include <span>
 
 #include "../utils/byte_stream.hpp"
 
@@ -55,7 +56,7 @@ public:
     {
         const size_t size{ variants_.size() };
 
-        ByteStream<uint32_t> stream{};
+        utils::ByteStream<uint32_t> stream{};
         stream.write<uint8_t>(size);
 
         for (size_t i{ 0 }; i < size; i++) {
@@ -89,12 +90,12 @@ public:
             }
         }
 
-        return stream.get_data();
+        return stream.take_data();
     }
 
-    [[nodiscard]] bool deserialize(const std::vector<std::byte>& data)
+    [[nodiscard]] bool deserialize(std::span<const std::byte> data)
     {
-        ByteStream<uint32_t> byte_stream{ const_cast<std::byte*>(data.data()), data.size() };
+        utils::ByteStream<uint32_t> byte_stream{ data };
 
         uint8_t size{ 0 };
         byte_stream.read(size);
@@ -180,7 +181,8 @@ public:
         variants_[index] = value;
     }
 
-    [[nodiscard]] std::vector<variant> get_variants() const { return variants_; }
+    [[nodiscard]] const std::vector<variant>& get_variants() const { return variants_; }
+    [[nodiscard]] std::span<const variant> variants() const { return variants_; }
     [[nodiscard]] std::size_t size() const { return variants_.size(); }
 
 private:

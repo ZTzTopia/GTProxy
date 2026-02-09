@@ -20,7 +20,7 @@ struct Log : TextPacket<PacketId::Log> {
 
     Payload write() override
     {
-        TextParse parse{};
+        utils::TextParse parse{};
         parse.add("action", "log");
         parse.add("msg", msg);
         return TextPayload{ MESSAGE_TYPE, parse };

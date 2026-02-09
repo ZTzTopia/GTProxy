@@ -21,7 +21,7 @@ Scheduler::Scheduler(std::size_t num_threads)
 
     timer_thread_ = std::thread(&Scheduler::timer_thread, this);
 
-    spdlog::debug("Scheduler started with {} worker threads", num_threads);
+    spdlog::info("Scheduler started with {} worker threads", num_threads);
 }
 
 Scheduler::~Scheduler()
@@ -52,7 +52,7 @@ void Scheduler::stop()
         }
     }
 
-    spdlog::debug("Scheduler stopped");
+    spdlog::info("Scheduler stopped");
 }
 
 TaskId Scheduler::generate_id()

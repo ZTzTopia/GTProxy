@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <spdlog/spdlog.h>
 
+#include "../packet/packet_decoder.hpp"
 #include "../packet/packet_event_registry.hpp"
 #include "../utils/network.hpp"
 
@@ -50,7 +51,7 @@ void Server::on_connect(ENetPeer* peer)
 {
     spdlog::info(
         "Client {}:{} connected to proxy server",
-        network::format_ip_address(peer->address.host),
+        utils::network::format_ip_address(peer->address.host),
         peer->address.port
     );
 
@@ -61,7 +62,7 @@ void Server::on_connect(ENetPeer* peer)
     dispatcher_.dispatch(evt);
 }
 
-void Server::on_receive(ENetPeer* peer, std::span<const std::byte> data)
+void Server::on_receive(ENetPeer* peer, const std::span<const std::byte> data)
 {
     if (peer != peer_) {
         return;
@@ -73,7 +74,7 @@ void Server::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         return;
     }
 
-    const auto decoded{ decoder_.decode(data, config_.get_log_config(), "ServerBound") };
+    const auto decoded{ packet::PacketDecoder::decode(data, config_.get_log_config(), "ServerBound") };
     if (!decoded.has_value()) {
         const event::RawPacketEvent evt{ event::Type::ServerBoundPacket, data };
         dispatcher_.dispatch(evt);
@@ -96,7 +97,7 @@ void Server::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         }
     }
 
-    const event::PacketEvent evt{ event::Type::ServerBoundPacket, packet };
+    const event::RawPacketEvent evt{ event::Type::ServerBoundPacket, data };
     dispatcher_.dispatch(evt);
 }
 

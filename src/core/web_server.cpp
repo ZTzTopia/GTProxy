@@ -35,7 +35,6 @@ WebServer::WebServer(
 
     spdlog::info("HTTPS server listening on port 443");
     server_thread_ = std::thread{ &WebServer::listen_internal, this };
-    // server_thread_.detach();
 }
 
 WebServer::~WebServer()
@@ -142,7 +141,7 @@ void WebServer::listen_internal()
             return true;
         }
 
-        TextParse text_parse{ response->body };
+        utils::TextParse text_parse{ response->body };
         if (text_parse.empty()) {
             spdlog::error("Failed to parse server_data.php response");
             res.status = 500;
@@ -182,7 +181,7 @@ void WebServer::on_client_connect(const event::Event& e)
         return;
     }
 
-    spdlog::debug("Connecting to Growtopia server at {}:{}", pending_address_, pending_port_);
+    spdlog::info("Connecting to Growtopia server at {}:{}", pending_address_, pending_port_);
 
     client_.connect(pending_address_, pending_port_);
 

@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "utils/byte_stream.hpp"
 
+using namespace utils;
+
 TEST(ByteStreamTest, WriteAndReadBasicTypes)
 {
     ByteStream bs{};

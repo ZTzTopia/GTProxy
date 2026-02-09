@@ -2,6 +2,7 @@
 #include "packet_event_registry.hpp"
 #include "game/server.hpp"
 #include "game/world.hpp"
+#include "game/item_database.hpp"
 #include "message/chat.hpp"
 #include "message/exit.hpp"
 #include "message/input.hpp"
@@ -45,10 +46,30 @@ inline void register_packet_events() {
         PacketId::Disconnect,
         make_event_builder<game::Disconnect, PacketId::Disconnect>()
     );
+    registry.register_event(
+        PacketId::SendMapData,
+        make_event_builder<game::SendMapData, PacketId::SendMapData>()
+    );
+    registry.register_event(
+        PacketId::SendTileUpdateData,
+        make_event_builder<game::SendTileUpdateData, PacketId::SendTileUpdateData>()
+    );
+    registry.register_event(
+        PacketId::TileChangeRequest,
+        make_event_builder<game::TileChangeRequest, PacketId::TileChangeRequest>()
+    );
+    registry.register_event(
+        PacketId::ItemChangeObject,
+        make_event_builder<game::ItemChangeObject, PacketId::ItemChangeObject>()
+    );
 
     registry.register_event(
         PacketId::OnSendToServer,
         make_event_builder<game::OnSendToServer, PacketId::OnSendToServer>()
+    );
+    registry.register_event(
+        PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a,
+        make_event_builder<game::OnSuperMainStartAcceptLogonHrdxs47254722215a, PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a>()
     );
 
     registry.register_event(
@@ -58,6 +79,10 @@ inline void register_packet_events() {
     registry.register_event(
         PacketId::OnRemove,
         make_event_builder<game::OnRemove, PacketId::OnRemove>()
+    );
+    registry.register_event(
+        PacketId::SendItemDatabaseData,
+        make_event_builder<game::SendItemDatabaseData, PacketId::SendItemDatabaseData>()
     );
 }
 }

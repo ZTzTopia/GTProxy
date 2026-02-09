@@ -7,6 +7,7 @@ file(GLOB GTPROXY_INCLUDE_FILES
     core/*.hpp
     core/handlers/*.hpp
     event/*.hpp
+    item/*.hpp
     network/*.hpp
     packet/*.hpp
     packet/game/*.hpp
@@ -22,11 +23,14 @@ file(GLOB GTPROXY_SOURCE_FILES
     *.cpp
     command/*.cpp
     core/*.cpp
+    core/handlers/*.cpp
+    item/*.cpp
     network/*.cpp
     packet/*.cpp
     scripting/*.cpp
     scripting/bindings/*.cpp
-    utils/*.cpp)
+    utils/*.cpp
+    world/*.cpp)
 
 add_executable(${PROJECT_NAME}
     ${GTPROXY_INCLUDE_FILES}

@@ -1,6 +1,7 @@
 #pragma once
 #include "packet_registry.hpp"
 #include "register_packet_events.hpp"
+#include "game/item_database.hpp"
 #include "game/server.hpp"
 #include "game/world.hpp"
 #include "message/chat.hpp"
@@ -30,8 +31,14 @@ inline bool register_all_packets()
     registry.register_packet<message::Log>();
 
     registry.register_packet<game::Disconnect>();
+    registry.register_packet<game::SendMapData>();
+    registry.register_packet<game::SendTileUpdateData>();
+    registry.register_packet<game::SendItemDatabaseData>();
+    registry.register_packet<game::TileChangeRequest>();
+    registry.register_packet<game::ItemChangeObject>();
 
     registry.register_packet<game::OnSendToServer>();
+    registry.register_packet<game::OnSuperMainStartAcceptLogonHrdxs47254722215a>();
 
     registry.register_packet<game::OnSpawn>();
     registry.register_packet<game::OnRemove>();

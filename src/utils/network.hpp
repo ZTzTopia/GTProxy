@@ -5,7 +5,7 @@
 
 #include "text_parse.hpp"
 
-namespace network {
+namespace utils::network {
 enum class HostType {
     IpAddress,
     Hostname
@@ -13,7 +13,7 @@ enum class HostType {
 
 inline bool is_valid_ip_address(const std::string& address)
 {
-    std::vector parts{ TextParse::tokenize(address, ".") };
+    std::vector parts{ utils::TextParse::tokenize(address, ".") };
     if (parts.size() != 4) {
         return false;
     }

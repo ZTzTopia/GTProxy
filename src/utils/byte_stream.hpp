@@ -4,22 +4,29 @@
 #include <span>
 #include <cstring>
 
+namespace utils {
 template <typename LengthType = std::uint16_t>
 class ByteStream {
 public:
     ByteStream()
         : read_offset_{ 0 }
-    { }
+    {
+
+    }
 
     ByteStream(const std::byte* data, const std::size_t length)
         : data_span_{ data, length }
         , read_offset_{ 0 }
-    { }
+    {
 
-    ByteStream(std::span<const std::byte> span)
+    }
+
+    explicit ByteStream(const std::span<const std::byte> span)
         : data_span_{ span }
         , read_offset_{ 0 }
-    { }
+    {
+
+    }
 
     void write_data(const void* ptr, const std::size_t size)
     {
@@ -143,8 +150,18 @@ public:
         return { data_span_.begin(), data_span_.end() };
     }
 
+    [[nodiscard]] std::vector<std::byte> take_data()
+    {
+        if (!data_vec_.empty()) {
+            return std::move(data_vec_);
+        }
+
+        return { data_span_.begin(), data_span_.end() };
+    }
+
 private:
     std::vector<std::byte> data_vec_;
     std::span<const std::byte> data_span_;
     std::size_t read_offset_;
 };
+}
