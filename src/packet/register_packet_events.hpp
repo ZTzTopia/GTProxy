@@ -2,6 +2,7 @@
 #include "packet_event_registry.hpp"
 #include "game/server.hpp"
 #include "game/world.hpp"
+#include "game/item_database.hpp"
 #include "message/chat.hpp"
 #include "message/exit.hpp"
 #include "message/input.hpp"
@@ -66,6 +67,10 @@ inline void register_packet_events() {
         PacketId::OnSendToServer,
         make_event_builder<game::OnSendToServer, PacketId::OnSendToServer>()
     );
+    registry.register_event(
+        PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a,
+        make_event_builder<game::OnSuperMainStartAcceptLogonHrdxs47254722215a, PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a>()
+    );
 
     registry.register_event(
         PacketId::OnSpawn,
@@ -74,6 +79,10 @@ inline void register_packet_events() {
     registry.register_event(
         PacketId::OnRemove,
         make_event_builder<game::OnRemove, PacketId::OnRemove>()
+    );
+    registry.register_event(
+        PacketId::SendItemDatabaseData,
+        make_event_builder<game::SendItemDatabaseData, PacketId::SendItemDatabaseData>()
     );
 }
 }

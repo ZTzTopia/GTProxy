@@ -1,26 +1,23 @@
 #pragma once
 #include <cstddef>
-#include <cstdint>
-#include <limits>
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <memory>
-#include <vector>
 
-#include "../player/player.hpp"
-#include "../utils/singleton.hpp"
-#include "tile_map.hpp"
 #include "object_map.hpp"
+#include "tile_map.hpp"
+#include "../player/player.hpp"
 #include "../utils/byte_stream.hpp"
+#include "../utils/singleton.hpp"
 
 namespace world {
 class World : public utils::Singleton<World> {
 public:
     World()
-        : players_{}
-        , local_net_id_{ -1 }
+        : local_net_id_{ -1 }
         , version_{ 0 }
     {
+
     }
 
     void add_player(const std::shared_ptr<player::Player>& player)
@@ -90,24 +87,29 @@ public:
         return version_;
     }
 
-    void serialize(const uint8_t* extended_data)
+    void serialize(const std::byte* extended_data, const std::size_t extended_data_size)
     {
         if (!extended_data) {
             return;
         }
 
-        utils::ByteStream<> bs(reinterpret_cast<const std::byte*>(extended_data), std::numeric_limits<std::size_t>::max());
+        utils::ByteStream bs{ extended_data, extended_data_size };
 
         bs.read(version_);
+        bs.skip(4);
+        bs.read(name_);
 
         tile_map_.serialize(bs, version_);
-        object_map_.serialize(bs);
+        object_map_.serialize(bs, version_);
     }
 
 private:
     std::unordered_map<int32_t, std::shared_ptr<player::Player>> players_;
     int32_t local_net_id_;
+
     uint16_t version_;
+    std::string name_;
+
     WorldTileMap tile_map_;
     WorldObjectMap object_map_;
 };

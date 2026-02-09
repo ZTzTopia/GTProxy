@@ -1,16 +1,13 @@
 #pragma once
-#include <cstdint>
 #include <string_view>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <regex>
-#include <spdlog/spdlog.h>
 
 #include "payload.hpp"
 
 namespace packet {
-
 enum class PacketId : uint32_t {
     ServerHello,
     Padding = 0x1000,
@@ -27,6 +24,7 @@ enum class PacketId : uint32_t {
     TileChangeRequest,
     SendMapData,
     SendTileUpdateData,
+    SendItemDatabaseData,
     SendInventoryState,
     ModifyItemInventory,
     ItemChangeObject,
@@ -34,6 +32,7 @@ enum class PacketId : uint32_t {
     OnSendToServer,
     OnSpawn,
     OnRemove,
+    OnSuperMainStartAcceptLogonHrdxs47254722215a,
     Unknown = std::numeric_limits<uint32_t>::max(),
 };
 
@@ -70,6 +69,7 @@ inline const std::unordered_map<std::string_view, PacketId> VARIANT_FUNCTION_MAP
     { "OnRemove", PacketId::OnRemove },
     { "OnNameChanged", PacketId::OnNameChanged },
     { "OnChangeSkin", PacketId::OnChangeSkin },
+    { "OnSuperMainStartAcceptLogonHrdxs47254722215a", PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a },
 };
 
 inline const std::unordered_map<PacketType, PacketId> GAME_PACKET_MAP = {
@@ -77,6 +77,7 @@ inline const std::unordered_map<PacketType, PacketId> GAME_PACKET_MAP = {
     { PACKET_TILE_CHANGE_REQUEST, PacketId::TileChangeRequest },
     { PACKET_SEND_MAP_DATA, PacketId::SendMapData },
     { PACKET_SEND_TILE_UPDATE_DATA, PacketId::SendTileUpdateData },
+    { PACKET_SEND_ITEM_DATABASE_DATA, PacketId::SendItemDatabaseData },
     { PACKET_SEND_INVENTORY_STATE, PacketId::SendInventoryState },
     { PACKET_MODIFY_ITEM_INVENTORY, PacketId::ModifyItemInventory },
     { PACKET_ITEM_CHANGE_OBJECT, PacketId::ItemChangeObject },

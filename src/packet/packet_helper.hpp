@@ -126,7 +126,7 @@ struct PacketHelper {
             byte_stream.write_data(ext_data.data(), ext_data.size());
         }
         
-        return byte_stream.get_data();
+        return byte_stream.take_data();
     }
 
     static std::vector<std::byte> serialize(IPacket& packet)

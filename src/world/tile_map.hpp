@@ -1,9 +1,9 @@
 #pragma once
-#include <glm/glm.hpp>
 #include <vector>
+#include <glm/glm.hpp>
 
-#include "../utils/byte_stream.hpp"
 #include "tile.hpp"
+#include "../utils/byte_stream.hpp"
 
 class WorldTileMap final {
 public:
@@ -18,7 +18,10 @@ public:
         bs.read(size_.x);
         bs.read(size_.y);
 
-        const std::uint32_t count{ static_cast<std::uint32_t>(size_.x * size_.y) };
+        std::uint32_t count{};
+        bs.read(count);
+        bs.skip(5);
+
         tiles_.resize(count);
 
         for (auto& tile : tiles_) {

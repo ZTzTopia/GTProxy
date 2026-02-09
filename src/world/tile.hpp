@@ -1,9 +1,10 @@
 #pragma once
-#include <cstdint>
 #include <string>
 
-#include "tile_extra.hpp"
 #include <fmt/format.h>
+#include "tile_extra.hpp"
+
+#include "../item/item_database.hpp"
 
 namespace world {
 enum class TileFlag : std::uint16_t {
@@ -72,13 +73,24 @@ struct Tile {
         bs.read(flag_val);
         flag = static_cast<TileFlag>(flag_val);
 
-        if (parent_tile) {
+        if (has_flag(flag, TileFlag::Locked)) {
             bs.read(lock_parent_tile);
         }
 
-        if (has_flag(flag, TileFlag::Extra)) {
+        if (has_flag(flag, TileFlag::Extra) || idiot_growtopia_dev(foreground, background)) {
             extra.serialize(bs, version, foreground, background);
         }
+    }
+
+    [[nodiscard]] static bool idiot_growtopia_dev(const std::uint16_t fg, const std::uint16_t bg)
+    {
+        const auto item_database{ &item::ItemDatabase::instance() };
+        return (
+            item_database->get_item(fg)->item_type == item::ItemType::Lock ||
+            item_database->get_item(fg)->item_type == item::ItemType::Door ||
+            item_database->get_item(fg)->item_type == item::ItemType::Vending ||
+            item_database->get_item(fg)->item_type == item::ItemType::DisplayBlock
+        );
     }
 
     [[nodiscard]] std::string flag_to_string() const
@@ -108,14 +120,6 @@ struct Tile {
         }
 
         return flag_string;
-    }
-
-    [[nodiscard]] std::string get_raw_data() const {
-        if (!has_flag(flag, TileFlag::Extra)) {
-            return fmt::format("Tile::Type -> [{}]", flag_to_string());
-        }
-
-        return fmt::format("Tile::Type -> [{}]:\n{}", flag_to_string(), extra.get_raw_data());
     }
 };
 }

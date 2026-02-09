@@ -10,6 +10,7 @@
 #include "commands/help_command.hpp"
 #include "commands/nick_command.hpp"
 #include "commands/proxy_command.hpp"
+#include "commands/rainbow_command.hpp"
 #include "commands/skin_command.hpp"
 #include "commands/warp_command.hpp"
 
@@ -54,6 +55,7 @@ void CommandHandler::register_default_commands()
     registry_.add(std::make_unique<ExitCommand>());
     registry_.add(std::make_unique<NickCommand>());
     registry_.add(std::make_unique<SkinCommand>());
+    registry_.add(std::make_unique<RainbowCommand>());
     registry_.add(std::make_unique<HelpCommand>());
     registry_.add(std::make_unique<DebugCommand>());
 }

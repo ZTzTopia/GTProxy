@@ -1,6 +1,4 @@
 #pragma once
-
-#include <cstdint>
 #include "../packet_types.hpp"
 #include "../packet_id.hpp"
 #include "../packet_helper.hpp"
@@ -74,14 +72,6 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
         online_id = parser.get<int32_t>("onlineID", 0);
         type = parser.get("type", 0);
         title_icon = parser.get("titleIcon", 0);
-
-        spdlog::debug(
-            "OnSpawn(spawn={}, net_id={}, user_id={}, country_code={}, name={}, position=({}, {}), "
-            "collision=({}, {}, {}, {}), invisible={}, mod_state={}, supermod_state={}, online_id={}, type={}, title_icon={})",
-            spawn, net_id, user_id, country_code, name, position.x, position.y,
-            collision.x, collision.y, collision.z, collision.w,
-            invisible, mod_state, supermod_state, online_id, type, title_icon
-        );
         return true;
     }
 
@@ -102,7 +92,6 @@ struct OnSpawn : VariantPacket<PacketId::OnSpawn> {
         parser.add("onlineID", "");
         parser.add("type", type);
 
-        spdlog::debug("Raw OnSpawn data: {}", parser.get_raw());
         const PacketVariant write_variant{
             "OnSpawn",
             parser.get_raw()
@@ -181,7 +170,16 @@ struct SendMapData : GamePacket<PacketId::SendMapData, PACKET_SEND_MAP_DATA> {
 
     Payload write() override
     {
-        return {};
+        if (extra.empty()) {
+            return {};
+        }
+
+        GamePayload game_payload{};
+        game_payload.packet.type = PACKET_TYPE;
+        game_payload.packet.net_id = -1;
+        game_payload.extra = extra;
+
+        return game_payload;
     }
 };
 
@@ -199,7 +197,16 @@ struct SendTileUpdateData : GamePacket<PacketId::SendTileUpdateData, PACKET_SEND
 
     Payload write() override
     {
-        return {};
+        if (extra.empty()) {
+            return {};
+        }
+
+        GamePayload game_payload{};
+        game_payload.packet.type = PACKET_TYPE;
+        game_payload.packet.net_id = -1;
+        game_payload.extra = extra;
+
+        return game_payload;
     }
 };
 
@@ -210,30 +217,41 @@ struct TileChangeRequest : GamePacket<PacketId::TileChangeRequest, PACKET_TILE_C
 
     bool read(const Payload& payload) override
     {
-        const auto* game = get_payload_if<GamePayload>(payload);
+        const auto game{ get_payload_if<GamePayload>(payload) };
         if (!game) {
             return false;
         }
 
-        int_x = game->packet.int_x;
-        int_y = game->packet.int_y;
-        item_id = game->packet.int_data;
+        game_packet = game->packet;
+
+        int_x = game_packet.int_x;
+        int_y = game_packet.int_y;
+        item_id = game_packet.item_net_id;
         return true;
     }
 
     Payload write() override
     {
-        return {};
+        if (item_id == 0) {
+            return {};
+        }
+
+        GamePayload game_payload{};
+
+        game_payload.packet.int_x = int_x;
+        game_payload.packet.int_y = int_y;
+        game_payload.packet.item_net_id = item_id;
+        return game_payload;
     }
 };
 
 struct ItemChangeObject : GamePacket<PacketId::ItemChangeObject, PACKET_ITEM_CHANGE_OBJECT> {
-    float pos_x;
-    float pos_y;
-    int32_t item_id;
-    uint8_t amount;
-    int32_t object_change_type;
-    int32_t item_net_id;
+    std::uint16_t pos_x;
+    std::uint16_t pos_y;
+    std::uint16_t item_id;
+    std::uint16_t amount;
+    std::uint8_t object_change_type;
+    std::uint16_t item_net_id;
 
     bool read(const Payload& payload) override
     {
@@ -242,18 +260,31 @@ struct ItemChangeObject : GamePacket<PacketId::ItemChangeObject, PACKET_ITEM_CHA
             return false;
         }
 
-        pos_x = game->packet.pos_x;
-        pos_y = game->packet.pos_y;
-        item_id = game->packet.int_data;
-        amount = static_cast<uint8_t>(game->packet.float_var);
-        object_change_type = static_cast<int32_t>(game->packet.object_change_type);
-        item_net_id = game->packet.item_net_id;
+        game_packet = game->packet;
+
+        pos_x = game_packet.int_x;
+        pos_y = game_packet.int_y;
+        object_change_type = static_cast<std::uint8_t>(game_packet.object_change_type);
+        item_net_id = static_cast<std::uint16_t>(game_packet.item_net_id);
+        amount = static_cast<std::uint16_t>(game_packet.int_data);
+        item_id = static_cast<std::uint16_t>(game_packet.item_id);
         return true;
     }
 
     Payload write() override
     {
-        return {};
+        if (item_id == 0) {
+            return {};
+        }
+
+        GamePayload game_payload{};
+        game_payload.packet.int_x = pos_x;
+        game_payload.packet.int_y = pos_y;
+        game_payload.packet.object_change_type = static_cast<int32_t>(object_change_type);
+        game_payload.packet.item_net_id = static_cast<int32_t>(item_net_id);
+        game_payload.packet.int_data = static_cast<int32_t>(amount);
+        game_payload.packet.item_id = static_cast<int32_t>(item_id);
+        return game_payload;
     }
 };
 }

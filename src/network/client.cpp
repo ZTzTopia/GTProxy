@@ -66,7 +66,7 @@ void Client::on_connect(ENetPeer* peer)
     dispatcher_.dispatch(evt);
 }
 
-void Client::on_receive(ENetPeer* peer, std::span<const std::byte> data)
+void Client::on_receive(ENetPeer* peer, const std::span<const std::byte> data)
 {
     if (peer != peer_) {
         return;
@@ -78,7 +78,7 @@ void Client::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         return;
     }
 
-    const auto decoded{ decoder_.decode(data, config_.get_log_config(), "ClientBound") };
+    const auto decoded{ packet::PacketDecoder::decode(data, config_.get_log_config(), "ClientBound") };
     if (!decoded.has_value()) {
         const event::RawPacketEvent evt{ event::Type::ClientBoundPacket, data };
         dispatcher_.dispatch(evt);
@@ -101,7 +101,7 @@ void Client::on_receive(ENetPeer* peer, std::span<const std::byte> data)
         }
     }
 
-    const event::PacketEvent evt{ event::Type::ClientBoundPacket, packet };
+    const event::RawPacketEvent evt{ event::Type::ClientBoundPacket, data };
     dispatcher_.dispatch(evt);
 }
 
@@ -122,13 +122,6 @@ bool Client::write(std::span<const std::byte> data, const int channel) const
     if (!is_connected()) {
         return false;
     }
-
-    /*auto pkt_log = spdlog::get("packet");
-    pkt_log->debug(
-        "Sending {} bytes to Growtopia server:{}",
-        data.size(),
-        spdlog::to_hex(data.begin(), data.end())
-    );*/
 
     ENetPacket* packet{ enet_packet_create(
         data.data(),

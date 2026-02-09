@@ -39,7 +39,5 @@ private:
 
     event::Dispatcher& dispatcher_;
     ENetPeer* peer_;
-
-    packet::PacketDecoder decoder_;
 };
 }

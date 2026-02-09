@@ -1,5 +1,4 @@
 #pragma once
-#include <cstdint>
 #include <span>
 #include <enet/enet.h>
 
@@ -7,7 +6,6 @@
 #include "enet_wrapper.hpp"
 #include "../core/config.hpp"
 #include "../event/event.hpp"
-#include "../packet/packet_decoder.hpp"
 
 namespace network {
 class Server final : public ENetWrapper, public IConnection {
@@ -37,7 +35,5 @@ private:
 
     event::Dispatcher& dispatcher_;
     ENetPeer* peer_;
-
-    packet::PacketDecoder decoder_;
 };
 }

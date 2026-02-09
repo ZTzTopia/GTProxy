@@ -1,9 +1,8 @@
 #pragma once
-#include <cstdint>
 #include <vector>
 
-#include "../utils/byte_stream.hpp"
 #include "object.hpp"
+#include "../utils/byte_stream.hpp"
 
 class WorldObjectMap final {
 public:
@@ -13,15 +12,17 @@ public:
 
     }
 
-    void serialize(utils::ByteStream<>& bs)
+    void serialize(utils::ByteStream<>& bs, const std::uint16_t version)
     {
+        bs.skip(12);
+
         std::uint32_t count{};
         bs.read(count);
         bs.read(drop_id_);
 
         objects_.resize(count);
         for (auto& object : objects_) {
-            object.serialize(bs);
+            object.serialize(bs, version);
         }
     }
 

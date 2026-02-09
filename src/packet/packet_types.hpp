@@ -1,5 +1,4 @@
 #pragma once
-#include <cstdint>
 
 namespace packet {
 enum NetMessageType : uint32_t {
@@ -134,6 +133,7 @@ struct GameUpdatePacket {
         uint32_t decompressed_data_size;
         int32_t object_id;
         int32_t int_data;
+        int32_t item_id;
     };
 
     union {

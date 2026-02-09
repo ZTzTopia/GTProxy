@@ -35,7 +35,6 @@ WebServer::WebServer(
 
     spdlog::info("HTTPS server listening on port 443");
     server_thread_ = std::thread{ &WebServer::listen_internal, this };
-    // server_thread_.detach();
 }
 
 WebServer::~WebServer()
@@ -182,7 +181,7 @@ void WebServer::on_client_connect(const event::Event& e)
         return;
     }
 
-    spdlog::debug("Connecting to Growtopia server at {}:{}", pending_address_, pending_port_);
+    spdlog::info("Connecting to Growtopia server at {}:{}", pending_address_, pending_port_);
 
     client_.connect(pending_address_, pending_port_);
 
