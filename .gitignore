@@ -18,4 +18,5 @@ CMakeSettings.json
 
 # OpenCode stuff
 /.opencode/plans
+
 .DS_Store
