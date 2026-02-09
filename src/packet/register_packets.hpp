@@ -4,6 +4,7 @@
 #include "game/item_database.hpp"
 #include "game/server.hpp"
 #include "game/world.hpp"
+#include "game/inventory.hpp"
 #include "message/chat.hpp"
 #include "message/exit.hpp"
 #include "message/input.hpp"
@@ -34,6 +35,8 @@ inline bool register_all_packets()
     registry.register_packet<game::SendMapData>();
     registry.register_packet<game::SendTileUpdateData>();
     registry.register_packet<game::SendItemDatabaseData>();
+    registry.register_packet<game::SendInventoryState>();
+    registry.register_packet<game::ModifyItemInventory>();
     registry.register_packet<game::TileChangeRequest>();
     registry.register_packet<game::ItemChangeObject>();
 

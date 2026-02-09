@@ -3,6 +3,7 @@
 #include "game/server.hpp"
 #include "game/world.hpp"
 #include "game/item_database.hpp"
+#include "game/inventory.hpp"
 #include "message/chat.hpp"
 #include "message/exit.hpp"
 #include "message/input.hpp"
@@ -83,6 +84,14 @@ inline void register_packet_events() {
     registry.register_event(
         PacketId::SendItemDatabaseData,
         make_event_builder<game::SendItemDatabaseData, PacketId::SendItemDatabaseData>()
+    );
+    registry.register_event(
+        PacketId::SendInventoryState,
+        make_event_builder<game::SendInventoryState, PacketId::SendInventoryState>()
+    );
+    registry.register_event(
+        PacketId::ModifyItemInventory,
+        make_event_builder<game::ModifyItemInventory, PacketId::ModifyItemInventory>()
     );
 }
 }

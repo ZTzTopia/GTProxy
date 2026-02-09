@@ -19,6 +19,7 @@ class GTProxyRecipe(ConanFile):
         self.requires('gtest/[~1.14]')
         self.requires('lua/5.4.6')
         self.requires('sol2/[~3.5]')
+        # self.requires('zlib/1.3.1')
 
     def layout(self):
         cmake_layout(self)

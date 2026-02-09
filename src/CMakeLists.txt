@@ -47,6 +47,7 @@ find_package(LibreSSL REQUIRED)
 find_package(lua REQUIRED)
 find_package(sol2 REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(ZLIB REQUIRED)
 
 target_link_libraries(${PROJECT_NAME}
     enet
@@ -61,7 +62,8 @@ target_link_libraries(${PROJECT_NAME}
     magic_enum::magic_enum
     pcg-cpp::pcg-cpp
     sol2::sol2
-    spdlog::spdlog)
+    spdlog::spdlog
+    ZLIB::ZLIB)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/lib/enet/include)
@@ -94,10 +96,25 @@ if (NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_
         GTPROXY_DEBUG)
 endif ()
 
-# Copy the resources folder to executable directory
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_SOURCE_DIR}/resources"
     "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources"
     COMMENT "Copying ${CMAKE_SOURCE_DIR}/resources to $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources.")
+
+file(GLOB SCRIPT_FILES "${CMAKE_SOURCE_DIR}/scripts/*.lua")
+file(GLOB_RECURSE SCRIPT_SUBDIR_FILES "${CMAKE_SOURCE_DIR}/scripts/**/*.lua")
+
+list(FILTER SCRIPT_FILES EXCLUDE REGEX "test_.*\\.lua$")
+list(FILTER SCRIPT_SUBDIR_FILES EXCLUDE REGEX "test_.*\\.lua$")
+
+foreach (script_file ${SCRIPT_FILES} ${SCRIPT_SUBDIR_FILES})
+    get_filename_component(script_name "${script_file}" NAME)
+    add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${script_file}"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/scripts/${script_name}"
+        COMMENT "Copying ${script_name} to $<TARGET_FILE_DIR:${PROJECT_NAME}>/scripts/")
+endforeach ()

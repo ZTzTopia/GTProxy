@@ -1,6 +1,8 @@
 #include "packet_bindings.hpp"
+
 #include "../../packet/generic_packets.hpp"
 #include "../../packet/packet_variant.hpp"
+#include "../../packet/game/inventory.hpp"
 
 namespace scripting::bindings {
 void PacketBindings::bind(sol::state& lua)
@@ -243,6 +245,82 @@ void PacketBindings::bind_game_packets(sol::state& lua)
         "player_id", &packet::game::OnRemove::player_id,
         "variant", &packet::game::OnRemove::variant,
         "game_packet", &packet::game::OnRemove::game_packet
+    );
+
+    lua.new_usertype<packet::game::SendMapData>("SendMapDataPacket",
+        sol::constructors<packet::game::SendMapData()>(),
+        sol::base_classes, sol::bases<packet::IPacket>(),
+        "extra", sol::property([](const packet::game::SendMapData& p, sol::this_state s) {
+            sol::state_view lua{ s };
+            sol::table t = lua.create_table();
+            for (std::size_t i = 0; i < p.extra.size(); ++i) {
+                t[i + 1] = static_cast<uint8_t>(p.extra[i]);
+            }
+            return t;
+        })
+    );
+
+    lua.new_usertype<packet::game::SendTileUpdateData>("SendTileUpdateDataPacket",
+        sol::constructors<packet::game::SendTileUpdateData()>(),
+        sol::base_classes, sol::bases<packet::IPacket>(),
+        "extra", sol::property([](const packet::game::SendTileUpdateData& p, sol::this_state s) {
+            sol::state_view lua{ s };
+            sol::table t = lua.create_table();
+            for (std::size_t i = 0; i < p.extra.size(); ++i) {
+                t[i + 1] = static_cast<uint8_t>(p.extra[i]);
+            }
+            return t;
+        })
+    );
+
+    lua.new_usertype<packet::game::TileChangeRequest>("TileChangeRequestPacket",
+        sol::constructors<packet::game::TileChangeRequest()>(),
+        sol::base_classes, sol::bases<packet::IPacket>(),
+        "int_x", &packet::game::TileChangeRequest::int_x,
+        "int_y", &packet::game::TileChangeRequest::int_y,
+        "item_id", &packet::game::TileChangeRequest::item_id
+    );
+
+    lua.new_usertype<packet::game::ItemChangeObject>("ItemChangeObjectPacket",
+        sol::constructors<packet::game::ItemChangeObject()>(),
+        sol::base_classes, sol::bases<packet::IPacket>(),
+        "pos_x", &packet::game::ItemChangeObject::pos_x,
+        "pos_y", &packet::game::ItemChangeObject::pos_y,
+        "item_id", &packet::game::ItemChangeObject::item_id,
+        "amount", &packet::game::ItemChangeObject::amount
+    );
+
+    lua.new_usertype<packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a>("OnSuperMainStartAcceptLogonPacket",
+        sol::constructors<packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a()>(),
+        sol::base_classes, sol::bases<packet::IPacket>(),
+        "variant", &packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a::variant,
+        "game_packet", &packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a::game_packet,
+        "item_hash", &packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a::item_hash,
+        "u", &packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a::u,
+        "uu", &packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a::uu,
+        "uuu", &packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a::uuu,
+        "player_tribute_hash", &packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a::player_tribute_hash
+    );
+
+    lua.new_usertype<packet::game::SendInventoryState>("SendInventoryStatePacket",
+        sol::constructors<packet::game::SendInventoryState()>(),
+        sol::base_classes, sol::bases<packet::IPacket>(),
+        "extra", sol::property([](const packet::game::SendInventoryState& p, sol::this_state s) {
+            sol::state_view lua{ s };
+            sol::table t = lua.create_table();
+            for (std::size_t i = 0; i < p.extra.size(); ++i) {
+                t[i + 1] = static_cast<uint8_t>(p.extra[i]);
+            }
+            return t;
+        })
+    );
+
+    lua.new_usertype<packet::game::ModifyItemInventory>("ModifyItemInventoryPacket",
+        sol::constructors<packet::game::ModifyItemInventory()>(),
+        sol::base_classes, sol::bases<packet::IPacket>(),
+        "item_id", &packet::game::ModifyItemInventory::item_id,
+        "amount", &packet::game::ModifyItemInventory::amount,
+        "net_id", &packet::game::ModifyItemInventory::net_id
     );
 }
 

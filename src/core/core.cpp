@@ -13,6 +13,8 @@
 #include "../scripting/bindings/scheduler_bindings.hpp"
 #include "../scripting/bindings/player_bindings.hpp"
 #include "../scripting/bindings/world_bindings.hpp"
+#include "../scripting/bindings/world_data_bindings.hpp"
+#include "../scripting/bindings/item_bindings.hpp"
 
 namespace core {
 Core::Core()
@@ -45,13 +47,15 @@ Core::Core()
         *server_
     );
 
-    script_engine_->register_binding(std::make_unique<scripting::bindings::CommandBindings>(*command_handler_));
+    script_engine_->register_binding(std::make_unique<scripting::bindings::CommandBindings>(*command_handler_, *server_, *client_, dispatcher_, scheduler_));
     script_engine_->register_binding(std::make_unique<scripting::bindings::EventBindings>(*script_event_bridge_));
     script_engine_->register_binding(std::make_unique<scripting::bindings::LoggerBindings>());
     script_engine_->register_binding(std::make_unique<scripting::bindings::PacketBindings>(*client_, *server_));
     script_engine_->register_binding(std::make_unique<scripting::bindings::SchedulerBindings>(*script_scheduler_));
     script_engine_->register_binding(std::make_unique<scripting::bindings::PlayerBindings>());
     script_engine_->register_binding(std::make_unique<scripting::bindings::WorldBindings>());
+    script_engine_->register_binding(std::make_unique<scripting::bindings::WorldDataBindings>());
+    script_engine_->register_binding(std::make_unique<scripting::bindings::ItemBindings>());
 
     script_loader_ = std::make_unique<scripting::ScriptLoader>(*script_engine_, "scripts");
     script_loader_->load_all();
