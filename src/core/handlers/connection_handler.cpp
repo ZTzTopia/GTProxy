@@ -175,7 +175,8 @@ void ConnectionHandler::setup_send_item_database_data_handler()
                 item::ItemDatabase::instance().get_count()
             );
 
-            constexpr std::string cache_path{ "resources/items.dat" };
+            // ReSharper disable once CppVariableCanBeMadeConstexpr
+            const std::string cache_path{ "resources/items.dat" };
             try {
                 std::ofstream out{ cache_path, std::ios::binary };
                 if (!out) {
@@ -209,7 +210,8 @@ void ConnectionHandler::setup_on_super_main_start_handler()
                 return;
             }
 
-            constexpr std::string cache_path{ "resources/items.dat" };
+            // ReSharper disable once CppVariableCanBeMadeConstexpr
+            const std::string cache_path{ "resources/items.dat" };
             const auto server_hash{ static_cast<std::uint32_t>(pkt->item_hash) };
             const auto cached_hash{ (utils::hash::proton_file(cache_path)) };
 
