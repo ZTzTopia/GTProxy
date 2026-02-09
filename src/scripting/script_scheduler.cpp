@@ -101,9 +101,6 @@ void ScriptScheduler::update(std::chrono::microseconds elapsed)
             if (task->periodic) {
                 task->remaining = task->interval;
             }
-            else {
-                task->cancelled = true;
-            }
         }
     }
 
@@ -123,6 +120,10 @@ void ScriptScheduler::update(std::chrono::microseconds elapsed)
                 task->cancelled = true;
                 spdlog::debug("Periodic task {} stopped by callback returning false", task->id);
             }
+        }
+
+        if (!task->periodic) {
+            task->cancelled = true;
         }
     }
 
