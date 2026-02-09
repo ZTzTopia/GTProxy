@@ -32,6 +32,13 @@ const std::unordered_map<std::string, packet::PacketId> PACKET_ID_MAP = {
     {"OnChangeSkin", packet::PacketId::OnChangeSkin},
     {"OnSpawn", packet::PacketId::OnSpawn},
     {"OnRemove", packet::PacketId::OnRemove},
+    {"SendMapData", packet::PacketId::SendMapData},
+    {"SendTileUpdateData", packet::PacketId::SendTileUpdateData},
+    {"SendInventoryState", packet::PacketId::SendInventoryState},
+    {"ModifyItemInventory", packet::PacketId::ModifyItemInventory},
+    {"TileChangeRequest", packet::PacketId::TileChangeRequest},
+    {"ItemChangeObject", packet::PacketId::ItemChangeObject},
+    {"OnSuperMainStartAcceptLogon", packet::PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a},
 };
 }
 
@@ -158,6 +165,16 @@ void ScriptEventBridge::register_event_context_type()
                     return sol::make_object(s, static_cast<packet::game::OnSpawn*>(ctx.packet.get()));
                 case packet::PacketId::OnRemove:
                     return sol::make_object(s, static_cast<packet::game::OnRemove*>(ctx.packet.get()));
+                case packet::PacketId::SendMapData:
+                    return sol::make_object(s, static_cast<packet::game::SendMapData*>(ctx.packet.get()));
+                case packet::PacketId::SendTileUpdateData:
+                    return sol::make_object(s, static_cast<packet::game::SendTileUpdateData*>(ctx.packet.get()));
+                case packet::PacketId::TileChangeRequest:
+                    return sol::make_object(s, static_cast<packet::game::TileChangeRequest*>(ctx.packet.get()));
+                case packet::PacketId::ItemChangeObject:
+                    return sol::make_object(s, static_cast<packet::game::ItemChangeObject*>(ctx.packet.get()));
+                case packet::PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a:
+                    return sol::make_object(s, static_cast<packet::game::OnSuperMainStartAcceptLogonHrdxs47254722215a*>(ctx.packet.get()));
                 case packet::PacketId::Unknown:
                 default:
                     // Try to cast to generic packet types
@@ -249,6 +266,11 @@ void try_fill_typed_context(packet::PacketId pid, const event::Event& event, scr
     case packet::PacketId::OnChangeSkin: fill_typed_context<packet::PacketId::OnChangeSkin>(event, ctx); break;
     case packet::PacketId::OnSpawn: fill_typed_context<packet::PacketId::OnSpawn>(event, ctx); break;
     case packet::PacketId::OnRemove: fill_typed_context<packet::PacketId::OnRemove>(event, ctx); break;
+    case packet::PacketId::SendMapData: fill_typed_context<packet::PacketId::SendMapData>(event, ctx); break;
+    case packet::PacketId::SendTileUpdateData: fill_typed_context<packet::PacketId::SendTileUpdateData>(event, ctx); break;
+    case packet::PacketId::TileChangeRequest: fill_typed_context<packet::PacketId::TileChangeRequest>(event, ctx); break;
+    case packet::PacketId::ItemChangeObject: fill_typed_context<packet::PacketId::ItemChangeObject>(event, ctx); break;
+    case packet::PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a: fill_typed_context<packet::PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a>(event, ctx); break;
     default: break;
     }
 }
