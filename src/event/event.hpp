@@ -156,10 +156,10 @@ struct TypedPacketEvent : Event {
     }
 };
 
-
 struct EventPolicies {
-    static Type get_event(const Event& e) { return e.type; }
-    static bool can_continue_invoking(const Event& e) { return !e.canceled; }
+    // @note error C2440
+    static Type getEvent(const Event& e) { return e.type; }
+    static bool canContinueInvoking(const Event& e) { return !e.canceled; }
 };
 
 using BaseDispatcher = eventpp::EventDispatcher<

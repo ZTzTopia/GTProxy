@@ -118,7 +118,7 @@ ScriptEventBridge::ScriptEventBridge(
 ScriptEventBridge::~ScriptEventBridge()
 {
     for (auto& [type, handle] : event_handles_) {
-        dispatcher_.removeListener(type, handle);
+        dispatcher_.remove_listener(type, handle);
     }
 }
 
@@ -220,7 +220,7 @@ void ScriptEventBridge::setup_event_listeners()
     for (const auto type : event_values) {
         if (type == event::Type::Max) continue;
 
-        event_handles_[type] = dispatcher_.appendListener(
+        event_handles_[type] = dispatcher_.append_listener(
             type,
             make_handler(type),
             event::Priority::FairlyHigh
@@ -229,7 +229,7 @@ void ScriptEventBridge::setup_event_listeners()
 
     for (const auto& [name, pid] : PACKET_ID_MAP) {
         const auto type = event::packet_event_type(pid);
-        event_handles_[type] = dispatcher_.appendListener(
+        event_handles_[type] = dispatcher_.append_listener(
             type,
             make_handler(type),
             event::Priority::FairlyHigh

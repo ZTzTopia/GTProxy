@@ -10,7 +10,7 @@ public:
     };
 
     struct ClientConfig {
-        std::string game_version{ "5.39" };
+        std::string game_version{ "5.51" };
         int protocol{ 225 };
         std::string dns_server{ "cloudflare" };
     };

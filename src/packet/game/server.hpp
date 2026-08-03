@@ -24,7 +24,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
     std::string address;
     std::string door_id;
     std::string uuid_token;
-    uint8_t login_mode;
+    int8_t login_mode;
     std::string username;
 
     bool read(const Payload& payload) override
@@ -55,7 +55,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
         door_id = text_parse.get(key, 0);
         uuid_token = text_parse.get(key, 1);
 
-        login_mode = variant.get<uint32_t>(5);
+        login_mode = variant.get<int32_t>(5);
         username = variant.get<std::string>(6);
         return true;
     }
@@ -71,7 +71,7 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
             token,
             user,
             text_parse.get_raw(),
-            static_cast<uint32_t>(login_mode),
+            static_cast<int32_t>(login_mode),
             username
         };
         return VariantPayload{ game_packet, variant };
@@ -79,10 +79,11 @@ struct OnSendToServer : VariantPacket<PacketId::OnSendToServer> {
 };
 
 struct OnSuperMainStartAcceptLogonHrdxs47254722215a : VariantPacket<PacketId::OnSuperMainStartAcceptLogonHrdxs47254722215a> {
-    int32_t item_hash;
+    uint32_t item_hash;
     std::string u;
     std::string uu;
     std::string uuu;
+    std::string uuuu;
     uint32_t player_tribute_hash;
 
     bool read(const Payload& payload) override
@@ -99,11 +100,12 @@ struct OnSuperMainStartAcceptLogonHrdxs47254722215a : VariantPacket<PacketId::On
             return false;
         }
 
-        item_hash = variant.get<int32_t>(1);
+        item_hash = variant.get<uint32_t>(1);
         u = variant.get<std::string>(2);
         uu = variant.get<std::string>(3);
         uuu = variant.get<std::string>(4);
-        player_tribute_hash = variant.get<uint32_t>(5);
+        uuuu = variant.get<std::string>(5);
+        player_tribute_hash = variant.get<uint32_t>(6);
 
         return true;
     }
@@ -116,6 +118,7 @@ struct OnSuperMainStartAcceptLogonHrdxs47254722215a : VariantPacket<PacketId::On
             u,
             uu,
             uuu,
+            uuuu,
             player_tribute_hash
         };
         return VariantPayload{ game_packet, variant };

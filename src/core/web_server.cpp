@@ -30,8 +30,8 @@ WebServer::WebServer(
         return;
     }
 
-    dispatcher_.appendListener(event::Type::ClientConnect, [this](const event::Event& e) { on_client_connect(e); });
-    dispatcher_.appendListener(event::Type::ClientDisconnect, [this](const event::Event& e) { on_client_disconnect(e); });
+    dispatcher_.append_listener(event::Type::ClientConnect, [this](const event::Event& e) { on_client_connect(e); });
+    dispatcher_.append_listener(event::Type::ClientDisconnect, [this](const event::Event& e) { on_client_disconnect(e); });
 
     spdlog::info("HTTPS server listening on port 443");
     server_thread_ = std::thread{ &WebServer::listen_internal, this };
